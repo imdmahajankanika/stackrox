@@ -128,8 +128,6 @@ curl --retry 3 -s -f -o "${bundle_root}/snappy.rpm" "${rpm_base_url}/snappy-1.1.
 # Get postgres RPMs directly
 postgres_major="13"
 pg_rhel_major="8"
-pg_rhel_minor="6"
-pg_rhel_version="${pg_rhel_major}.${pg_rhel_minor}"
 postgres_url="https://download.postgresql.org/pub/repos/yum/${postgres_major}/redhat/rhel-${pg_rhel_major}-${arch}"
 postgres_repo_url="https://download.postgresql.org/pub/repos/yum/reporpms/EL-8-${arch}/pgdg-redhat-repo-latest.noarch.rpm"
 
@@ -141,7 +139,7 @@ if [[ "${NATIVE_PG_INSTALL}" == "true" ]]; then
 else
     build_dir="$(mktemp -d)"
     docker build -q -t postgres-minor-image "${build_dir}" -f - <<EOF
-FROM registry.access.redhat.com/ubi8/ubi:${pg_rhel_version}
+FROM registry.access.redhat.com/ubi8/ubi:latest
 RUN dnf install --disablerepo='*' -y "${postgres_repo_url}"
 ENTRYPOINT dnf list ${dnf_list_args[@]+"${dnf_list_args[@]}"} --disablerepo='*' --enablerepo=pgdg${postgres_major} -y postgresql${postgres_major}-server.$arch | tail -n 1 | awk '{print \$2}'
 EOF
