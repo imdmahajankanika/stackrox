@@ -47,7 +47,7 @@ RUN ln -s entrypoint-wrapper.sh /stackrox/admission-control && \
     ln -s /assets/downloads/cli/roxctl-linux-${TARGET_ARCH} /stackrox/roxctl && \
     ln -s /assets/downloads/cli/roxctl-linux-amd64 /assets/downloads/cli/roxctl-linux && \
     rpm --import RPM-GPG-KEY-CentOS-Official && \
-    microdnf upgrade && \
+    microdnf upgrade --nobest && \
     rpm -i /tmp/snappy.rpm && \
     rpm -i --nodeps /tmp/postgres-libs.rpm && \
     rpm -i --nodeps /tmp/postgres.rpm && \
