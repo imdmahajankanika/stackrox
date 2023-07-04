@@ -1,5 +1,5 @@
 import withAuth from '../../helpers/basicAuth';
-import { hasFeatureFlag, hasOrchestratorFlavor } from '../../helpers/features';
+import { hasOrchestratorFlavor } from '../../helpers/features';
 import {
     assertSortedItems,
     callbackForPairOfAscendingNumberValuesFromElements,
@@ -18,12 +18,6 @@ const entitiesKey = 'node-components';
 
 describe('Vulnerability Management Node Components', () => {
     withAuth();
-
-    before(function beforeHook() {
-        if (!hasFeatureFlag('ROX_POSTGRES_DATASTORE')) {
-            this.skip();
-        }
-    });
 
     it('should display table columns', () => {
         visitVulnerabilityManagementEntities(entitiesKey);
@@ -139,6 +133,6 @@ describe('Vulnerability Management Node Components', () => {
     });
 
     it('should display links for nodes', () => {
-        verifySecondaryEntities(entitiesKey, 'nodes', 6, /^\d+ nodes?$/);
+        verifySecondaryEntities(entitiesKey, 'nodes', 6);
     });
 });

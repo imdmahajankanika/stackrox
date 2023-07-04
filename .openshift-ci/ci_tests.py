@@ -99,6 +99,7 @@ class QaE2eTestPart2(BaseTest):
             ["qa-tests-backend/scripts/run-part-2.sh"], QaE2eTestPart2.TEST_TIMEOUT
         )
 
+
 class QaE2eTestCompatibility(BaseTest):
     TEST_TIMEOUT = 240 * 60
 
@@ -108,6 +109,7 @@ class QaE2eTestCompatibility(BaseTest):
         self.run_with_graceful_kill(
             ["qa-tests-backend/scripts/run-compatibility.sh"], QaE2eTestCompatibility.TEST_TIMEOUT
         )
+
 
 class QaE2eDBBackupRestoreTest(BaseTest):
     TEST_TIMEOUT = 30 * 60
@@ -161,6 +163,30 @@ class NonGroovyE2e(BaseTest):
             NonGroovyE2e.TEST_TIMEOUT,
             post_start_hook=set_dirs_after_start,
         )
+
+
+class SensorIntegration(BaseTest):
+    TEST_TIMEOUT = 90 * 60
+    TEST_OUTPUT_DIR = "/tmp/sensor-integration-test-logs"
+
+    def run(self):
+        print("Executing the Sensor Integration Tests")
+
+        def set_dirs_after_start():
+            # let post test know where logs are
+            self.test_outputs = [SensorIntegration.TEST_OUTPUT_DIR]
+
+        self.run_with_graceful_kill(
+            ["tests/e2e/sensor.sh", SensorIntegration.TEST_OUTPUT_DIR],
+            SensorIntegration.TEST_TIMEOUT,
+            post_start_hook=set_dirs_after_start,
+        )
+
+
+class SensorIntegrationOCP(SensorIntegration):
+    def run(self):
+        print("Skipping the Sensor Integration Tests for OCP")
+
 
 
 class ScaleTest(BaseTest):

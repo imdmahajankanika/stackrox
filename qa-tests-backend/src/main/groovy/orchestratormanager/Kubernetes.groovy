@@ -33,6 +33,7 @@ import io.fabric8.kubernetes.api.model.NamespaceBuilder
 import io.fabric8.kubernetes.api.model.ObjectFieldSelectorBuilder
 import io.fabric8.kubernetes.api.model.ObjectMeta
 import io.fabric8.kubernetes.api.model.Pod
+import io.fabric8.kubernetes.api.model.PodBuilder
 import io.fabric8.kubernetes.api.model.PodList
 import io.fabric8.kubernetes.api.model.PodSpec
 import io.fabric8.kubernetes.api.model.PodTemplateSpec
@@ -110,7 +111,6 @@ import objects.Node
 import objects.Secret
 import objects.SecretKeyRef
 import util.Env
-import util.Helpers
 import util.Timer
 
 @CompileStatic
@@ -142,7 +142,6 @@ class Kubernetes implements OrchestratorMain {
         this.client.configuration.namespace = null
         this.client.configuration.setRequestTimeout(32*1000)
         this.client.configuration.setConnectionTimeout(20*1000)
-        this.client.configuration.setWebsocketTimeout(20*1000)
         this.deployments = this.client.apps().deployments()
         this.daemonsets = this.client.apps().daemonSets()
         this.statefulsets = this.client.apps().statefulSets()
@@ -389,6 +388,13 @@ class Kubernetes implements OrchestratorMain {
                 .upload(Paths.get(fromPath))
     }
 
+    def addPodAnnotationByApp(String ns, String appName, String key, String value) {
+        Pod pod = getPodsByLabel(ns, ["app": appName]).get(0)
+        client.pods().inNamespace(ns).withName(pod.metadata.name).edit {
+            n -> new PodBuilder(n).editMetadata().addToAnnotations(key, value).endMetadata().build()
+        }
+    }
+
     def waitForDeploymentDeletion(Deployment deploy, int retries = 30, int intervalSeconds = 5) {
         Timer t = new Timer(retries, intervalSeconds)
 
@@ -562,24 +568,29 @@ class Kubernetes implements OrchestratorMain {
                 .spec.containers.get(0).env
 
         int index = envVars.findIndexOf { EnvVar it -> it.name == key }
-        if (index < 0) {
-            throw new OrchestratorManagerException(
-                    "Could not update env var, did not find env variable ${key} in ${ns}/${name}")
+        if (index > -1) {
+            log.debug "Env var ${key} found on index: ${index}"
+            envVars.get(index).value = value
         }
-        envVars.get(index).value = value
+        else {
+            log.debug "Env var ${key} not found. Adding it now"
+            envVars.add(new EnvVarBuilder().withName(key).withValue(value).build())
+        }
 
-        client.apps().deployments().inNamespace(ns).withName(name)
-            .edit { d -> new DeploymentBuilder(d)
-                .editSpec()
-                .editTemplate()
-                .editSpec()
-                .editContainer(0)
-                .withEnv(envVars)
-                .endContainer()
-                .endSpec()
-                .endTemplate()
-                .endSpec()
-            .build() }
+        withRetry(2, 3) {
+            client.apps().deployments().inNamespace(ns).withName(name)
+                .edit { d -> new DeploymentBuilder(d)
+                    .editSpec()
+                    .editTemplate()
+                    .editSpec()
+                    .editContainer(0)
+                    .withEnv(envVars)
+                    .endContainer()
+                    .endSpec()
+                    .endTemplate()
+                    .endSpec()
+                .build() }
+        }
     }
 
     def scaleDeployment(String ns, String name, Integer replicas) {
@@ -2022,9 +2033,7 @@ class Kubernetes implements OrchestratorMain {
         try {
             withK8sClientRetry(maxNumRetries, 1) {
                 client.apps().deployments().inNamespace(deployment.namespace).createOrReplace(d)
-                int att = Helpers.getAttemptCount()
-                log.debug "Told the orchestrator to createOrReplace " + deployment.name + ". " +
-                          "Attempt " + att + " of " + maxNumRetries
+                log.debug "Told the orchestrator to createOrReplace " + deployment.name
             }
             if (deployment.exposeAsService && deployment.createLoadBalancer) {
                 waitForLoadBalancer(deployment)

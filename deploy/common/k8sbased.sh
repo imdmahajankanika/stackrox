@@ -195,13 +195,24 @@ function launch_central {
     	add_args "--with-config-file=${ROXDEPLOY_CONFIG_FILE_MAP}"
     fi
 
+    SUPPORTS_PSP=$(kubectl api-resources | grep "podsecuritypolicies" -c || true)
+    if [[ "${SUPPORTS_PSP}" -eq 0 ]]; then
+        echo "Pod security policies are not supported on this cluster. Skipping..."
+        POD_SECURITY_POLICIES="false"
+    fi
+
     if [[ -n "$POD_SECURITY_POLICIES" ]]; then
       add_args "--enable-pod-security-policies=${POD_SECURITY_POLICIES}"
     fi
 
-    # TODO(ROX-16008): Once the feature flag is enabled by default, always add the config map mount.
     if [[ -n "${ROX_DECLARATIVE_CONFIGURATION}" ]]; then
         add_args "--declarative-config-config-maps=declarative-configurations"
+    fi
+
+    if [[ -n "${ROX_TELEMETRY_STORAGE_KEY_V1}" ]]; then
+      add_args "--enable-telemetry=true"
+    else
+      add_args "--enable-telemetry=false"
     fi
 
     local unzip_dir="${k8s_dir}/central-deploy/"
@@ -213,7 +224,7 @@ function launch_central {
         rm -rf central-bundle
     else
         docker run --rm ${DOCKER_PLATFORM_ARGS[@]} "${EXTRA_DOCKER_ARGS[@]}" --env-file <(env | grep '^ROX_') "$ROXCTL_IMAGE" \
-        	central generate "${ORCH}" "${EXTRA_ARGS[@]}" "${STORAGE}" "${STORAGE_ARGS[@]}" > "${k8s_dir}/central.zip"
+          central generate "${ORCH}" "${EXTRA_ARGS[@]}" "${STORAGE}" "${STORAGE_ARGS[@]}" > "${k8s_dir}/central.zip"
         unzip "${k8s_dir}/central.zip" -d "${unzip_dir}"
     fi
 
@@ -480,6 +491,12 @@ function launch_sensor {
     if [[ -n "$ROXCTL_TIMEOUT" ]]; then
       echo "Extending roxctl timeout to $ROXCTL_TIMEOUT"
       extra_config+=("--timeout=$ROXCTL_TIMEOUT")
+    fi
+
+    SUPPORTS_PSP=$(kubectl api-resources | grep "podsecuritypolicies" -c || true)
+    if [[ "${SUPPORTS_PSP}" -eq 0 ]]; then
+        echo "Pod security policies are not supported on this cluster. Skipping..."
+        POD_SECURITY_POLICIES="false"
     fi
 
     if [[ -n "$POD_SECURITY_POLICIES" ]]; then

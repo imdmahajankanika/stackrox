@@ -15,10 +15,6 @@ var (
 	// ComplianceOperatorCheckResults enables getting compliance results from the compliance operator
 	ComplianceOperatorCheckResults = registerFeature("Enable fetching of compliance operator results", "ROX_COMPLIANCE_OPERATOR_INTEGRATION", true)
 
-	// NetworkPolicySystemPolicy enables two system policy fields (Missing (Ingress|Egress) Network Policy) to check deployments
-	// against network policies applied in the secured cluster.
-	NetworkPolicySystemPolicy = registerFeature("Enable NetworkPolicy-related system policy fields", "ROX_NETPOL_FIELDS", true)
-
 	// QuayRobotAccounts enables Robot accounts as credentials in Quay Image Integration.
 	QuayRobotAccounts = registerFeature("Enable Robot accounts in Quay Image Integration", "ROX_QUAY_ROBOT_ACCOUNTS", true)
 
@@ -50,11 +46,14 @@ var (
 	StoreEventHashes = registerFeature("Store Event Hashes", "ROX_STORE_EVENT_HASHES", true)
 
 	// DisableComplianceStandards enables Manage standards modal and conditional rendering in Compliance pages
-	DisableComplianceStandards = registerFeature("Disable compliance standards", "ROX_DISABLE_COMPLIANCE_STANDARDS", false)
+	DisableComplianceStandards = registerFeature("Disable compliance standards", "ROX_DISABLE_COMPLIANCE_STANDARDS", true)
 
 	// PreventSensorRestartOnDisconnect enables a new behavior in Sensor where it avoids restarting when the gRPC connection with Central ends.
 	PreventSensorRestartOnDisconnect = registerFeature("Prevent Sensor restart on disconnect", "ROX_PREVENT_SENSOR_RESTART_ON_DISCONNECT", false)
 
 	// SyslogNamespaceLabels enables sending namespace labels as part of the syslog alert notification.
 	SyslogNamespaceLabels = registerFeature("Send namespace labels as part of the syslog alert notification", "ROX_SEND_NAMESPACE_LABELS_IN_SYSLOG", true)
+
+	// ComplianceEnhancements enables APIs and UI pages for Compliance 2.0
+	ComplianceEnhancements = registerFeature("Compliance enhancements", "ROX_COMPLIANCE_ENHANCEMENTS", false)
 )

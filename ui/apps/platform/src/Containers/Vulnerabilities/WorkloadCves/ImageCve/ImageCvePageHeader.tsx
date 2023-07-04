@@ -10,6 +10,7 @@ import {
     List,
     ListItem,
 } from '@patternfly/react-core';
+import { ExternalLinkAltIcon } from '@patternfly/react-icons';
 import uniqBy from 'lodash/uniqBy';
 import { getDateTime } from 'utils/dateUtils';
 import { ensureExhaustive } from 'utils/type.utils';
@@ -62,7 +63,10 @@ export type ImageCvePageHeaderProps = {
 };
 
 function ImageCvePageHeader({ data }: ImageCvePageHeaderProps) {
-    const prioritizedDistros = uniqBy(sortCveDistroList(data?.distroTuples ?? []), 'distro');
+    const prioritizedDistros = uniqBy(
+        sortCveDistroList(data?.distroTuples ?? []),
+        getDistroLinkText
+    );
     return data ? (
         <Flex direction={{ default: 'column' }} alignItems={{ default: 'alignItemsFlexStart' }}>
             <Title headingLevel="h1" className="pf-u-mb-sm">
@@ -88,6 +92,7 @@ function ImageCvePageHeader({ data }: ImageCvePageHeaderProps) {
                                     rel="noopener noreferrer"
                                 >
                                     {getDistroLinkText(distro)}
+                                    <ExternalLinkAltIcon className="pf-u-display-inline pf-u-ml-sm" />
                                 </a>
                             </ListItem>
                         ))}

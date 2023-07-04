@@ -12,6 +12,7 @@ import (
 	"github.com/stackrox/rox/pkg/clusterid"
 	"github.com/stackrox/rox/pkg/env"
 	"github.com/stackrox/rox/pkg/expiringcache"
+	"github.com/stackrox/rox/pkg/features"
 	"github.com/stackrox/rox/pkg/grpc"
 	"github.com/stackrox/rox/pkg/logging"
 	"github.com/stackrox/rox/pkg/namespaces"
@@ -22,6 +23,7 @@ import (
 	"github.com/stackrox/rox/sensor/common/certdistribution"
 	"github.com/stackrox/rox/sensor/common/compliance"
 	"github.com/stackrox/rox/sensor/common/config"
+	"github.com/stackrox/rox/sensor/common/delegatedregistry"
 	"github.com/stackrox/rox/sensor/common/deployment"
 	"github.com/stackrox/rox/sensor/common/detector"
 	"github.com/stackrox/rox/sensor/common/externalsrcs"
@@ -30,8 +32,8 @@ import (
 	"github.com/stackrox/rox/sensor/common/networkflow/service"
 	"github.com/stackrox/rox/sensor/common/processfilter"
 	"github.com/stackrox/rox/sensor/common/processsignal"
-	"github.com/stackrox/rox/sensor/common/registry"
 	"github.com/stackrox/rox/sensor/common/reprocessor"
+	"github.com/stackrox/rox/sensor/common/scan"
 	"github.com/stackrox/rox/sensor/common/sensor"
 	"github.com/stackrox/rox/sensor/common/sensor/helmconfig"
 	signalService "github.com/stackrox/rox/sensor/common/signal"
@@ -39,6 +41,7 @@ import (
 	"github.com/stackrox/rox/sensor/kubernetes/clusterhealth"
 	"github.com/stackrox/rox/sensor/kubernetes/clustermetrics"
 	"github.com/stackrox/rox/sensor/kubernetes/clusterstatus"
+	"github.com/stackrox/rox/sensor/kubernetes/complianceoperator"
 	"github.com/stackrox/rox/sensor/kubernetes/enforcer"
 	"github.com/stackrox/rox/sensor/kubernetes/eventpipeline"
 	"github.com/stackrox/rox/sensor/kubernetes/listener/resources"
@@ -109,9 +112,12 @@ func CreateSensor(cfg *CreateOptions) (*sensor.Sensor, error) {
 		return nil, errors.Wrap(err, "creating enforcer")
 	}
 
-	delegatedRegistryConfigHandler := registry.NewDelegatedRegistryConfigHandler(storeProvider.Registries())
 	imageCache := expiringcache.NewExpiringCache(env.ReprocessInterval.DurationSetting())
-	policyDetector := detector.New(enforcer, admCtrlSettingsMgr, storeProvider.Deployments(), storeProvider.ServiceAccounts(), imageCache, auditLogEventsInput, auditLogCollectionManager, storeProvider.NetworkPolicies(), storeProvider.Registries())
+
+	localScan := scan.NewLocalScan(storeProvider.Registries())
+	delegatedRegistryHandler := delegatedregistry.NewHandler(storeProvider.Registries(), localScan)
+
+	policyDetector := detector.New(enforcer, admCtrlSettingsMgr, storeProvider.Deployments(), storeProvider.ServiceAccounts(), imageCache, auditLogEventsInput, auditLogCollectionManager, storeProvider.NetworkPolicies(), storeProvider.Registries(), localScan)
 	reprocessorHandler := reprocessor.NewHandler(admCtrlSettingsMgr, policyDetector, imageCache)
 	pipeline := eventpipeline.New(cfg.k8sClient, configHandler, policyDetector, reprocessorHandler, k8sNodeName.Setting(), cfg.resyncPeriod, cfg.traceWriter, storeProvider, cfg.eventPipelineQueueSize)
 	admCtrlMsgForwarder := admissioncontroller.NewAdmCtrlMsgForwarder(admCtrlSettingsMgr, pipeline)
@@ -140,7 +146,8 @@ func CreateSensor(cfg *CreateOptions) (*sensor.Sensor, error) {
 		admissioncontroller.AlertHandlerSingleton(),
 		auditLogCollectionManager,
 		reprocessorHandler,
-		delegatedRegistryConfigHandler,
+		delegatedRegistryHandler,
+		imageService,
 	}
 	if env.RHCOSNodeScanning.BooleanSetting() {
 		matcher := compliance.NewNodeIDMatcher(storeProvider.Nodes())
@@ -149,6 +156,9 @@ func CreateSensor(cfg *CreateOptions) (*sensor.Sensor, error) {
 		// complianceMultiplexer must start after all components that implement common.ComplianceComponent
 		// i.e., after nodeInventoryHandler
 		components = append(components, nodeInventoryHandler, complianceMultiplexer)
+	}
+	if features.ComplianceEnhancements.Enabled() {
+		components = append(components, complianceoperator.NewInfoUpdater(cfg.k8sClient.Kubernetes(), 0))
 	}
 
 	if !cfg.localSensor {

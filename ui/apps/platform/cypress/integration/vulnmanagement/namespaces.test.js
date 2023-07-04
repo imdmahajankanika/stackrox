@@ -1,5 +1,5 @@
 import withAuth from '../../helpers/basicAuth';
-import { hasFeatureFlag, hasOrchestratorFlavor } from '../../helpers/features';
+import { hasOrchestratorFlavor } from '../../helpers/features';
 import {
     assertSortedItems,
     callbackForPairOfAscendingNumberValuesFromElements,
@@ -18,12 +18,6 @@ const entitiesKey = 'namespaces';
 
 describe('Vulnerability Management Namespaces', () => {
     withAuth();
-
-    before(function beforeHook() {
-        if (!hasFeatureFlag('ROX_POSTGRES_DATASTORE')) {
-            this.skip();
-        }
-    });
 
     it('should display table columns', () => {
         visitVulnerabilityManagementEntities(entitiesKey);
@@ -95,10 +89,10 @@ describe('Vulnerability Management Namespaces', () => {
     });
 
     it('should display links for deployments', () => {
-        verifySecondaryEntities(entitiesKey, 'deployments', 5, /^\d+ deployments?$/);
+        verifySecondaryEntities(entitiesKey, 'deployments', 5);
     });
 
     it('should display links for images', () => {
-        verifySecondaryEntities(entitiesKey, 'images', 6, /^\d+ images?$/);
+        verifySecondaryEntities(entitiesKey, 'images', 6);
     });
 });

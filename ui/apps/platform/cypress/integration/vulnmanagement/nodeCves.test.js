@@ -1,6 +1,6 @@
 import { selectors } from '../../constants/VulnManagementPage';
 import withAuth from '../../helpers/basicAuth';
-import { hasFeatureFlag, hasOrchestratorFlavor } from '../../helpers/features';
+import { hasOrchestratorFlavor } from '../../helpers/features';
 import {
     assertSortedItems,
     callbackForPairOfAscendingNumberValuesFromElements,
@@ -19,12 +19,6 @@ const entitiesKey = 'node-cves';
 
 describe('Vulnerability Management Node CVEs', () => {
     withAuth();
-
-    before(function beforeHook() {
-        if (!hasFeatureFlag('ROX_POSTGRES_DATASTORE')) {
-            this.skip();
-        }
-    });
 
     it('should display table columns', () => {
         visitVulnerabilityManagementEntities(entitiesKey);
@@ -150,7 +144,7 @@ describe('Vulnerability Management Node CVEs', () => {
             this.skip();
         }
 
-        verifySecondaryEntities(entitiesKey, 'nodes', 10, /^\d+ nodes?$/);
+        verifySecondaryEntities(entitiesKey, 'nodes', 10);
     });
 
     it('should display links for node-components', function () {
@@ -158,6 +152,6 @@ describe('Vulnerability Management Node CVEs', () => {
             this.skip();
         }
 
-        verifySecondaryEntities(entitiesKey, 'node-components', 10, /^\d+ node components?$/);
+        verifySecondaryEntities(entitiesKey, 'node-components', 10);
     });
 });

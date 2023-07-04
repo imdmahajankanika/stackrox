@@ -9,9 +9,9 @@ import ImageNameTd from '../components/ImageNameTd';
 import SeverityCountLabels from '../components/SeverityCountLabels';
 import { DynamicColumnIcon } from '../components/DynamicIcon';
 import EmptyTableResults from '../components/EmptyTableResults';
-import DatePhraseTd from '../components/DatePhraseTd';
+import DateDistanceTd from '../components/DatePhraseTd';
 import TooltipTh from '../components/TooltipTh';
-import { VulnerabilitySeverityLabel } from '../types';
+import { VulnerabilitySeverityLabel, watchStatusLabel, WatchStatus } from '../types';
 
 export const imageListQuery = gql`
     query getImageList($query: String, $pagination: Pagination) {
@@ -64,7 +64,7 @@ type Image = {
     };
     operatingSystem: string;
     deploymentCount: number;
-    watchStatus: 'WATCHED' | 'NOT_WATCHED';
+    watchStatus: WatchStatus;
     metadata: {
         v1: {
             created: string | null;
@@ -124,14 +124,14 @@ function ImagesTable({ images, getSortParams, isFiltered, filteredSeverities }: 
                             }}
                         >
                             <Tr>
-                                <Td>
+                                <Td dataLabel="Image">
                                     {name ? (
                                         <ImageNameTd name={name} id={id} />
                                     ) : (
                                         'Image name not available'
                                     )}
                                 </Td>
-                                <Td>
+                                <Td dataLabel="CVEs by severity">
                                     <SeverityCountLabels
                                         criticalCount={criticalCount}
                                         importantCount={importantCount}
@@ -152,15 +152,17 @@ function ImagesTable({ images, getSortParams, isFiltered, filteredSeverities }: 
                                         <Flex>
                                             <div>0 deployments</div>
                                             {/* TODO: double check on what this links to */}
-                                            <span>({`${watchStatus}`} image)</span>
+                                            <span>
+                                                ({`${watchStatusLabel[watchStatus]}`} image)
+                                            </span>
                                         </Flex>
                                     )}
                                 </Td>
                                 <Td>
-                                    <DatePhraseTd date={metadata?.v1?.created} />
+                                    <DateDistanceTd date={metadata?.v1?.created} asPhrase={false} />
                                 </Td>
                                 <Td>
-                                    <DatePhraseTd date={scanTime} />
+                                    <DateDistanceTd date={scanTime} />
                                 </Td>
                             </Tr>
                         </Tbody>

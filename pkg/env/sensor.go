@@ -27,11 +27,19 @@ var (
 	EventPipelineQueueSize = RegisterIntegerSetting("ROX_EVENT_PIPELINE_QUEUE_SIZE", 1000)
 
 	// ResyncDisabled disables the resync behavior of the kubernetes listeners in sensor
-	ResyncDisabled = RegisterBooleanSetting("ROX_RESYNC_DISABLED", false)
+	ResyncDisabled = RegisterBooleanSetting("ROX_RESYNC_DISABLED", true)
 
 	// ConnectionRetryInitialInterval defines how long it takes for sensor to retry gRPC connection when it first disconnects.
 	ConnectionRetryInitialInterval = registerDurationSetting("ROX_SENSOR_CONNECTION_RETRY_INITIAL_INTERVAL", time.Minute)
 
 	// ConnectionRetryMaxInterval defines the maximum interval between retries after the gRPC connection disconnects.
 	ConnectionRetryMaxInterval = registerDurationSetting("ROX_SENSOR_CONNECTION_RETRY_MAX_INTERVAL", 10*time.Minute)
+
+	// ScanTimeout defines the scan timeout duration for Sensor initiated scans
+	ScanTimeout = registerDurationSetting("ROX_SCAN_TIMEOUT", 6*time.Minute)
+
+	// DelegatedScanningDisabled disables the capabilities associated with delegated image scanning.
+	// This is meant to be a 'kill switch' that allows for local scanning to continue (ie: for OCP internal repos)
+	// in the event the delegated scanning capabilities are causing unforeseen issues.
+	DelegatedScanningDisabled = RegisterBooleanSetting("ROX_DELEGATED_SCANNING_DISABLED", false)
 )
