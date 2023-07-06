@@ -2,13 +2,7 @@
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd)"
 
-echo "Deploying Compliance Operator"
-git clone git@github.com:openshift/compliance-operator.git
-cd compliance-operator
-
-oc create -f deploy/ns.yaml
-for f in $(ls -1 deploy/crds/*crd.yaml); do oc apply -f $f -n openshift-compliance; done
-oc apply -n openshift-compliance -f deploy/
+echo "Validating the Compliance Operator is ready for use"
 
 # Due to reconciliation bug in compliance operator, ensure that the profile exists prior to creating the
 # tailored profile

@@ -31,7 +31,6 @@ test_e2e() {
     setup_deployment_env false false
     remove_existing_stackrox_resources
     setup_default_TLS_certs
-    "$ROOT/tests/complianceoperator/create.sh"
 
     deploy_stackrox
     deploy_optional_e2e_components
