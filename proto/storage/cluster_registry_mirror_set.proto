@@ -1,0 +1,33 @@
+syntax = "proto3";
+
+option go_package = "storage";
+option java_package = "io.stackrox.proto.storage";
+
+import "gogoproto/gogo.proto";
+
+package storage;
+
+// ClusterRegistryMirrorSet represents an ImageContentSourcePolicy, 
+// ImageDigestMirrorSet, or ImageTagMirrorSet CR from Secured Clusters.
+// These CRs are used to configure registry mirroring for the cluster.
+// 
+// Refer to https://github.com/openshift/api for full CR details.
+message ClusterRegistryMirrorSet {
+    enum Type {
+        IMAGE_CONTENT_SOURCE_POLICY = 0;
+        IMAGE_DIGEST_MIRROR_SET     = 1;
+        IMAGE_TAG_MIRROR_SET        = 2;
+    }
+
+    message Mirror {
+        string          source               = 1;
+        repeated string mirrors              = 2;
+        string          mirror_source_policy = 3;
+    }
+
+    string          id         = 1 [(gogoproto.moretags) = 'sql:"pk,type(uuid)"'];
+    string          cluster_id = 2 [(gogoproto.moretags) = 'sql:"fk(Cluster:id),type(uuid)"'];
+    Type            type       = 3;
+    string          name       = 4;
+    repeated Mirror mirrors    = 5;
+}

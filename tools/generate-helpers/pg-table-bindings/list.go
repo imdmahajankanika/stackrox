@@ -23,6 +23,7 @@ func init() {
 		&storage.ClusterHealthStatus{}:                          resources.Cluster,
 		&storage.ClusterCVE{}:                                   resources.Cluster,
 		&storage.ClusterCVEEdge{}:                               resources.Cluster,
+		&storage.ClusterRegistryMirrorSet{}:                     resources.Cluster,
 		&storage.ComplianceControlResult{}:                      resources.Compliance,
 		&storage.ComplianceDomain{}:                             resources.Compliance,
 		&storage.ComplianceStrings{}:                            resources.Compliance,
