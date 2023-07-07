@@ -12,6 +12,7 @@ import (
 	"github.com/stackrox/rox/pkg/postgres"
 	"github.com/stackrox/rox/pkg/postgres/pgutils"
 	"github.com/stackrox/rox/pkg/postgres/walker"
+	"github.com/stackrox/rox/pkg/sac"
 	"github.com/stackrox/rox/pkg/search"
 )
 
@@ -22,6 +23,7 @@ const (
 // PermissionChecker is a permission checker that could be used by GenericStore
 type PermissionChecker interface {
 	CountAllowed(ctx context.Context) (bool, error)
+	DeleteAllowed(ctx context.Context, keys ...sac.ScopeKey) (bool, error)
 	ExistsAllowed(ctx context.Context) (bool, error)
 	GetAllowed(ctx context.Context) (bool, error)
 	WalkAllowed(ctx context.Context) (bool, error)
@@ -283,4 +285,91 @@ func (s *GenericStore[T, PT]) GetIDs(ctx context.Context) ([]string, error) {
 	}
 
 	return identifiers, nil
+}
+
+// GetMany returns the objects specified by the IDs from the store as well as the index in the missing indices slice.
+func (s *GenericStore[T, PT]) GetMany(ctx context.Context, identifiers []string) ([]*T, []int, error) {
+	defer s.setPostgresOperationDurationTime(time.Now(), ops.GetMany)
+
+	if len(identifiers) == 0 {
+		return nil, nil, nil
+	}
+
+	var sacQueryFilter *v1.Query
+	if s.hasPermissionsChecker() {
+		if ok, err := s.permissionChecker.GetAllowed(ctx); err != nil || !ok {
+			return nil, nil, err
+		}
+	} else {
+		filter, err := GetReadSACQuery(ctx, s.targetResource)
+		if err != nil {
+			return nil, nil, err
+		}
+		sacQueryFilter = filter
+	}
+	q := search.ConjunctionQuery(
+		sacQueryFilter,
+		search.NewQueryBuilder().AddDocIDs(identifiers...).ProtoQuery(),
+	)
+
+	rows, err := RunGetManyQueryForSchema[T, PT](ctx, s.schema, q, s.db)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			missingIndices := make([]int, 0, len(identifiers))
+			for i := range identifiers {
+				missingIndices = append(missingIndices, i)
+			}
+			return nil, missingIndices, nil
+		}
+		return nil, nil, err
+	}
+	resultsByID := make(map[string]*T, len(rows))
+	for _, msg := range rows {
+		resultsByID[s.pkGetter(msg)] = msg
+	}
+	missingIndices := make([]int, 0, len(identifiers)-len(resultsByID))
+	// It is important that the elems are populated in the same order as the input identifiers
+	// slice, since some calling code relies on that to maintain order.
+	elems := make([]*T, 0, len(resultsByID))
+	for i, identifier := range identifiers {
+		if result, ok := resultsByID[identifier]; !ok {
+			missingIndices = append(missingIndices, i)
+		} else {
+			elems = append(elems, result)
+		}
+	}
+	return elems, missingIndices, nil
+}
+
+// DeleteByQuery removes the objects from the store based on the passed query.
+func (s *GenericStore[T, PT]) DeleteByQuery(ctx context.Context, query *v1.Query) error {
+	defer s.setPostgresOperationDurationTime(time.Now(), ops.Remove)
+
+	var sacQueryFilter *v1.Query
+	if s.hasPermissionsChecker() {
+		if ok, err := s.permissionChecker.DeleteAllowed(ctx); err != nil {
+			return err
+		} else if !ok {
+			return sac.ErrResourceAccessDenied
+		}
+	} else {
+		filter, err := GetReadWriteSACQuery(ctx, s.targetResource)
+		if err != nil {
+			return err
+		}
+		sacQueryFilter = filter
+	}
+
+	q := search.ConjunctionQuery(
+		sacQueryFilter,
+		query,
+	)
+
+	return RunDeleteRequestForSchema(ctx, s.schema, q, s.db)
+}
+
+// Delete removes the object associated to the specified ID from the store.
+func (s *GenericStore[T, PT]) Delete(ctx context.Context, id string) error {
+	q := search.NewQueryBuilder().AddDocIDs(id).ProtoQuery()
+	return s.DeleteByQuery(ctx, q)
 }

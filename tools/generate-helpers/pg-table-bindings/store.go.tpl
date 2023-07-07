@@ -461,64 +461,6 @@ func (s *storeImpl) UpsertMany(ctx context.Context, objs []*{{.Type}}) error {
 }
 {{- end }}
 
-{{- if not .JoinTable }}
-
-// Delete removes the object associated to the specified ID from the store.
-func (s *storeImpl) Delete(ctx context.Context, {{template "paramList" $pks}}) error {
-	defer metrics.SetPostgresOperationDurationTime(time.Now(), ops.Remove, "{{.TrimmedType}}")
-
-    var sacQueryFilter *v1.Query
-    {{- if .PermissionChecker }}
-    if ok, err := {{ .PermissionChecker }}.DeleteAllowed(ctx); err != nil {
-        return err
-    } else if !ok {
-        return sac.ErrResourceAccessDenied
-    }
-    {{- else }}
-    sacQueryFilter, err := pgSearch.GetReadWriteSACQuery(ctx, targetResource)
-    if err != nil {
-        return err
-    }
-    {{- end }}
-
-    q := search.ConjunctionQuery(
-        sacQueryFilter,
-        {{template "matchQuery" (arr $pks $singlePK)}}
-    )
-
-	return pgSearch.RunDeleteRequestForSchema(ctx, schema, q, s.db)
-}
-{{- end}}
-
-{{- if not .JoinTable }}
-
-// DeleteByQuery removes the objects from the store based on the passed query.
-func (s *storeImpl) DeleteByQuery(ctx context.Context, query *v1.Query) error {
-	defer metrics.SetPostgresOperationDurationTime(time.Now(), ops.Remove, "{{.TrimmedType}}")
-
-    var sacQueryFilter *v1.Query
-    {{- if .PermissionChecker }}
-    if ok, err := {{ .PermissionChecker }}.DeleteAllowed(ctx); err != nil {
-        return err
-    } else if !ok {
-        return sac.ErrResourceAccessDenied
-    }
-    {{- else }}
-    sacQueryFilter, err := pgSearch.GetReadWriteSACQuery(ctx, targetResource)
-    if err != nil {
-        return err
-    }
-    {{- end }}
-
-    q := search.ConjunctionQuery(
-        sacQueryFilter,
-        query,
-    )
-
-	return pgSearch.RunDeleteRequestForSchema(ctx, schema, q, s.db)
-}
-{{- end}}
-
 {{- if $singlePK }}
 {{- if not .JoinTable }}
 
@@ -569,64 +511,6 @@ func (s *storeImpl) DeleteMany(ctx context.Context, identifiers []{{$singlePK.Ty
     return nil
 }
 {{- end }}
-{{- end }}
-
-{{- if $singlePK }}
-
-// GetMany returns the objects specified by the IDs from the store as well as the index in the missing indices slice.
-func (s *storeImpl) GetMany(ctx context.Context, identifiers []{{$singlePK.Type}}) ([]*{{.Type}}, []int, error) {
-	defer metrics.SetPostgresOperationDurationTime(time.Now(), ops.GetMany, "{{.TrimmedType}}")
-
-    if len(identifiers) == 0 {
-        return nil, nil, nil
-    }
-
-    var sacQueryFilter *v1.Query
-    {{ if .Obj.HasPermissionChecker -}}
-    if ok, err := {{ .PermissionChecker }}.GetManyAllowed(ctx); err != nil {
-        return nil, nil, err
-    } else if !ok {
-        return nil, nil, nil
-    }
-    {{- else }}
-    sacQueryFilter, err := pgSearch.GetReadSACQuery(ctx, targetResource)
-	if err != nil {
-        return nil, nil, err
-	}
-    {{- end }}
-    q := search.ConjunctionQuery(
-        sacQueryFilter,
-        search.NewQueryBuilder().AddDocIDs(identifiers...).ProtoQuery(),
-    )
-
-	rows, err := pgSearch.RunGetManyQueryForSchema[{{.Type}}](ctx, schema, q, s.db)
-	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			missingIndices := make([]int, 0, len(identifiers))
-			for i := range identifiers {
-				missingIndices = append(missingIndices, i)
-			}
-			return nil, missingIndices, nil
-		}
-		return nil, nil, err
-	}
-	resultsByID := make(map[{{$singlePK.Type}}]*{{.Type}}, len(rows))
-    for _, msg := range rows {
-		resultsByID[{{$singlePK.Getter "msg"}}] = msg
-	}
-	missingIndices := make([]int, 0, len(identifiers)-len(resultsByID))
-	// It is important that the elems are populated in the same order as the input identifiers
-	// slice, since some calling code relies on that to maintain order.
-	elems := make([]*{{.Type}}, 0, len(resultsByID))
-	for i, identifier := range identifiers {
-		if result, ok := resultsByID[identifier]; !ok {
-			missingIndices = append(missingIndices, i)
-		} else {
-		    elems = append(elems, result)
-		}
-	}
-	return elems, missingIndices, nil
-}
 {{- end }}
 
 //// Interface functions - END
