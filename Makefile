@@ -16,7 +16,7 @@ SILENT ?= @
 # UNIT_TEST_IGNORE ignores a set of file patterns from the unit test make command.
 # the pattern is passed to: grep -Ev
 #  usage: "path/to/ignored|another/path"
-UNIT_TEST_IGNORE := "stackrox/rox/sensor/tests"
+UNIT_TEST_IGNORE := "stackrox/rox/sensor/tests|stackrox/rox/operator/tests"
 
 ifeq ($(TAG),)
 TAG=$(shell git describe --tags --abbrev=10 --dirty --long --exclude '*-nightly-*')
@@ -118,7 +118,7 @@ $(call go-tool, EASYJSON_BIN, github.com/mailru/easyjson/easyjson)
 $(call go-tool, CONTROLLER_GEN_BIN, sigs.k8s.io/controller-tools/cmd/controller-gen@v0.8.0)
 $(call go-tool, ROXVET_BIN, ./tools/roxvet)
 $(call go-tool, STRINGER_BIN, golang.org/x/tools/cmd/stringer)
-$(call go-tool, MOCKGEN_BIN, github.com/golang/mock/mockgen)
+$(call go-tool, MOCKGEN_BIN, go.uber.org/mock/mockgen)
 $(call go-tool, GO_JUNIT_REPORT_BIN, github.com/jstemmer/go-junit-report/v2, tools/test)
 $(call go-tool, PROTOLOCK_BIN, github.com/nilslice/protolock/cmd/protolock, tools/linters)
 
@@ -810,3 +810,7 @@ mitre:
 	@echo "+ $@"
 	CGO_ENABLED=0 GOOS=$(HOST_OS) $(GOBUILD) ./tools/mitre
 	go install ./tools/mitre
+
+.PHONY: bootstrap_migration
+bootstrap_migration:
+	$(SILENT)if [[ "x${DESCRIPTION}" == "x" ]]; then echo "Please set a description for your migration in the DESCRIPTION environment variable"; else go run tools/generate-helpers/bootstrap-migration/main.go --root . --description "${DESCRIPTION}" ;fi

@@ -27,15 +27,14 @@ import (
 
 const (
 	baseTable = "policies"
+	storeName = "Policy"
 
 	batchAfter = 100
 
 	// using copyFrom, we may not even want to batch.  It would probably be simpler
 	// to deal with failures if we just sent it all.  Something to think about as we
 	// proceed and move into more e2e and larger performance testing
-	batchSize = 10000
-
-	cursorBatchSize = 50
+	batchSize       = 10000
 	deleteBatchSize = 5000
 )
 
@@ -66,6 +65,7 @@ type Store interface {
 }
 
 type storeImpl struct {
+	*pgSearch.GenericStore[storage.Policy, *storage.Policy]
 	db    postgres.DB
 	mutex sync.RWMutex
 }
@@ -74,10 +74,30 @@ type storeImpl struct {
 func New(db postgres.DB) Store {
 	return &storeImpl{
 		db: db,
+		GenericStore: pgSearch.NewGenericStore[storage.Policy, *storage.Policy](
+			db,
+			schema,
+			pkGetter,
+			metricsSetAcquireDBConnDuration,
+			metricsSetPostgresOperationDurationTime,
+			targetResource,
+		),
 	}
 }
 
-//// Helper functions
+// region Helper functions
+
+func pkGetter(obj *storage.Policy) string {
+	return obj.GetId()
+}
+
+func metricsSetPostgresOperationDurationTime(start time.Time, op ops.Op) {
+	metrics.SetPostgresOperationDurationTime(start, op, storeName)
+}
+
+func metricsSetAcquireDBConnDuration(start time.Time, op ops.Op) {
+	metrics.SetAcquireDBConnDuration(start, op, storeName)
+}
 
 func insertIntoPolicies(_ context.Context, batch *pgx.Batch, obj *storage.Policy) error {
 
@@ -216,21 +236,12 @@ func (s *storeImpl) copyFromPolicies(ctx context.Context, tx *postgres.Tx, objs 
 	return err
 }
 
-func (s *storeImpl) acquireConn(ctx context.Context, op ops.Op, typ string) (*postgres.Conn, func(), error) {
-	defer metrics.SetAcquireDBConnDuration(time.Now(), op, typ)
-	conn, err := s.db.Acquire(ctx)
-	if err != nil {
-		return nil, nil, err
-	}
-	return conn, conn.Release, nil
-}
-
 func (s *storeImpl) copyFrom(ctx context.Context, objs ...*storage.Policy) error {
-	conn, release, err := s.acquireConn(ctx, ops.Get, "Policy")
+	conn, err := s.AcquireConn(ctx, ops.Get)
 	if err != nil {
 		return err
 	}
-	defer release()
+	defer conn.Release()
 
 	tx, err := conn.Begin(ctx)
 	if err != nil {
@@ -250,11 +261,11 @@ func (s *storeImpl) copyFrom(ctx context.Context, objs ...*storage.Policy) error
 }
 
 func (s *storeImpl) upsert(ctx context.Context, objs ...*storage.Policy) error {
-	conn, release, err := s.acquireConn(ctx, ops.Get, "Policy")
+	conn, err := s.AcquireConn(ctx, ops.Get)
 	if err != nil {
 		return err
 	}
-	defer release()
+	defer conn.Release()
 
 	for _, obj := range objs {
 		batch := &pgx.Batch{}
@@ -277,7 +288,7 @@ func (s *storeImpl) upsert(ctx context.Context, objs ...*storage.Policy) error {
 	return nil
 }
 
-//// Helper functions - END
+// endregion Helper functions
 
 //// Interface functions
 
@@ -397,92 +408,6 @@ func (s *storeImpl) DeleteMany(ctx context.Context, identifiers []string) error 
 	return nil
 }
 
-// Count returns the number of objects in the store.
-func (s *storeImpl) Count(ctx context.Context) (int, error) {
-	defer metrics.SetPostgresOperationDurationTime(time.Now(), ops.Count, "Policy")
-
-	var sacQueryFilter *v1.Query
-
-	sacQueryFilter, err := pgSearch.GetReadSACQuery(ctx, targetResource)
-	if err != nil {
-		return 0, err
-	}
-
-	return pgSearch.RunCountRequestForSchema(ctx, schema, sacQueryFilter, s.db)
-}
-
-// Exists returns if the ID exists in the store.
-func (s *storeImpl) Exists(ctx context.Context, id string) (bool, error) {
-	defer metrics.SetPostgresOperationDurationTime(time.Now(), ops.Exists, "Policy")
-
-	var sacQueryFilter *v1.Query
-	sacQueryFilter, err := pgSearch.GetReadSACQuery(ctx, targetResource)
-	if err != nil {
-		return false, err
-	}
-
-	q := search.ConjunctionQuery(
-		sacQueryFilter,
-		search.NewQueryBuilder().AddDocIDs(id).ProtoQuery(),
-	)
-
-	count, err := pgSearch.RunCountRequestForSchema(ctx, schema, q, s.db)
-	// With joins and multiple paths to the scoping resources, it can happen that the Count query for an object identifier
-	// returns more than 1, despite the fact that the identifier is unique in the table.
-	return count > 0, err
-}
-
-// Get returns the object, if it exists from the store.
-func (s *storeImpl) Get(ctx context.Context, id string) (*storage.Policy, bool, error) {
-	defer metrics.SetPostgresOperationDurationTime(time.Now(), ops.Get, "Policy")
-
-	var sacQueryFilter *v1.Query
-
-	sacQueryFilter, err := pgSearch.GetReadSACQuery(ctx, targetResource)
-	if err != nil {
-		return nil, false, err
-	}
-
-	q := search.ConjunctionQuery(
-		sacQueryFilter,
-		search.NewQueryBuilder().AddDocIDs(id).ProtoQuery(),
-	)
-
-	data, err := pgSearch.RunGetQueryForSchema[storage.Policy](ctx, schema, q, s.db)
-	if err != nil {
-		return nil, false, pgutils.ErrNilIfNoRows(err)
-	}
-
-	return data, true, nil
-}
-
-// GetByQuery returns the objects from the store matching the query.
-func (s *storeImpl) GetByQuery(ctx context.Context, query *v1.Query) ([]*storage.Policy, error) {
-	defer metrics.SetPostgresOperationDurationTime(time.Now(), ops.GetByQuery, "Policy")
-
-	var sacQueryFilter *v1.Query
-
-	sacQueryFilter, err := pgSearch.GetReadSACQuery(ctx, targetResource)
-	if err != nil {
-		return nil, err
-	}
-	pagination := query.GetPagination()
-	q := search.ConjunctionQuery(
-		sacQueryFilter,
-		query,
-	)
-	q.Pagination = pagination
-
-	rows, err := pgSearch.RunGetManyQueryForSchema[storage.Policy](ctx, schema, q, s.db)
-	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, nil
-		}
-		return nil, err
-	}
-	return rows, nil
-}
-
 // GetMany returns the objects specified by the IDs from the store as well as the index in the missing indices slice.
 func (s *storeImpl) GetMany(ctx context.Context, identifiers []string) ([]*storage.Policy, []int, error) {
 	defer metrics.SetPostgresOperationDurationTime(time.Now(), ops.GetMany, "Policy")
@@ -529,69 +454,6 @@ func (s *storeImpl) GetMany(ctx context.Context, identifiers []string) ([]*stora
 		}
 	}
 	return elems, missingIndices, nil
-}
-
-// GetIDs returns all the IDs for the store.
-func (s *storeImpl) GetIDs(ctx context.Context) ([]string, error) {
-	defer metrics.SetPostgresOperationDurationTime(time.Now(), ops.GetAll, "storage.PolicyIDs")
-	var sacQueryFilter *v1.Query
-
-	sacQueryFilter, err := pgSearch.GetReadSACQuery(ctx, targetResource)
-	if err != nil {
-		return nil, err
-	}
-	result, err := pgSearch.RunSearchRequestForSchema(ctx, schema, sacQueryFilter, s.db)
-	if err != nil {
-		return nil, err
-	}
-
-	identifiers := make([]string, 0, len(result))
-	for _, entry := range result {
-		identifiers = append(identifiers, entry.ID)
-	}
-
-	return identifiers, nil
-}
-
-// GetAll retrieves all objects from the store.
-func (s *storeImpl) GetAll(ctx context.Context) ([]*storage.Policy, error) {
-	defer metrics.SetPostgresOperationDurationTime(time.Now(), ops.GetAll, "Policy")
-
-	var objs []*storage.Policy
-	err := s.Walk(ctx, func(obj *storage.Policy) error {
-		objs = append(objs, obj)
-		return nil
-	})
-	return objs, err
-}
-
-// Walk iterates over all of the objects in the store and applies the closure.
-func (s *storeImpl) Walk(ctx context.Context, fn func(obj *storage.Policy) error) error {
-	var sacQueryFilter *v1.Query
-	sacQueryFilter, err := pgSearch.GetReadSACQuery(ctx, targetResource)
-	if err != nil {
-		return err
-	}
-	fetcher, closer, err := pgSearch.RunCursorQueryForSchema[storage.Policy](ctx, schema, sacQueryFilter, s.db)
-	if err != nil {
-		return err
-	}
-	defer closer()
-	for {
-		rows, err := fetcher(cursorBatchSize)
-		if err != nil {
-			return pgutils.ErrNilIfNoRows(err)
-		}
-		for _, data := range rows {
-			if err := fn(data); err != nil {
-				return err
-			}
-		}
-		if len(rows) != cursorBatchSize {
-			break
-		}
-	}
-	return nil
 }
 
 //// Interface functions - END
