@@ -7,11 +7,12 @@ import (
 	"github.com/stackrox/rox/generated/storage"
 )
 
+// Store interface for managing persisted cluster registry mirror sets.
 type Store interface {
 	Upsert(ctx context.Context, obj *storage.ClusterRegistryMirrorSet) error
 }
 
-// Store provides an interface to the underlying data layer
+// UnderlyingStore is the base store that actually accesses the data.
 type UnderlyingStore interface {
 	Upsert(ctx context.Context, obj *storage.ClusterRegistryMirrorSet) error
 	UpsertMany(ctx context.Context, objs []*storage.ClusterRegistryMirrorSet) error
@@ -33,11 +34,12 @@ type storeImpl struct {
 	store UnderlyingStore
 }
 
-// NewStore returns a wrapper store for cluster registry mirrors
+// NewStore returns a wrapper store for cluster registry mirror sets.
 func NewStore(store UnderlyingStore) Store {
 	return &storeImpl{store: store}
 }
 
+// Upsert inserts/updates a mirror set into the underlying store.
 func (s *storeImpl) Upsert(ctx context.Context, obj *storage.ClusterRegistryMirrorSet) error {
 	return s.store.Upsert(ctx, obj)
 }
