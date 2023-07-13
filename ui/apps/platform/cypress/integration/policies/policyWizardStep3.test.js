@@ -87,7 +87,11 @@ describe('Policy wizard, Step 3 Policy Criteria', () => {
         goToPoliciesAndCloneToStep3();
 
         cy.get(selectors.step3.policyCriteria.keyGroup).should((values) => {
-            expect(values).to.have.length(9);
+            // before we began filtering what policy criteria were available,
+            // there were 9 groups of criteria to count
+            // after filtering for Lifecycle was added, the number of groups for a Deploy-only policy is 7
+            const GROUPS_AVAILABLE_FOR_DEPLOY_POLICY = 7;
+            expect(values).to.have.length(GROUPS_AVAILABLE_FOR_DEPLOY_POLICY);
         });
 
         cy.get(`${selectors.step3.policyCriteria.key}:first`).scrollIntoView().should('be.visible');
@@ -204,7 +208,7 @@ describe('Policy wizard, Step 3 Policy Criteria', () => {
 
                 clickPolicyKeyGroup('Storage');
                 dragFieldIntoSection(
-                    `${selectors.step3.policyCriteria.key}:contains('Writable mounted volume')`
+                    `${selectors.step3.policyCriteria.key}:contains('Mounted volume writability')`
                 );
                 cy.get(selectors.step3.policyCriteria.value.radioGroup).should('exist');
                 cy.get(selectors.step3.policyCriteria.value.addBtn).should('not.exist');
@@ -233,7 +237,7 @@ describe('Policy wizard, Step 3 Policy Criteria', () => {
 
                 clickPolicyKeyGroup('Storage');
                 dragFieldIntoSection(
-                    `${selectors.step3.policyCriteria.key}:contains('Writable mounted volume')`
+                    `${selectors.step3.policyCriteria.key}:contains('Mounted volume writability')`
                 );
                 cy.get(selectors.step3.policyCriteria.value.negateCheckbox).should('not.exist');
             });
@@ -273,7 +277,7 @@ describe('Policy wizard, Step 3 Policy Criteria', () => {
 
                 clickPolicyKeyGroup('Image contents');
                 dragFieldIntoSection(
-                    `${selectors.step3.policyCriteria.key}:contains('Unscanned image')`
+                    `${selectors.step3.policyCriteria.key}:contains('Image scan status')`
                 );
                 cy.get(selectors.step3.policyCriteria.value.radioGroup).should('exist');
                 cy.get(
@@ -395,7 +399,7 @@ describe('Policy wizard, Step 3 Policy Criteria', () => {
                 goToPoliciesAndCloneToStep3();
                 clearPolicyCriteriaCards();
                 dragFieldIntoSection(
-                    `${selectors.step3.policyCriteria.key}:contains('trusted image signers')`
+                    `${selectors.step3.policyCriteria.key}:contains('Image signature')`
                 );
                 cy.wait('@getSignatureIntegrations');
             });

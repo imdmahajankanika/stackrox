@@ -1,5 +1,4 @@
 //go:build sql_integration
-// +build sql_integration
 
 package datastore
 
@@ -7,12 +6,10 @@ import (
 	"context"
 	"testing"
 
-	"github.com/golang/mock/gomock"
 	imageDataStore "github.com/stackrox/rox/central/image/datastore"
 	v1 "github.com/stackrox/rox/generated/api/v1"
 	"github.com/stackrox/rox/generated/storage"
 	"github.com/stackrox/rox/pkg/cve"
-	"github.com/stackrox/rox/pkg/env"
 	"github.com/stackrox/rox/pkg/fixtures"
 	"github.com/stackrox/rox/pkg/postgres/pgtest"
 	"github.com/stackrox/rox/pkg/postgres/schema"
@@ -27,6 +24,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
+	"go.uber.org/mock/gomock"
 )
 
 func TestDeploymentDataStoreWithPostgres(t *testing.T) {
@@ -44,12 +42,6 @@ type DeploymentPostgresDataStoreTestSuite struct {
 }
 
 func (s *DeploymentPostgresDataStoreTestSuite) SetupSuite() {
-	s.T().Setenv(env.PostgresDatastoreEnabled.EnvVar(), "true")
-
-	if !env.PostgresDatastoreEnabled.BooleanSetting() {
-		s.T().Skip("Skip postgres store tests")
-		s.T().SkipNow()
-	}
 
 	s.ctx = context.Background()
 
@@ -339,12 +331,6 @@ func (s *DeploymentPostgresDataStoreTestSuite) TestSearchWithPostgres() {
 }
 
 func TestSelectQueryOnDeployments(t *testing.T) {
-	t.Setenv(env.PostgresDatastoreEnabled.EnvVar(), "true")
-
-	if !env.PostgresDatastoreEnabled.BooleanSetting() {
-		t.Skip("Skip postgres store tests")
-		t.SkipNow()
-	}
 
 	ctx := sac.WithAllAccess(context.Background())
 	testDB := pgtest.ForT(t)

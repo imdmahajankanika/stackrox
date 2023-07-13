@@ -15,9 +15,9 @@ import { min } from 'date-fns';
 import LinkShim from 'Components/PatternFly/LinkShim';
 import useSet from 'hooks/useSet';
 import { UseURLSortResult } from 'hooks/useURLSort';
-import { FixableIcon, NotFixableIcon } from 'Components/PatternFly/FixabilityIcons';
 import VulnerabilitySeverityIconText from 'Components/PatternFly/IconText/VulnerabilitySeverityIconText';
 import { VulnerabilitySeverity } from 'types/cve.proto';
+import VulnerabilityFixableIconText from 'Components/PatternFly/IconText/VulnerabilityFixableIconText';
 import { getEntityPagePath } from '../searchUtils';
 import { DynamicColumnIcon } from '../components/DynamicIcon';
 
@@ -28,7 +28,7 @@ import DeploymentComponentVulnerabilitiesTable, {
     deploymentComponentVulnerabilitiesFragment,
 } from './DeploymentComponentVulnerabilitiesTable';
 import { getAnyVulnerabilityIsFixable, getHighestVulnerabilitySeverity } from './table.utils';
-import DatePhraseTd from '../components/DatePhraseTd';
+import DateDistanceTd from '../components/DatePhraseTd';
 
 export const deploymentWithVulnerabilitiesFragment = gql`
     ${deploymentComponentVulnerabilitiesFragment}
@@ -38,7 +38,7 @@ export const deploymentWithVulnerabilitiesFragment = gql`
             ...ImageMetadataContext
         }
         imageVulnerabilities(query: $query, pagination: $pagination) {
-            id
+            vulnerabilityId: id
             cve
             summary
             images(query: $query) {
@@ -55,7 +55,7 @@ export type DeploymentWithVulnerabilities = {
     id: string;
     images: ImageMetadataContext[];
     imageVulnerabilities: {
-        id: string;
+        vulnerabilityId: string;
         cve: string;
         summary: string;
         images: {
@@ -65,26 +65,30 @@ export type DeploymentWithVulnerabilities = {
     }[];
 };
 
+type DeploymentVulnerabilityImageMapping = {
+    imageMetadataContext: ImageMetadataContext;
+    componentVulnerabilities: DeploymentComponentVulnerability[];
+};
+
 function formatVulnerabilityData(deployment: DeploymentWithVulnerabilities): {
-    id: string;
+    vulnerabilityId: string;
     cve: string;
     severity: VulnerabilitySeverity;
     isFixable: boolean;
     discoveredAtImage: Date | null;
     summary: string;
     affectedComponentsText: string;
-    images: {
-        imageMetadataContext: ImageMetadataContext;
-        componentVulnerabilities: DeploymentComponentVulnerability[];
-    }[];
+    images: DeploymentVulnerabilityImageMapping[];
 }[] {
-    const imageMap: Record<string, ImageMetadataContext> = {};
+    // Create a map of image ID to image metadata for easy lookup
+    // We use 'Partial' here because there is no guarantee that the image will be found
+    const imageMap: Partial<Record<string, ImageMetadataContext>> = {};
     deployment.images.forEach((image) => {
         imageMap[image.id] = image;
     });
 
     return deployment.imageVulnerabilities.map((vulnerability) => {
-        const { id, cve, summary, images } = vulnerability;
+        const { vulnerabilityId, cve, summary, images } = vulnerability;
         // Severity, Fixability, and Discovered date are all based on the aggregate value of all components
         const allVulnerableComponents = vulnerability.images.flatMap((img) => img.imageComponents);
         const highestVulnSeverity = getHighestVulnerabilitySeverity(allVulnerableComponents);
@@ -100,18 +104,26 @@ function formatVulnerabilityData(deployment: DeploymentWithVulnerabilities): {
                 ? uniqueComponents.values().next().value
                 : `${uniqueComponents.size} components`;
 
+        const vulnerabilityImages = images
+            .map((img) => ({
+                imageMetadataContext: imageMap[img.imageId],
+                componentVulnerabilities: img.imageComponents,
+            }))
+            // filter out values where the vulnerability->image mapping is missing
+            .filter(
+                (vulnImageMap): vulnImageMap is DeploymentVulnerabilityImageMapping =>
+                    !!vulnImageMap.imageMetadataContext
+            );
+
         return {
-            id,
+            vulnerabilityId,
             cve,
             severity: highestVulnSeverity,
             isFixable: isAnyVulnFixable,
             discoveredAtImage: oldestDiscoveredVulnDate,
             summary,
             affectedComponentsText,
-            images: images.map((img) => ({
-                imageMetadataContext: imageMap[img.imageId],
-                componentVulnerabilities: img.imageComponents,
-            })),
+            images: vulnerabilityImages,
         };
     });
 }
@@ -137,9 +149,9 @@ function DeploymentVulnerabilitiesTable({
                 <Tr>
                     <Th>{/* Header for expanded column */}</Th>
                     <Th sort={getSortParams('CVE')}>CVE</Th>
-                    <Th>Severity</Th>
+                    <Th>CVE severity</Th>
                     <Th>
-                        CVE Status
+                        CVE status
                         {isFiltered && <DynamicColumnIcon />}
                     </Th>
                     <Th>
@@ -152,6 +164,7 @@ function DeploymentVulnerabilitiesTable({
             {vulnerabilities.length === 0 && <EmptyTableResults colSpan={7} />}
             {vulnerabilities.map((vulnerability, rowIndex) => {
                 const {
+                    vulnerabilityId,
                     cve,
                     severity,
                     summary,
@@ -162,10 +175,8 @@ function DeploymentVulnerabilitiesTable({
                 } = vulnerability;
                 const isExpanded = expandedRowSet.has(cve);
 
-                const FixabilityIcon = isFixable ? FixableIcon : NotFixableIcon;
-
                 return (
-                    <Tbody key={cve} isExpanded={isExpanded}>
+                    <Tbody key={vulnerabilityId} isExpanded={isExpanded}>
                         <Tr>
                             <Td
                                 expand={{
@@ -188,16 +199,11 @@ function DeploymentVulnerabilitiesTable({
                                 <VulnerabilitySeverityIconText severity={severity} />
                             </Td>
                             <Td modifier="nowrap" dataLabel="CVE Status">
-                                <span>
-                                    <FixabilityIcon className="pf-u-display-inline" />
-                                    <span className="pf-u-pl-sm">
-                                        {isFixable ? 'Fixable' : 'Not fixable'}
-                                    </span>
-                                </span>
+                                <VulnerabilityFixableIconText isFixable={isFixable} />
                             </Td>
                             <Td dataLabel="Affected components">{affectedComponentsText}</Td>
                             <Td modifier="nowrap" dataLabel="First discovered">
-                                <DatePhraseTd date={discoveredAtImage} />
+                                <DateDistanceTd date={discoveredAtImage} />
                             </Td>
                         </Tr>
                         <Tr isExpanded={isExpanded}>

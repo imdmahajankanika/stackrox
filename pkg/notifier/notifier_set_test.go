@@ -5,11 +5,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/golang/mock/gomock"
 	"github.com/stackrox/rox/generated/storage"
 	"github.com/stackrox/rox/pkg/notifiers"
 	"github.com/stackrox/rox/pkg/notifiers/mocks"
 	"github.com/stretchr/testify/suite"
+	"go.uber.org/mock/gomock"
 )
 
 func TestNotifierSet(t *testing.T) {
@@ -58,7 +58,7 @@ func (s *notifierSetTestSuite) TestHasFunctions() {
 	s.True(s.ns.HasNotifiers())
 	s.False(s.ns.HasEnabledAuditNotifiers())
 
-	// An alert and an enabled audit notifier.
+	// An alet and an enabled audit notifier.
 	notifier2 := &storage.Notifier{Id: "n2"}
 	s.mockAuditN.EXPECT().ProtoNotifier().Return(notifier2)
 	s.mockAuditN.EXPECT().AuditLoggingEnabled().Return(true)

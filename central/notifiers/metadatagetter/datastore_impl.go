@@ -25,6 +25,7 @@ func newMetadataGetter() *datastoreMetadataGetter {
 	}
 }
 
+// newTestMetadataGetter returns an instance of notifiers.MetadataGetter for testing purposes
 func newTestMetadataGetter(t *testing.T, store namespaceDataStore.DataStore) notifiers.MetadataGetter {
 	if t == nil {
 		return nil
@@ -106,4 +107,13 @@ func getNamespaceFromAlert(ctx context.Context, alert *storage.Alert, namespaceS
 	}
 
 	return namespaces[0]
+}
+
+func (m datastoreMetadataGetter) GetNamespaceLabels(ctx context.Context, alert *storage.Alert) map[string]string {
+	if ns := getNamespaceFromAlert(ctx, alert, m.datastore); ns != nil {
+		if labels := ns.GetLabels(); labels != nil {
+			return labels
+		}
+	}
+	return map[string]string{}
 }

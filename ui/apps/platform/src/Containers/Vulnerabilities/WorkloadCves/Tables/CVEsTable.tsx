@@ -9,18 +9,26 @@ import {
     Tr,
     ExpandableRowContent,
 } from '@patternfly/react-table';
-import { Button, ButtonVariant } from '@patternfly/react-core';
+import { Button, ButtonVariant, Text } from '@patternfly/react-core';
 
 import LinkShim from 'Components/PatternFly/LinkShim';
 import { UseURLSortResult } from 'hooks/useURLSort';
 import useSet from 'hooks/useSet';
-
+import { VulnerabilitySeverityLabel } from '../types';
 import { getEntityPagePath } from '../searchUtils';
 import TooltipTh from '../components/TooltipTh';
 import SeverityCountLabels from '../components/SeverityCountLabels';
 import { DynamicColumnIcon } from '../components/DynamicIcon';
-import DatePhraseTd from '../components/DatePhraseTd';
+import DateDistanceTd from '../components/DatePhraseTd';
 import CvssTd from '../components/CvssTd';
+import {
+    getScoreVersionsForTopCVSS,
+    sortCveDistroList,
+    aggregateByCVSS,
+    aggregateByCreatedTime,
+    aggregateByImageSha,
+} from '../sortUtils';
+import EmptyTableResults from '../components/EmptyTableResults';
 
 export const cveListQuery = gql`
     query getImageCVEList($query: String, $pagination: Pagination) {
@@ -43,6 +51,12 @@ export const cveListQuery = gql`
             topCVSS
             affectedImageCount
             firstDiscoveredInSystem
+            distroTuples {
+                summary
+                operatingSystem
+                cvss
+                scoreVersion
+            }
         }
     }
 `;
@@ -55,7 +69,6 @@ export const unfilteredImageCountQuery = gql`
 
 type ImageCVE = {
     cve: string;
-    // summary: string;
     affectedImageCountBySeverity: {
         critical: { total: number };
         important: { total: number };
@@ -65,6 +78,12 @@ type ImageCVE = {
     topCVSS: number;
     affectedImageCount: number;
     firstDiscoveredInSystem: string | null;
+    distroTuples: {
+        summary: string;
+        operatingSystem: string;
+        cvss: number;
+        scoreVersion: string;
+    }[];
 };
 
 type CVEsTableProps = {
@@ -72,14 +91,21 @@ type CVEsTableProps = {
     unfilteredImageCount: number;
     getSortParams: UseURLSortResult['getSortParams'];
     isFiltered: boolean;
+    filteredSeverities?: VulnerabilitySeverityLabel[];
 };
 
-function CVEsTable({ cves, unfilteredImageCount, getSortParams, isFiltered }: CVEsTableProps) {
+function CVEsTable({
+    cves,
+    unfilteredImageCount,
+    getSortParams,
+    isFiltered,
+    filteredSeverities,
+}: CVEsTableProps) {
     const expandedRowSet = useSet<string>();
+
     return (
         <TableComposable borders={false} variant="compact">
             <Thead noWrap>
-                {/* TODO: need to double check sorting on columns  */}
                 <Tr>
                     <Th>{/* Header for expanded column */}</Th>
                     <Th sort={getSortParams('CVE')}>CVE</Th>
@@ -87,32 +113,49 @@ function CVEsTable({ cves, unfilteredImageCount, getSortParams, isFiltered }: CV
                         Images by severity
                         {isFiltered && <DynamicColumnIcon />}
                     </TooltipTh>
-                    <TooltipTh tooltip="Highest CVSS score of this CVE across images">
+                    <TooltipTh
+                        sort={getSortParams('CVSS', aggregateByCVSS)}
+                        tooltip="Highest CVSS score of this CVE across images"
+                    >
                         Top CVSS
                     </TooltipTh>
-                    <TooltipTh tooltip="Ratio of total environment affect by this CVE">
+                    <TooltipTh
+                        sort={getSortParams('Image sha', aggregateByImageSha)}
+                        tooltip="Ratio of total images affected by this CVE"
+                    >
                         Affected images
                         {isFiltered && <DynamicColumnIcon />}
                     </TooltipTh>
-                    <TooltipTh tooltip="Time since this CVE first affected an entity">
+                    <TooltipTh
+                        sort={getSortParams('CVE Created Time', aggregateByCreatedTime)}
+                        tooltip="Time since this CVE first affected an entity"
+                    >
                         First discovered
                         {isFiltered && <DynamicColumnIcon />}
                     </TooltipTh>
                 </Tr>
             </Thead>
+            {cves.length === 0 && <EmptyTableResults colSpan={6} />}
             {cves.map(
                 (
                     {
                         cve,
-                        // summary,
                         affectedImageCountBySeverity,
                         topCVSS,
                         affectedImageCount,
                         firstDiscoveredInSystem,
+                        distroTuples,
                     },
                     rowIndex
                 ) => {
                     const isExpanded = expandedRowSet.has(cve);
+                    const criticalCount = affectedImageCountBySeverity.critical.total;
+                    const importantCount = affectedImageCountBySeverity.important.total;
+                    const moderateCount = affectedImageCountBySeverity.moderate.total;
+                    const lowCount = affectedImageCountBySeverity.low.total;
+
+                    const prioritizedDistros = sortCveDistroList(distroTuples);
+                    const scoreVersions = getScoreVersionsForTopCVSS(topCVSS, distroTuples);
 
                     return (
                         <Tbody
@@ -130,7 +173,7 @@ function CVEsTable({ cves, unfilteredImageCount, getSortParams, isFiltered }: CV
                                         onToggle: () => expandedRowSet.toggle(cve),
                                     }}
                                 />
-                                <Td>
+                                <Td dataLabel="CVE">
                                     <Button
                                         variant={ButtonVariant.link}
                                         isInline
@@ -140,39 +183,40 @@ function CVEsTable({ cves, unfilteredImageCount, getSortParams, isFiltered }: CV
                                         {cve}
                                     </Button>
                                 </Td>
-                                <Td>
+                                <Td dataLabel="Images by severity">
                                     <SeverityCountLabels
-                                        critical={affectedImageCountBySeverity.critical.total}
-                                        important={affectedImageCountBySeverity.important.total}
-                                        moderate={affectedImageCountBySeverity.moderate.total}
-                                        low={affectedImageCountBySeverity.low.total}
+                                        criticalCount={criticalCount}
+                                        importantCount={importantCount}
+                                        moderateCount={moderateCount}
+                                        lowCount={lowCount}
+                                        filteredSeverities={filteredSeverities}
                                     />
                                 </Td>
-                                {/* TODO: score version? */}
-                                <Td>
-                                    <CvssTd cvss={topCVSS} />
+                                <Td dataLabel="Top CVSS">
+                                    <CvssTd
+                                        cvss={topCVSS}
+                                        scoreVersion={
+                                            scoreVersions.length > 0
+                                                ? scoreVersions.join('/')
+                                                : undefined
+                                        }
+                                    />
                                 </Td>
-                                <Td>
+                                <Td dataLabel="Affected images">
                                     {/* TODO: fix upon PM feedback */}
                                     {affectedImageCount}/{unfilteredImageCount} affected images
                                 </Td>
-                                <Td>
-                                    <DatePhraseTd date={firstDiscoveredInSystem} />
+                                <Td dataLabel="First discovered">
+                                    <DateDistanceTd date={firstDiscoveredInSystem} />
                                 </Td>
                             </Tr>
                             <Tr isExpanded={isExpanded}>
                                 <Td />
                                 <Td colSpan={6}>
                                     <ExpandableRowContent>
-                                        {/* TODO: add summary once it's in */}
-                                        Lorem ipsum dolor sit amet, consectetur adipiscing elit. In
-                                        a vehicula nisl. Interdum et malesuada fames ac ante ipsum
-                                        primis in faucibus. Duis mollis nisi eget augue rhoncus, a
-                                        consectetur magna tincidunt. Nam est diam, aliquet at
-                                        hendrerit at, venenatis eu est. Integer pulvinar diam ac dui
-                                        efficitur finibus. Vestibulum ante ipsum primis in faucibus
-                                        orci luctus et ultrices posuere cubilia curae; Cras eu ex
-                                        sit amet enim lacinia placerat eget vitae arcu.
+                                        {prioritizedDistros.length > 0 && (
+                                            <Text>{prioritizedDistros[0].summary}</Text>
+                                        )}
                                     </ExpandableRowContent>
                                 </Td>
                             </Tr>

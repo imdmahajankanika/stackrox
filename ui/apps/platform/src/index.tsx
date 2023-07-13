@@ -10,7 +10,6 @@ import { AnyAction, Store } from 'redux';
 import { ConnectedRouter } from 'connected-react-router';
 import { createBrowserHistory as createHistory } from 'history';
 import { ApolloProvider } from '@apollo/client';
-import 'typeface-open-sans-condensed';
 import 'react-toastify/dist/ReactToastify.css';
 import 'app.tw.css'; // this file is the main Tailwind entrypoint handled by react-scripts
 import '@patternfly/react-core/dist/styles/base.css';
@@ -39,6 +38,7 @@ import installRaven from 'installRaven';
 import { ThunkAction, ThunkDispatch } from 'redux-thunk';
 import { fetchFeatureFlagsThunk } from './reducers/featureFlags';
 import { fetchPublicConfigThunk } from './reducers/publicConfig';
+import { fetchCentralCapabilitiesThunk } from './reducers/centralCapabilities';
 import configureApollo from './configureApolloClient';
 
 // This enables syntax highlighting for the patternfly code editor
@@ -72,6 +72,7 @@ const dispatch = (action) =>
 
 dispatch(fetchFeatureFlagsThunk());
 dispatch(fetchPublicConfigThunk());
+dispatch(fetchCentralCapabilitiesThunk());
 
 ReactDOM.render(
     <Provider store={store}>

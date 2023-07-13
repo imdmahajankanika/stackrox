@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/golang/mock/gomock"
 	"github.com/graph-gophers/graphql-go"
 	"github.com/stackrox/rox/central/audit"
 	clusterMockDS "github.com/stackrox/rox/central/cluster/datastore/mocks"
@@ -24,6 +23,7 @@ import (
 	"github.com/stackrox/rox/pkg/sac"
 	"github.com/stackrox/rox/pkg/uuid"
 	"github.com/stretchr/testify/suite"
+	"go.uber.org/mock/gomock"
 )
 
 // While it would've been nice to use the proto object, because of the oneofs and enums json unmarshalling into that object is a struggle
@@ -129,8 +129,8 @@ func (s *ServiceAccountResolverTestSuite) TestGetSaNamespace() {
 	s.serviceAccountDataStore.EXPECT().SearchRawServiceAccounts(gomock.Any(), gomock.Any()).Return([]*storage.ServiceAccount{sa}, nil).AnyTimes()
 
 	// Pulled by saNamespace. It's not necessary for this test so mock away
-	s.deployments.EXPECT().Search(gomock.Any(), gomock.Any()).Return(nil, nil).AnyTimes()
-	s.secretsDataStore.EXPECT().Search(gomock.Any(), gomock.Any()).Return(nil, nil).AnyTimes()
+	s.deployments.EXPECT().Count(gomock.Any(), gomock.Any()).Return(0, nil).AnyTimes()
+	s.secretsDataStore.EXPECT().Count(gomock.Any(), gomock.Any()).Return(0, nil).AnyTimes()
 	// saNamesapce -> namespace resolver -> CountMatchingNetworkPolicies. Yikes
 	s.netPolDataStore.EXPECT().CountMatchingNetworkPolicies(gomock.Any(), gomock.Any(), gomock.Any()).Return(0, nil).AnyTimes()
 	s.namespaceDataStore.EXPECT().SearchNamespaces(gomock.Any(), gomock.Any()).AnyTimes().Return([]*storage.NamespaceMetadata{{
@@ -176,7 +176,7 @@ func (s *ServiceAccountResolverTestSuite) TestGetSaNamespace() {
 
 func (s *ServiceAccountResolverTestSuite) getMockContext(extraPerms ...permissions.ResourceMetadata) context.Context {
 	id := mockIdentity.NewMockIdentity(s.mockCtrl)
-	id.EXPECT().UID().Return(fakeUserID).AnyTimes()
+	id.EXPECT().UID().Return("fakeUserID").AnyTimes()
 	id.EXPECT().FullName().Return("First Last").AnyTimes()
 	id.EXPECT().FriendlyName().Return("DefinitelyNotBob").AnyTimes()
 

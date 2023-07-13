@@ -21,6 +21,7 @@ proto/storage/risk.proto            @stackrox/core-workflows
 roxctl/**/*     @stackrox/merlin
 pkg/auth/**/*   @stackrox/merlin
 pkg/sac/**/*    @stackrox/merlin
+*/declarativeconfig/**/* @stackrox/merlin
 
 pkg/images/defaults/**/* @stackrox/maple
 
@@ -44,3 +45,4 @@ operator/**/* @stackrox/draco
 /sensor/common/scannerdefinitions/                    @stackrox/scanner
 /sensor/kubernetes/listener/resources/secrets.go      @stackrox/scanner
 /sensor/kubernetes/listener/resources/secrets_test.go @stackrox/scanner
+/SCANNER_VERSION                                      @stackrox/scanner

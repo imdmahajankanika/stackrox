@@ -3,9 +3,8 @@ package service
 import (
 	"context"
 
-	"github.com/stackrox/rox/central/detection"
 	"github.com/stackrox/rox/central/notifier/datastore"
-	"github.com/stackrox/rox/central/sensor/service/connection"
+	"github.com/stackrox/rox/central/notifier/policycleaner"
 	v1 "github.com/stackrox/rox/generated/api/v1"
 	"github.com/stackrox/rox/pkg/grpc"
 	"github.com/stackrox/rox/pkg/integrationhealth"
@@ -29,18 +28,12 @@ type Service interface {
 // New returns a new Service instance using the given DataStore.
 func New(storage datastore.DataStore,
 	processor notifier.Processor,
-	buildTimePolicies detection.PolicySet,
-	deployTimePolicies detection.PolicySet,
-	runTimePolicies detection.PolicySet,
-	reporter integrationhealth.Reporter,
-	connectionManager connection.Manager) Service {
+	policyCleaner policycleaner.PolicyCleaner,
+	reporter integrationhealth.Reporter) Service {
 	return &serviceImpl{
-		storage:            storage,
-		processor:          processor,
-		buildTimePolicies:  buildTimePolicies,
-		deployTimePolicies: deployTimePolicies,
-		runTimePolicies:    runTimePolicies,
-		reporter:           reporter,
-		connectionManager:  connectionManager,
+		storage:       storage,
+		processor:     processor,
+		policyCleaner: policyCleaner,
+		reporter:      reporter,
 	}
 }

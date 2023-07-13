@@ -6,7 +6,6 @@ import (
 	"context"
 	"testing"
 
-	"github.com/stackrox/rox/pkg/env"
 	"github.com/stackrox/rox/pkg/migrations"
 	"github.com/stackrox/rox/pkg/postgres"
 	"github.com/stackrox/rox/pkg/postgres/pgconfig"
@@ -37,12 +36,6 @@ func TestRestore(t *testing.T) {
 }
 
 func (s *PostgresRestoreSuite) SetupTest() {
-	if !env.PostgresDatastoreEnabled.BooleanSetting() {
-		s.T().Skip("Skip postgres store tests")
-		s.T().SkipNow()
-	}
-
-	s.T().Setenv(env.PostgresDatastoreEnabled.EnvVar(), "true")
 
 	ctx := sac.WithAllAccess(context.Background())
 

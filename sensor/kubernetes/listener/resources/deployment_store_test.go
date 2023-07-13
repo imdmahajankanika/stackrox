@@ -1,6 +1,7 @@
 package resources
 
 import (
+	"fmt"
 	"sort"
 	"testing"
 
@@ -8,7 +9,6 @@ import (
 	"github.com/stackrox/rox/generated/storage"
 	"github.com/stackrox/rox/pkg/uuid"
 	"github.com/stackrox/rox/sensor/common/registry"
-	nsStore "github.com/stackrox/rox/sensor/common/resources/namespaces"
 	"github.com/stackrox/rox/sensor/common/selector"
 	"github.com/stackrox/rox/sensor/common/service"
 	"github.com/stackrox/rox/sensor/common/store"
@@ -24,7 +24,7 @@ import (
 type deploymentStoreSuite struct {
 	suite.Suite
 	deploymentStore *DeploymentStore
-	namespaceStore  *nsStore.NamespaceStore
+	namespaceStore  *namespaceStore
 	mockPodLister   *mockPodLister
 }
 
@@ -35,8 +35,8 @@ func TestDeploymentStoreSuite(t *testing.T) {
 var _ suite.SetupTestSuite = &deploymentStoreSuite{}
 
 func (s *deploymentStoreSuite) SetupTest() {
-	s.namespaceStore = nsStore.Singleton()
-	s.namespaceStore.AddNamespace(&storage.NamespaceMetadata{Name: "test-ns", Id: "1"})
+	s.namespaceStore = newNamespaceStore()
+	s.namespaceStore.addNamespace(&storage.NamespaceMetadata{Name: "test-ns", Id: "1"})
 	s.deploymentStore = newDeploymentStore()
 	s.mockPodLister = &mockPodLister{}
 }
@@ -358,6 +358,81 @@ func (s *deploymentStoreSuite) Test_FindDeploymentIDsByImages() {
 			ids := s.deploymentStore.FindDeploymentIDsByImages(c.images)
 			s.Equal(len(c.expectedIDs), len(ids))
 			s.ElementsMatch(c.expectedIDs, ids)
+		})
+	}
+}
+
+func (s *deploymentStoreSuite) Test_DeleteAllDeployments() {
+	testCases := []struct {
+		before []*v1.Deployment
+		after  []*v1.Deployment
+	}{
+		{
+			before: []*v1.Deployment{
+				makeDeploymentObject("before1", "test-ns", "uuid-1"),
+			},
+		},
+		{
+			after: []*v1.Deployment{
+				makeDeploymentObject("after1", "test-ns", "uuid-2"),
+			},
+		},
+		{
+			before: []*v1.Deployment{
+				makeDeploymentObject("before1", "test-ns", "uuid-1"),
+				makeDeploymentObject("before2", "test-ns", "uuid-2"),
+			},
+			after: []*v1.Deployment{
+				makeDeploymentObject("after1", "test-ns", "uuid-3"),
+			},
+		},
+		{
+			before: []*v1.Deployment{
+				makeDeploymentObject("same", "test-ns", "uuid-1"),
+			},
+			after: []*v1.Deployment{
+				makeDeploymentObject("same", "test-ns", "uuid-1"),
+			},
+		},
+		{
+			before: []*v1.Deployment{
+				makeDeploymentObject("before1", "old-ns", "uuid-1"),
+			},
+			after: []*v1.Deployment{
+				makeDeploymentObject("after1", "new-ns", "uuid-2"),
+			},
+		},
+	}
+
+	for _, testCase := range testCases {
+		s.Run(fmt.Sprintf("Create %d before %d after", len(testCase.before), len(testCase.after)), func() {
+			s.namespaceStore = newNamespaceStore()
+			s.namespaceStore.addNamespace(&storage.NamespaceMetadata{Name: "test-ns", Id: "1"})
+			s.deploymentStore = newDeploymentStore()
+			s.mockPodLister = &mockPodLister{}
+
+			for _, before := range testCase.before {
+				s.deploymentStore.addOrUpdateDeployment(s.createDeploymentWrap(before))
+			}
+
+			s.deploymentStore.Cleanup()
+
+			for _, before := range testCase.before {
+				s.Assert().Nil(s.deploymentStore.Get(string(before.GetUID())))
+			}
+
+			s.Assert().Equal(0, s.deploymentStore.CountDeploymentsForNamespace("test-ns"))
+			s.Assert().Equal(0, s.deploymentStore.CountDeploymentsForNamespace("old-ns"))
+			s.Assert().Equal(0, s.deploymentStore.CountDeploymentsForNamespace("new-ns"))
+
+			for _, after := range testCase.after {
+				s.deploymentStore.addOrUpdateDeployment(s.createDeploymentWrap(after))
+			}
+
+			for _, after := range testCase.after {
+				s.Assert().NotNil(s.deploymentStore.Get(string(after.GetUID())))
+			}
+
 		})
 	}
 }

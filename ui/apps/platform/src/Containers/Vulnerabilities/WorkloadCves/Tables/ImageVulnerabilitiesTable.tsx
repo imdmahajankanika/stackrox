@@ -9,15 +9,14 @@ import {
     Thead,
     Tr,
 } from '@patternfly/react-table';
-import { SVGIconProps } from '@patternfly/react-icons/dist/js/createIcon';
 import { gql } from '@apollo/client';
 
 import LinkShim from 'Components/PatternFly/LinkShim';
-import SeverityIcons from 'Components/PatternFly/SeverityIcons';
 import useSet from 'hooks/useSet';
-import { vulnerabilitySeverityLabels } from 'messages/common';
 import { UseURLSortResult } from 'hooks/useURLSort';
-import { FixableIcon, NotFixableIcon } from 'Components/PatternFly/FixabilityIcons';
+import VulnerabilityFixableIconText from 'Components/PatternFly/IconText/VulnerabilityFixableIconText';
+import { isVulnerabilitySeverity } from 'types/cve.proto';
+import VulnerabilitySeverityIconText from 'Components/PatternFly/IconText/VulnerabilitySeverityIconText';
 import { getEntityPagePath } from '../searchUtils';
 import { DynamicColumnIcon } from '../components/DynamicIcon';
 import ImageComponentVulnerabilitiesTable, {
@@ -27,15 +26,14 @@ import ImageComponentVulnerabilitiesTable, {
 } from './ImageComponentVulnerabilitiesTable';
 
 import EmptyTableResults from '../components/EmptyTableResults';
-import DatePhraseTd from '../components/DatePhraseTd';
+import DateDistanceTd from '../components/DatePhraseTd';
 import CvssTd from '../components/CvssTd';
+import { getAnyVulnerabilityIsFixable } from './table.utils';
 
 export const imageVulnerabilitiesFragment = gql`
     ${imageComponentVulnerabilitiesFragment}
     fragment ImageVulnerabilityFields on ImageVulnerability {
-        id
         severity
-        isFixable
         cve
         summary
         cvss
@@ -48,9 +46,7 @@ export const imageVulnerabilitiesFragment = gql`
 `;
 
 export type ImageVulnerability = {
-    id: string;
     severity: string;
-    isFixable: boolean;
     cve: string;
     summary: string;
     cvss: number;
@@ -80,9 +76,9 @@ function ImageVulnerabilitiesTable({
                 <Tr>
                     <Th>{/* Header for expanded column */}</Th>
                     <Th sort={getSortParams('CVE')}>CVE</Th>
-                    <Th>Severity</Th>
+                    <Th sort={getSortParams('Severity')}>CVE Severity</Th>
                     <Th>
-                        CVE Status
+                        CVE status
                         {isFiltered && <DynamicColumnIcon />}
                     </Th>
                     <Th sort={getSortParams('CVSS')}>CVSS</Th>
@@ -100,7 +96,6 @@ function ImageVulnerabilitiesTable({
                         cve,
                         severity,
                         summary,
-                        isFixable,
                         cvss,
                         scoreVersion,
                         imageComponents,
@@ -108,12 +103,8 @@ function ImageVulnerabilitiesTable({
                     },
                     rowIndex
                 ) => {
-                    const SeverityIcon: React.FC<SVGIconProps> | undefined =
-                        SeverityIcons[severity];
-                    const severityLabel: string | undefined = vulnerabilitySeverityLabels[severity];
+                    const isFixable = getAnyVulnerabilityIsFixable(imageComponents);
                     const isExpanded = expandedRowSet.has(cve);
-
-                    const FixabilityIcon = isFixable ? FixableIcon : NotFixableIcon;
 
                     return (
                         <Tbody key={cve} isExpanded={isExpanded}>
@@ -135,23 +126,13 @@ function ImageVulnerabilitiesTable({
                                         {cve}
                                     </Button>
                                 </Td>
-                                <Td modifier="nowrap" dataLabel="Severity">
-                                    <span>
-                                        {SeverityIcon && (
-                                            <SeverityIcon className="pf-u-display-inline" />
-                                        )}
-                                        {severityLabel && (
-                                            <span className="pf-u-pl-sm">{severityLabel}</span>
-                                        )}
-                                    </span>
+                                <Td modifier="nowrap" dataLabel="CVE severity">
+                                    {isVulnerabilitySeverity(severity) && (
+                                        <VulnerabilitySeverityIconText severity={severity} />
+                                    )}
                                 </Td>
-                                <Td modifier="nowrap" dataLabel="CVE Status">
-                                    <span>
-                                        <FixabilityIcon className="pf-u-display-inline" />
-                                        <span className="pf-u-pl-sm">
-                                            {isFixable ? 'Fixable' : 'Not fixable'}
-                                        </span>
-                                    </span>
+                                <Td modifier="nowrap" dataLabel="CVE status">
+                                    <VulnerabilityFixableIconText isFixable={isFixable} />
                                 </Td>
                                 <Td modifier="nowrap" dataLabel="CVSS">
                                     <CvssTd cvss={cvss} scoreVersion={scoreVersion} />
@@ -162,7 +143,7 @@ function ImageVulnerabilitiesTable({
                                         : `${imageComponents.length} components`}
                                 </Td>
                                 <Td dataLabel="First discovered">
-                                    <DatePhraseTd date={discoveredAtImage} />
+                                    <DateDistanceTd date={discoveredAtImage} />
                                 </Td>
                             </Tr>
                             <Tr isExpanded={isExpanded}>

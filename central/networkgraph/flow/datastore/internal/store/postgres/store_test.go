@@ -8,7 +8,6 @@ import (
 
 	"github.com/gogo/protobuf/types"
 	"github.com/stackrox/rox/generated/storage"
-	"github.com/stackrox/rox/pkg/env"
 	"github.com/stackrox/rox/pkg/fixtures/fixtureconsts"
 	"github.com/stackrox/rox/pkg/postgres"
 	"github.com/stackrox/rox/pkg/postgres/pgtest"
@@ -37,13 +36,6 @@ func TestNetworkflowStore(t *testing.T) {
 }
 
 func (s *NetworkflowStoreSuite) SetupSuite() {
-	if !env.PostgresDatastoreEnabled.BooleanSetting() {
-		s.T().Skip("Skip postgres store tests")
-		s.T().SkipNow()
-	} else {
-		s.T().Setenv(env.PostgresDatastoreEnabled.EnvVar(), "true")
-	}
-
 	s.ctx = context.Background()
 
 	source := pgtest.GetConnectionString(s.T())
@@ -159,20 +151,9 @@ func (s *NetworkflowStoreSuite) TestStore() {
 	pred := func(props *storage.NetworkFlowProperties) bool {
 		return true
 	}
-	flowPredicate := func(flow *storage.NetworkFlow) bool {
-		return true
-	}
 	foundNetworkFlows, _, err = store2.GetMatchingFlows(s.ctx, pred, nil)
 	s.NoError(err)
 	s.Len(foundNetworkFlows, 1)
-
-	err = store2.RemoveMatchingFlows(s.ctx, pred, flowPredicate)
-	s.NoError(err)
-
-	// Store 2 flows should be removed.
-	foundNetworkFlows, _, err = store2.GetAllFlows(s.ctx, nil)
-	s.NoError(err)
-	s.Len(foundNetworkFlows, 0)
 
 	// Store 1 flows should remain
 	foundNetworkFlows, _, err = s.store.GetAllFlows(s.ctx, nil)

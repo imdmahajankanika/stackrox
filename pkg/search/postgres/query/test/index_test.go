@@ -1,5 +1,4 @@
 //go:build sql_integration
-// +build sql_integration
 
 package test
 
@@ -11,13 +10,11 @@ import (
 
 	v1 "github.com/stackrox/rox/generated/api/v1"
 	"github.com/stackrox/rox/generated/storage"
-	"github.com/stackrox/rox/pkg/env"
 	"github.com/stackrox/rox/pkg/postgres"
 	"github.com/stackrox/rox/pkg/postgres/pgtest"
 	"github.com/stackrox/rox/pkg/postgres/schema"
 	"github.com/stackrox/rox/pkg/sac"
 	"github.com/stackrox/rox/pkg/search"
-	"github.com/stackrox/rox/pkg/search/blevesearch"
 	pgStore "github.com/stackrox/rox/tools/generate-helpers/pg-table-bindings/test/postgres"
 	"github.com/stretchr/testify/suite"
 )
@@ -32,7 +29,7 @@ type SingleIndexSuite struct {
 	pool    postgres.DB
 	store   pgStore.Store
 	indexer interface {
-		Search(ctx context.Context, q *v1.Query, opts ...blevesearch.SearchOption) ([]search.Result, error)
+		Search(ctx context.Context, q *v1.Query) ([]search.Result, error)
 	}
 }
 
@@ -41,12 +38,6 @@ func TestSingleIndex(t *testing.T) {
 }
 
 func (s *SingleIndexSuite) SetupTest() {
-	s.T().Setenv(env.PostgresDatastoreEnabled.EnvVar(), "true")
-
-	if !env.PostgresDatastoreEnabled.BooleanSetting() {
-		s.T().Skip("Skip postgres index tests")
-		s.T().SkipNow()
-	}
 
 	source := pgtest.GetConnectionString(s.T())
 	config, err := postgres.ParseConfig(source)

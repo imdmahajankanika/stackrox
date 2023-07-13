@@ -9,11 +9,11 @@ import (
 	reflect "reflect"
 	time "time"
 
-	gomock "github.com/golang/mock/gomock"
 	views "github.com/stackrox/rox/central/views"
 	common "github.com/stackrox/rox/central/views/common"
 	imagecve "github.com/stackrox/rox/central/views/imagecve"
 	v1 "github.com/stackrox/rox/generated/api/v1"
+	gomock "go.uber.org/mock/gomock"
 )
 
 // MockCveCore is a mock of CveCore interface.
@@ -39,18 +39,18 @@ func (m *MockCveCore) EXPECT() *MockCveCoreMockRecorder {
 	return m.recorder
 }
 
-// GetAffectedImages mocks base method.
-func (m *MockCveCore) GetAffectedImages() int {
+// GetAffectedImageCount mocks base method.
+func (m *MockCveCore) GetAffectedImageCount() int {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetAffectedImages")
+	ret := m.ctrl.Call(m, "GetAffectedImageCount")
 	ret0, _ := ret[0].(int)
 	return ret0
 }
 
-// GetAffectedImages indicates an expected call of GetAffectedImages.
-func (mr *MockCveCoreMockRecorder) GetAffectedImages() *gomock.Call {
+// GetAffectedImageCount indicates an expected call of GetAffectedImageCount.
+func (mr *MockCveCoreMockRecorder) GetAffectedImageCount() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAffectedImages", reflect.TypeOf((*MockCveCore)(nil).GetAffectedImages))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAffectedImageCount", reflect.TypeOf((*MockCveCore)(nil).GetAffectedImageCount))
 }
 
 // GetCVE mocks base method.
@@ -82,10 +82,10 @@ func (mr *MockCveCoreMockRecorder) GetCVEIDs() *gomock.Call {
 }
 
 // GetFirstDiscoveredInSystem mocks base method.
-func (m *MockCveCore) GetFirstDiscoveredInSystem() time.Time {
+func (m *MockCveCore) GetFirstDiscoveredInSystem() *time.Time {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetFirstDiscoveredInSystem")
-	ret0, _ := ret[0].(time.Time)
+	ret0, _ := ret[0].(*time.Time)
 	return ret0
 }
 
@@ -189,4 +189,34 @@ func (m *MockCveView) Get(ctx context.Context, q *v1.Query, options views.ReadOp
 func (mr *MockCveViewMockRecorder) Get(ctx, q, options interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockCveView)(nil).Get), ctx, q, options)
+}
+
+// GetDeploymentIDs mocks base method.
+func (m *MockCveView) GetDeploymentIDs(ctx context.Context, q *v1.Query) ([]string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetDeploymentIDs", ctx, q)
+	ret0, _ := ret[0].([]string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetDeploymentIDs indicates an expected call of GetDeploymentIDs.
+func (mr *MockCveViewMockRecorder) GetDeploymentIDs(ctx, q interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDeploymentIDs", reflect.TypeOf((*MockCveView)(nil).GetDeploymentIDs), ctx, q)
+}
+
+// GetImageIDs mocks base method.
+func (m *MockCveView) GetImageIDs(ctx context.Context, q *v1.Query) ([]string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetImageIDs", ctx, q)
+	ret0, _ := ret[0].([]string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetImageIDs indicates an expected call of GetImageIDs.
+func (mr *MockCveViewMockRecorder) GetImageIDs(ctx, q interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetImageIDs", reflect.TypeOf((*MockCveView)(nil).GetImageIDs), ctx, q)
 }

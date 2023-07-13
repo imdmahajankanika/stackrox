@@ -13,6 +13,8 @@ func TestDeterministicUUIDs(t *testing.T) {
 		NewDeclarativeGroupUUID,
 		NewDeclarativePermissionSetUUID,
 		NewDeclarativeAccessScopeUUID,
+		NewDeclarativeNotifierUUID,
+		NewDeclarativeHandlerUUID,
 	}
 	dummyName := "dummy-resource"
 

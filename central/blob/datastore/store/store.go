@@ -7,18 +7,25 @@ import (
 	"github.com/jackc/pgx/v4"
 	"github.com/pkg/errors"
 	"github.com/stackrox/rox/central/blob/datastore/store/postgres"
+	"github.com/stackrox/rox/central/role/resources"
 	"github.com/stackrox/rox/generated/storage"
 	"github.com/stackrox/rox/pkg/logging"
 	pgPkg "github.com/stackrox/rox/pkg/postgres"
+	"github.com/stackrox/rox/pkg/sac"
 )
 
-var log = logging.LoggerForModule()
+var (
+	log          = logging.LoggerForModule()
+	scopeChecker = sac.ForResource(resources.Administration)
+)
 
 // Store is the interface to interact with the storage for storage.Blob
 type Store interface {
 	Upsert(ctx context.Context, obj *storage.Blob, reader io.Reader) error
 	Get(ctx context.Context, name string, writer io.Writer) (*storage.Blob, bool, error)
 	Delete(ctx context.Context, name string) error
+	GetIDs(ctx context.Context) ([]string, error)
+	GetMetadata(ctx context.Context, name string) (*storage.Blob, bool, error)
 }
 
 type storeImpl struct {
@@ -44,6 +51,15 @@ func wrapRollback(ctx context.Context, tx *pgPkg.Tx, err error) error {
 
 // Upsert adds a blob to the database
 func (s *storeImpl) Upsert(ctx context.Context, obj *storage.Blob, reader io.Reader) error {
+	if err := sac.VerifyAuthzOK(scopeChecker.WriteAllowed(ctx)); err != nil {
+		return err
+	}
+	// Augment permission because we require read permission internally
+	ctx = sac.WithGlobalAccessScopeChecker(ctx,
+		sac.AllowFixedScopes(
+			sac.AccessModeScopeKeys(storage.Access_READ_ACCESS, storage.Access_READ_WRITE_ACCESS),
+			sac.ResourceScopeKeys(resources.Administration)))
+
 	tx, err := s.db.Begin(ctx)
 	if err != nil {
 		return err
@@ -64,6 +80,7 @@ func (s *storeImpl) Upsert(ctx context.Context, obj *storage.Blob, reader io.Rea
 		if err := lo.Truncate(0); err != nil {
 			return wrapRollback(ctx, tx, errors.Wrapf(err, "truncating blob with oid %d", existingBlob.GetOid()))
 		}
+		obj.Oid = existingBlob.GetOid()
 	} else {
 		oid, err := los.Create(ctx, 0)
 		if err != nil {
@@ -76,8 +93,11 @@ func (s *storeImpl) Upsert(ctx context.Context, obj *storage.Blob, reader io.Rea
 		obj.Oid = oid
 	}
 	buf := make([]byte, 1024*1024)
+
+	var totalRead int64
 	for {
 		nRead, err := reader.Read(buf)
+		totalRead += int64(nRead)
 
 		if nRead != 0 {
 			if _, err := lo.Write(buf[:nRead]); err != nil {
@@ -95,6 +115,9 @@ func (s *storeImpl) Upsert(ctx context.Context, obj *storage.Blob, reader io.Rea
 	}
 	if err := lo.Close(); err != nil {
 		return wrapRollback(ctx, tx, errors.Wrap(err, "closing large object for blob"))
+	}
+	if totalRead != obj.GetLength() {
+		return wrapRollback(ctx, tx, errors.Errorf("Blob metadata mismatch. Blob metadata shows %d in length, but data has length of %d", obj.GetLength(), totalRead))
 	}
 
 	if err := s.store.Upsert(ctx, obj); err != nil {
@@ -124,8 +147,10 @@ func (s *storeImpl) Get(ctx context.Context, name string, writer io.Writer) (*st
 	}
 
 	buf := make([]byte, 1024*1024)
+	var totalRead int64
 	for {
 		nRead, err := lo.Read(buf)
+		totalRead += int64(nRead)
 
 		// nRead can be non-zero when err == io.EOF
 		if nRead != 0 {
@@ -138,6 +163,7 @@ func (s *storeImpl) Get(ctx context.Context, name string, writer io.Writer) (*st
 			if err == io.EOF {
 				break
 			}
+			return nil, false, wrapRollback(ctx, tx, errors.Wrap(err, "reading blob"))
 		}
 	}
 	if err := lo.Close(); err != nil {
@@ -145,11 +171,23 @@ func (s *storeImpl) Get(ctx context.Context, name string, writer io.Writer) (*st
 		return nil, false, wrapRollback(ctx, tx, err)
 	}
 
+	if totalRead != existingBlob.GetLength() {
+		return nil, false, wrapRollback(ctx, tx, errors.Errorf("Blob %s corrupted. Blob metadata shows %d in length, but data has length of %d", existingBlob.GetName(), existingBlob.GetLength(), totalRead))
+	}
+
 	return existingBlob, true, tx.Commit(ctx)
 }
 
 // Delete removes a blob from database if it exists
 func (s *storeImpl) Delete(ctx context.Context, name string) error {
+	if err := sac.VerifyAuthzOK(scopeChecker.WriteAllowed(ctx)); err != nil {
+		return err
+	}
+	// Augment permission because we require read permission internally
+	ctx = sac.WithGlobalAccessScopeChecker(ctx,
+		sac.AllowFixedScopes(
+			sac.AccessModeScopeKeys(storage.Access_READ_ACCESS, storage.Access_READ_WRITE_ACCESS),
+			sac.ResourceScopeKeys(resources.Administration)))
 	tx, err := s.db.Begin(ctx)
 	if err != nil {
 		return err
@@ -172,4 +210,14 @@ func (s *storeImpl) Delete(ctx context.Context, name string) error {
 	}
 
 	return tx.Commit(ctx)
+}
+
+// GetIDs all blob names
+func (s *storeImpl) GetIDs(ctx context.Context) ([]string, error) {
+	return s.store.GetIDs(ctx)
+}
+
+// GetMetadata all blob names
+func (s *storeImpl) GetMetadata(ctx context.Context, name string) (*storage.Blob, bool, error) {
+	return s.store.Get(ctx, name)
 }

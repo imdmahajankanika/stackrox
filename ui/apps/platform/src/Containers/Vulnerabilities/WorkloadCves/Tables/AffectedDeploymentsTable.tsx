@@ -1,5 +1,5 @@
 import React from 'react';
-import { Flex, Button, ButtonVariant, pluralize } from '@patternfly/react-core';
+import { Flex, Button, ButtonVariant, pluralize, Truncate } from '@patternfly/react-core';
 import {
     TableComposable,
     Thead,
@@ -24,7 +24,8 @@ import DeploymentComponentVulnerabilitiesTable, {
     imageMetadataContextFragment,
 } from './DeploymentComponentVulnerabilitiesTable';
 import SeverityCountLabels from '../components/SeverityCountLabels';
-import DatePhraseTd from '../components/DatePhraseTd';
+import DateDistanceTd from '../components/DatePhraseTd';
+import { VulnerabilitySeverityLabel } from '../types';
 
 export type DeploymentForCve = {
     id: string;
@@ -32,7 +33,6 @@ export type DeploymentForCve = {
     namespace: string;
     clusterName: string;
     created: string | null;
-    imageCount: number;
     lowImageCount: number;
     moderateImageCount: number;
     importantImageCount: number;
@@ -49,7 +49,6 @@ export const deploymentsForCveFragment = gql`
         namespace
         clusterName
         created
-        imageCount(query: $query)
         lowImageCount: imageCount(query: $lowImageCountQuery)
         moderateImageCount: imageCount(query: $moderateImageCountQuery)
         importantImageCount: imageCount(query: $importantImageCountQuery)
@@ -67,12 +66,14 @@ export type AffectedDeploymentsTableProps = {
     deployments: DeploymentForCve[];
     getSortParams: UseURLSortResult['getSortParams'];
     isFiltered: boolean;
+    filteredSeverities?: VulnerabilitySeverityLabel[];
 };
 
 function AffectedDeploymentsTable({
     deployments,
     getSortParams,
     isFiltered,
+    filteredSeverities,
 }: AffectedDeploymentsTableProps) {
     const expandedRowSet = useSet<string>();
     return (
@@ -103,7 +104,6 @@ function AffectedDeploymentsTable({
                     name,
                     namespace,
                     clusterName,
-                    imageCount,
                     lowImageCount,
                     moderateImageCount,
                     importantImageCount,
@@ -139,26 +139,27 @@ function AffectedDeploymentsTable({
                                         component={LinkShim}
                                         href={getEntityPagePath('Deployment', id)}
                                     >
-                                        {name}
+                                        <Truncate position="middle" content={name} />
                                     </Button>{' '}
                                 </Flex>
                             </Td>
                             <Td modifier="nowrap" dataLabel="Images by severity">
                                 <SeverityCountLabels
-                                    critical={criticalImageCount}
-                                    important={importantImageCount}
-                                    moderate={moderateImageCount}
-                                    low={lowImageCount}
+                                    criticalCount={criticalImageCount}
+                                    importantCount={importantImageCount}
+                                    moderateCount={moderateImageCount}
+                                    lowCount={lowImageCount}
+                                    filteredSeverities={filteredSeverities}
                                 />
                             </Td>
                             <Td dataLabel="Cluster">{clusterName}</Td>
                             <Td dataLabel="Namespace">{namespace}</Td>
                             <Td modifier="nowrap" dataLabel="Images">
-                                {pluralize(imageCount, 'image')}
+                                {pluralize(images.length, 'image')}
                             </Td>
 
                             <Td modifier="nowrap" dataLabel="First discovered">
-                                <DatePhraseTd date={created} />
+                                <DateDistanceTd date={created} />
                             </Td>
                         </Tr>
                         <Tr isExpanded={isExpanded}>

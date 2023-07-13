@@ -6,8 +6,12 @@
 
 .ReactModal__Content,
 #main-page-container > div > :not(.pf-c-page__main-section) {
-  font-size: 0.75rem;
+  font-size: 0.875rem;
   color: var(--base-600);
+}
+
+#main-page-container > div > :not(.pf-c-page__main-section) button {
+    font-weight: inherit; /* override font-weight: 600 in ui-components.css file */
 }
 
 /* Universal selector increases specificity of these override style rules */

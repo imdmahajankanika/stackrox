@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	timestamp "github.com/gogo/protobuf/types"
-	"github.com/golang/mock/gomock"
 	storeMocks "github.com/stackrox/rox/central/networkpolicies/datastore/internal/store/mocks"
 	undoDeploymentStoreMocks "github.com/stackrox/rox/central/networkpolicies/datastore/internal/undodeploymentstore/mocks"
 	undoStoreMocks "github.com/stackrox/rox/central/networkpolicies/datastore/internal/undostore/mocks"
@@ -13,6 +12,7 @@ import (
 	"github.com/stackrox/rox/generated/storage"
 	"github.com/stackrox/rox/pkg/sac"
 	"github.com/stretchr/testify/suite"
+	"go.uber.org/mock/gomock"
 )
 
 func TestNetPolDataStore(t *testing.T) {
@@ -68,7 +68,7 @@ func (s *netPolDataStoreTestSuite) SetupTest() {
 	s.storage = storeMocks.NewMockStore(s.mockCtrl)
 	s.undoStorage = undoStoreMocks.NewMockUndoStore(s.mockCtrl)
 	s.undoDeploymentStorage = undoDeploymentStoreMocks.NewMockUndoDeploymentStore(s.mockCtrl)
-	s.dataStore = New(s.storage, s.undoStorage, s.undoDeploymentStorage)
+	s.dataStore = New(s.storage, nil, s.undoStorage, s.undoDeploymentStorage)
 }
 
 func (s *netPolDataStoreTestSuite) TearDownTest() {
@@ -125,13 +125,13 @@ func (s *netPolDataStoreTestSuite) TestGetNetworkPolicies() {
 	s.Equal(result, netPolNm2)
 
 	// Test we cannot do the opposite.
-	s.storage.EXPECT().Walk(gomock.Any(), gomock.Any()).Return(nil)
+	s.storage.EXPECT().GetByQuery(gomock.Any(), gomock.Any()).Return(nil, nil)
 
 	netPols, err := s.dataStore.GetNetworkPolicies(s.hasNS1ReadCtx, FakeClusterID, FakeNamespace2)
 	s.NoError(err)
 	s.Equal(0, len(netPols))
 
-	s.storage.EXPECT().Walk(gomock.Any(), gomock.Any()).Return(nil)
+	s.storage.EXPECT().GetByQuery(gomock.Any(), gomock.Any()).Return(nil, nil)
 
 	netPols, err = s.dataStore.GetNetworkPolicies(s.hasNS2ReadCtx, FakeClusterID, FakeNamespace1)
 	s.NoError(err)

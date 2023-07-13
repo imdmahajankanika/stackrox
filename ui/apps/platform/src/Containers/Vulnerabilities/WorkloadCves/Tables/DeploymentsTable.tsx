@@ -2,7 +2,7 @@ import React from 'react';
 import { gql } from '@apollo/client';
 import pluralize from 'pluralize';
 import { TableComposable, Tbody, Td, Th, Thead, Tr } from '@patternfly/react-table';
-import { Button, ButtonVariant } from '@patternfly/react-core';
+import { Button, ButtonVariant, Truncate } from '@patternfly/react-core';
 
 import LinkShim from 'Components/PatternFly/LinkShim';
 import { UseURLSortResult } from 'hooks/useURLSort';
@@ -10,8 +10,9 @@ import { getEntityPagePath } from '../searchUtils';
 import SeverityCountLabels from '../components/SeverityCountLabels';
 import { DynamicColumnIcon } from '../components/DynamicIcon';
 import EmptyTableResults from '../components/EmptyTableResults';
-import DatePhraseTd from '../components/DatePhraseTd';
+import DateDistanceTd from '../components/DatePhraseTd';
 import TooltipTh from '../components/TooltipTh';
+import { VulnerabilitySeverityLabel } from '../types';
 
 export const deploymentListQuery = gql`
     query getDeploymentList($query: String, $pagination: Pagination) {
@@ -59,9 +60,15 @@ type DeploymentsTableProps = {
     deployments: Deployment[];
     getSortParams: UseURLSortResult['getSortParams'];
     isFiltered: boolean;
+    filteredSeverities?: VulnerabilitySeverityLabel[];
 };
 
-function DeploymentsTable({ deployments, getSortParams, isFiltered }: DeploymentsTableProps) {
+function DeploymentsTable({
+    deployments,
+    getSortParams,
+    isFiltered,
+    filteredSeverities,
+}: DeploymentsTableProps) {
     return (
         <TableComposable borders={false} variant="compact">
             <Thead noWrap>
@@ -78,7 +85,7 @@ function DeploymentsTable({ deployments, getSortParams, isFiltered }: Deployment
                         Images
                         {isFiltered && <DynamicColumnIcon />}
                     </Th>
-                    <Th>First discovered</Th>
+                    <Th sort={getSortParams('Created')}>First discovered</Th>
                 </Tr>
             </Thead>
             {deployments.length === 0 && <EmptyTableResults colSpan={6} />}
@@ -92,6 +99,10 @@ function DeploymentsTable({ deployments, getSortParams, isFiltered }: Deployment
                     imageCount,
                     created,
                 }) => {
+                    const criticalCount = imageCVECountBySeverity.critical.total;
+                    const importantCount = imageCVECountBySeverity.important.total;
+                    const moderateCount = imageCVECountBySeverity.moderate.total;
+                    const lowCount = imageCVECountBySeverity.low.total;
                     return (
                         <Tbody
                             key={id}
@@ -107,34 +118,28 @@ function DeploymentsTable({ deployments, getSortParams, isFiltered }: Deployment
                                         component={LinkShim}
                                         href={getEntityPagePath('Deployment', id)}
                                     >
-                                        {name}
+                                        <Truncate position="middle" content={name} />
                                     </Button>
                                 </Td>
                                 <Td>
                                     <SeverityCountLabels
-                                        critical={imageCVECountBySeverity.critical.total}
-                                        important={imageCVECountBySeverity.important.total}
-                                        moderate={imageCVECountBySeverity.moderate.total}
-                                        low={imageCVECountBySeverity.low.total}
+                                        criticalCount={criticalCount}
+                                        importantCount={importantCount}
+                                        moderateCount={moderateCount}
+                                        lowCount={lowCount}
                                         entity="deployment"
+                                        filteredSeverities={filteredSeverities}
                                     />
                                 </Td>
                                 <Td>{clusterName}</Td>
                                 <Td>{namespace}</Td>
                                 <Td>
-                                    <Button
-                                        variant={ButtonVariant.link}
-                                        isInline
-                                        component={LinkShim}
-                                        href={getEntityPagePath('Deployment', id, {
-                                            detailsTab: 'Resources',
-                                        })}
-                                    >
+                                    <>
                                         {imageCount} {pluralize('image', imageCount)}
-                                    </Button>
+                                    </>
                                 </Td>
                                 <Td>
-                                    <DatePhraseTd date={created} />
+                                    <DateDistanceTd date={created} />
                                 </Td>
                             </Tr>
                         </Tbody>

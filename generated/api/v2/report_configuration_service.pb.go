@@ -8,7 +8,6 @@ import (
 	fmt "fmt"
 	types "github.com/gogo/protobuf/types"
 	proto "github.com/golang/protobuf/proto"
-	_ "github.com/stackrox/rox/generated/api/v1"
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
@@ -169,7 +168,7 @@ type ReportConfiguration struct {
 	Id          string                         `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	Name        string                         `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
 	Description string                         `protobuf:"bytes,3,opt,name=description,proto3" json:"description,omitempty"`
-	Type        ReportConfiguration_ReportType `protobuf:"varint,4,opt,name=type,proto3,enum=ReportConfiguration_ReportType" json:"type,omitempty"`
+	Type        ReportConfiguration_ReportType `protobuf:"varint,4,opt,name=type,proto3,enum=v2.ReportConfiguration_ReportType" json:"type,omitempty"`
 	// Types that are valid to be assigned to Filter:
 	//	*ReportConfiguration_VulnReportFilters
 	Filter               isReportConfiguration_Filter `protobuf_oneof:"filter"`
@@ -332,9 +331,9 @@ func (m *ReportConfiguration) Clone() *ReportConfiguration {
 }
 
 type VulnerabilityReportFilters struct {
-	Fixability VulnerabilityReportFilters_Fixability              `protobuf:"varint,1,opt,name=fixability,proto3,enum=VulnerabilityReportFilters_Fixability" json:"fixability,omitempty"`
-	Severities []VulnerabilityReportFilters_VulnerabilitySeverity `protobuf:"varint,2,rep,packed,name=severities,proto3,enum=VulnerabilityReportFilters_VulnerabilitySeverity" json:"severities,omitempty"`
-	ImageTypes []VulnerabilityReportFilters_ImageType             `protobuf:"varint,3,rep,packed,name=image_types,json=imageTypes,proto3,enum=VulnerabilityReportFilters_ImageType" json:"image_types,omitempty"`
+	Fixability VulnerabilityReportFilters_Fixability              `protobuf:"varint,1,opt,name=fixability,proto3,enum=v2.VulnerabilityReportFilters_Fixability" json:"fixability,omitempty"`
+	Severities []VulnerabilityReportFilters_VulnerabilitySeverity `protobuf:"varint,2,rep,packed,name=severities,proto3,enum=v2.VulnerabilityReportFilters_VulnerabilitySeverity" json:"severities,omitempty"`
+	ImageTypes []VulnerabilityReportFilters_ImageType             `protobuf:"varint,3,rep,packed,name=image_types,json=imageTypes,proto3,enum=v2.VulnerabilityReportFilters_ImageType" json:"image_types,omitempty"`
 	// Types that are valid to be assigned to CvesSince:
 	//	*VulnerabilityReportFilters_AllVuln
 	//	*VulnerabilityReportFilters_LastSuccessfulReport
@@ -510,7 +509,7 @@ func (m *VulnerabilityReportFilters) Clone() *VulnerabilityReportFilters {
 }
 
 type ReportSchedule struct {
-	IntervalType ReportSchedule_IntervalType `protobuf:"varint,1,opt,name=interval_type,json=intervalType,proto3,enum=ReportSchedule_IntervalType" json:"interval_type,omitempty"`
+	IntervalType ReportSchedule_IntervalType `protobuf:"varint,1,opt,name=interval_type,json=intervalType,proto3,enum=v2.ReportSchedule_IntervalType" json:"interval_type,omitempty"`
 	Hour         int32                       `protobuf:"varint,2,opt,name=hour,proto3" json:"hour,omitempty"`
 	Minute       int32                       `protobuf:"varint,3,opt,name=minute,proto3" json:"minute,omitempty"`
 	// Types that are valid to be assigned to Interval:
@@ -790,7 +789,7 @@ func (m *ReportSchedule_DaysOfMonth) Clone() *ReportSchedule_DaysOfMonth {
 
 type ResourceScope struct {
 	// Types that are valid to be assigned to ScopeReference:
-	//	*ResourceScope_CollectionId
+	//	*ResourceScope_CollectionScope
 	ScopeReference       isResourceScope_ScopeReference `protobuf_oneof:"scope_reference"`
 	XXX_NoUnkeyedLiteral struct{}                       `json:"-"`
 	XXX_unrecognized     []byte                         `json:"-"`
@@ -837,18 +836,19 @@ type isResourceScope_ScopeReference interface {
 	Clone() isResourceScope_ScopeReference
 }
 
-type ResourceScope_CollectionId struct {
-	CollectionId string `protobuf:"bytes,1,opt,name=collection_id,json=collectionId,proto3,oneof" json:"collection_id,omitempty"`
+type ResourceScope_CollectionScope struct {
+	CollectionScope *CollectionReference `protobuf:"bytes,1,opt,name=collection_scope,json=collectionScope,proto3,oneof" json:"collection_scope,omitempty"`
 }
 
-func (*ResourceScope_CollectionId) isResourceScope_ScopeReference() {}
-func (m *ResourceScope_CollectionId) Clone() isResourceScope_ScopeReference {
+func (*ResourceScope_CollectionScope) isResourceScope_ScopeReference() {}
+func (m *ResourceScope_CollectionScope) Clone() isResourceScope_ScopeReference {
 	if m == nil {
 		return nil
 	}
-	cloned := new(ResourceScope_CollectionId)
+	cloned := new(ResourceScope_CollectionScope)
 	*cloned = *m
 
+	cloned.CollectionScope = m.CollectionScope.Clone()
 	return cloned
 }
 
@@ -859,17 +859,17 @@ func (m *ResourceScope) GetScopeReference() isResourceScope_ScopeReference {
 	return nil
 }
 
-func (m *ResourceScope) GetCollectionId() string {
-	if x, ok := m.GetScopeReference().(*ResourceScope_CollectionId); ok {
-		return x.CollectionId
+func (m *ResourceScope) GetCollectionScope() *CollectionReference {
+	if x, ok := m.GetScopeReference().(*ResourceScope_CollectionScope); ok {
+		return x.CollectionScope
 	}
-	return ""
+	return nil
 }
 
 // XXX_OneofWrappers is for the internal use of the proto package.
 func (*ResourceScope) XXX_OneofWrappers() []interface{} {
 	return []interface{}{
-		(*ResourceScope_CollectionId)(nil),
+		(*ResourceScope_CollectionScope)(nil),
 	}
 }
 
@@ -889,10 +889,79 @@ func (m *ResourceScope) Clone() *ResourceScope {
 	return cloned
 }
 
+type CollectionReference struct {
+	CollectionId         string   `protobuf:"bytes,1,opt,name=collection_id,json=collectionId,proto3" json:"collection_id,omitempty"`
+	CollectionName       string   `protobuf:"bytes,2,opt,name=collection_name,json=collectionName,proto3" json:"collection_name,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *CollectionReference) Reset()         { *m = CollectionReference{} }
+func (m *CollectionReference) String() string { return proto.CompactTextString(m) }
+func (*CollectionReference) ProtoMessage()    {}
+func (*CollectionReference) Descriptor() ([]byte, []int) {
+	return fileDescriptor_6a1c7ce27d899a0e, []int{4}
+}
+func (m *CollectionReference) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *CollectionReference) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_CollectionReference.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *CollectionReference) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_CollectionReference.Merge(m, src)
+}
+func (m *CollectionReference) XXX_Size() int {
+	return m.Size()
+}
+func (m *CollectionReference) XXX_DiscardUnknown() {
+	xxx_messageInfo_CollectionReference.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_CollectionReference proto.InternalMessageInfo
+
+func (m *CollectionReference) GetCollectionId() string {
+	if m != nil {
+		return m.CollectionId
+	}
+	return ""
+}
+
+func (m *CollectionReference) GetCollectionName() string {
+	if m != nil {
+		return m.CollectionName
+	}
+	return ""
+}
+
+func (m *CollectionReference) MessageClone() proto.Message {
+	return m.Clone()
+}
+func (m *CollectionReference) Clone() *CollectionReference {
+	if m == nil {
+		return nil
+	}
+	cloned := new(CollectionReference)
+	*cloned = *m
+
+	return cloned
+}
+
 type NotifierConfiguration struct {
 	// Types that are valid to be assigned to NotifierConfig:
 	//	*NotifierConfiguration_EmailConfig
 	NotifierConfig       isNotifierConfiguration_NotifierConfig `protobuf_oneof:"notifier_config"`
+	NotifierName         string                                 `protobuf:"bytes,2,opt,name=notifier_name,json=notifierName,proto3" json:"notifier_name,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}                               `json:"-"`
 	XXX_unrecognized     []byte                                 `json:"-"`
 	XXX_sizecache        int32                                  `json:"-"`
@@ -902,7 +971,7 @@ func (m *NotifierConfiguration) Reset()         { *m = NotifierConfiguration{} }
 func (m *NotifierConfiguration) String() string { return proto.CompactTextString(m) }
 func (*NotifierConfiguration) ProtoMessage()    {}
 func (*NotifierConfiguration) Descriptor() ([]byte, []int) {
-	return fileDescriptor_6a1c7ce27d899a0e, []int{4}
+	return fileDescriptor_6a1c7ce27d899a0e, []int{5}
 }
 func (m *NotifierConfiguration) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -968,6 +1037,13 @@ func (m *NotifierConfiguration) GetEmailConfig() *EmailNotifierConfiguration {
 	return nil
 }
 
+func (m *NotifierConfiguration) GetNotifierName() string {
+	if m != nil {
+		return m.NotifierName
+	}
+	return ""
+}
+
 // XXX_OneofWrappers is for the internal use of the proto package.
 func (*NotifierConfiguration) XXX_OneofWrappers() []interface{} {
 	return []interface{}{
@@ -1003,7 +1079,7 @@ func (m *EmailNotifierConfiguration) Reset()         { *m = EmailNotifierConfigu
 func (m *EmailNotifierConfiguration) String() string { return proto.CompactTextString(m) }
 func (*EmailNotifierConfiguration) ProtoMessage()    {}
 func (*EmailNotifierConfiguration) Descriptor() ([]byte, []int) {
-	return fileDescriptor_6a1c7ce27d899a0e, []int{5}
+	return fileDescriptor_6a1c7ce27d899a0e, []int{6}
 }
 func (m *EmailNotifierConfiguration) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -1063,20 +1139,149 @@ func (m *EmailNotifierConfiguration) Clone() *EmailNotifierConfiguration {
 	return cloned
 }
 
+type GetReportConfigurationsResponse struct {
+	ReportConfigs        []*ReportConfiguration `protobuf:"bytes,1,rep,name=report_configs,json=reportConfigs,proto3" json:"report_configs,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}               `json:"-"`
+	XXX_unrecognized     []byte                 `json:"-"`
+	XXX_sizecache        int32                  `json:"-"`
+}
+
+func (m *GetReportConfigurationsResponse) Reset()         { *m = GetReportConfigurationsResponse{} }
+func (m *GetReportConfigurationsResponse) String() string { return proto.CompactTextString(m) }
+func (*GetReportConfigurationsResponse) ProtoMessage()    {}
+func (*GetReportConfigurationsResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_6a1c7ce27d899a0e, []int{7}
+}
+func (m *GetReportConfigurationsResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *GetReportConfigurationsResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_GetReportConfigurationsResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *GetReportConfigurationsResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_GetReportConfigurationsResponse.Merge(m, src)
+}
+func (m *GetReportConfigurationsResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *GetReportConfigurationsResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_GetReportConfigurationsResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_GetReportConfigurationsResponse proto.InternalMessageInfo
+
+func (m *GetReportConfigurationsResponse) GetReportConfigs() []*ReportConfiguration {
+	if m != nil {
+		return m.ReportConfigs
+	}
+	return nil
+}
+
+func (m *GetReportConfigurationsResponse) MessageClone() proto.Message {
+	return m.Clone()
+}
+func (m *GetReportConfigurationsResponse) Clone() *GetReportConfigurationsResponse {
+	if m == nil {
+		return nil
+	}
+	cloned := new(GetReportConfigurationsResponse)
+	*cloned = *m
+
+	if m.ReportConfigs != nil {
+		cloned.ReportConfigs = make([]*ReportConfiguration, len(m.ReportConfigs))
+		for idx, v := range m.ReportConfigs {
+			cloned.ReportConfigs[idx] = v.Clone()
+		}
+	}
+	return cloned
+}
+
+type CountReportConfigurationsResponse struct {
+	Count                int32    `protobuf:"varint,1,opt,name=count,proto3" json:"count,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *CountReportConfigurationsResponse) Reset()         { *m = CountReportConfigurationsResponse{} }
+func (m *CountReportConfigurationsResponse) String() string { return proto.CompactTextString(m) }
+func (*CountReportConfigurationsResponse) ProtoMessage()    {}
+func (*CountReportConfigurationsResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_6a1c7ce27d899a0e, []int{8}
+}
+func (m *CountReportConfigurationsResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *CountReportConfigurationsResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_CountReportConfigurationsResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *CountReportConfigurationsResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_CountReportConfigurationsResponse.Merge(m, src)
+}
+func (m *CountReportConfigurationsResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *CountReportConfigurationsResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_CountReportConfigurationsResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_CountReportConfigurationsResponse proto.InternalMessageInfo
+
+func (m *CountReportConfigurationsResponse) GetCount() int32 {
+	if m != nil {
+		return m.Count
+	}
+	return 0
+}
+
+func (m *CountReportConfigurationsResponse) MessageClone() proto.Message {
+	return m.Clone()
+}
+func (m *CountReportConfigurationsResponse) Clone() *CountReportConfigurationsResponse {
+	if m == nil {
+		return nil
+	}
+	cloned := new(CountReportConfigurationsResponse)
+	*cloned = *m
+
+	return cloned
+}
+
 func init() {
-	proto.RegisterEnum("ReportConfiguration_ReportType", ReportConfiguration_ReportType_name, ReportConfiguration_ReportType_value)
-	proto.RegisterEnum("VulnerabilityReportFilters_Fixability", VulnerabilityReportFilters_Fixability_name, VulnerabilityReportFilters_Fixability_value)
-	proto.RegisterEnum("VulnerabilityReportFilters_VulnerabilitySeverity", VulnerabilityReportFilters_VulnerabilitySeverity_name, VulnerabilityReportFilters_VulnerabilitySeverity_value)
-	proto.RegisterEnum("VulnerabilityReportFilters_ImageType", VulnerabilityReportFilters_ImageType_name, VulnerabilityReportFilters_ImageType_value)
-	proto.RegisterEnum("ReportSchedule_IntervalType", ReportSchedule_IntervalType_name, ReportSchedule_IntervalType_value)
-	proto.RegisterType((*ReportConfiguration)(nil), "ReportConfiguration")
-	proto.RegisterType((*VulnerabilityReportFilters)(nil), "VulnerabilityReportFilters")
-	proto.RegisterType((*ReportSchedule)(nil), "ReportSchedule")
-	proto.RegisterType((*ReportSchedule_DaysOfWeek)(nil), "ReportSchedule.DaysOfWeek")
-	proto.RegisterType((*ReportSchedule_DaysOfMonth)(nil), "ReportSchedule.DaysOfMonth")
-	proto.RegisterType((*ResourceScope)(nil), "ResourceScope")
-	proto.RegisterType((*NotifierConfiguration)(nil), "NotifierConfiguration")
-	proto.RegisterType((*EmailNotifierConfiguration)(nil), "EmailNotifierConfiguration")
+	proto.RegisterEnum("v2.ReportConfiguration_ReportType", ReportConfiguration_ReportType_name, ReportConfiguration_ReportType_value)
+	proto.RegisterEnum("v2.VulnerabilityReportFilters_Fixability", VulnerabilityReportFilters_Fixability_name, VulnerabilityReportFilters_Fixability_value)
+	proto.RegisterEnum("v2.VulnerabilityReportFilters_VulnerabilitySeverity", VulnerabilityReportFilters_VulnerabilitySeverity_name, VulnerabilityReportFilters_VulnerabilitySeverity_value)
+	proto.RegisterEnum("v2.VulnerabilityReportFilters_ImageType", VulnerabilityReportFilters_ImageType_name, VulnerabilityReportFilters_ImageType_value)
+	proto.RegisterEnum("v2.ReportSchedule_IntervalType", ReportSchedule_IntervalType_name, ReportSchedule_IntervalType_value)
+	proto.RegisterType((*ReportConfiguration)(nil), "v2.ReportConfiguration")
+	proto.RegisterType((*VulnerabilityReportFilters)(nil), "v2.VulnerabilityReportFilters")
+	proto.RegisterType((*ReportSchedule)(nil), "v2.ReportSchedule")
+	proto.RegisterType((*ReportSchedule_DaysOfWeek)(nil), "v2.ReportSchedule.DaysOfWeek")
+	proto.RegisterType((*ReportSchedule_DaysOfMonth)(nil), "v2.ReportSchedule.DaysOfMonth")
+	proto.RegisterType((*ResourceScope)(nil), "v2.ResourceScope")
+	proto.RegisterType((*CollectionReference)(nil), "v2.CollectionReference")
+	proto.RegisterType((*NotifierConfiguration)(nil), "v2.NotifierConfiguration")
+	proto.RegisterType((*EmailNotifierConfiguration)(nil), "v2.EmailNotifierConfiguration")
+	proto.RegisterType((*GetReportConfigurationsResponse)(nil), "v2.GetReportConfigurationsResponse")
+	proto.RegisterType((*CountReportConfigurationsResponse)(nil), "v2.CountReportConfigurationsResponse")
 }
 
 func init() {
@@ -1084,75 +1289,90 @@ func init() {
 }
 
 var fileDescriptor_6a1c7ce27d899a0e = []byte{
-	// 1081 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x7c, 0x56, 0xdd, 0x6e, 0xe2, 0x46,
-	0x14, 0xc6, 0x90, 0x1f, 0x38, 0xfc, 0x2c, 0x3b, 0xd9, 0x4d, 0x11, 0x59, 0x01, 0xf5, 0x36, 0xab,
-	0xb4, 0x95, 0x8c, 0x96, 0xdd, 0xf6, 0xa2, 0x95, 0xaa, 0x42, 0x70, 0x84, 0xb5, 0x04, 0xd2, 0xc1,
-	0x49, 0x36, 0xbd, 0xb1, 0x1c, 0x33, 0x24, 0xa3, 0x18, 0x1b, 0x79, 0x06, 0xba, 0xdc, 0xf6, 0xa6,
-	0x52, 0x6f, 0x7b, 0xd3, 0x07, 0xe8, 0xc3, 0x54, 0xda, 0x9b, 0x4a, 0x7d, 0x81, 0x2a, 0xed, 0x83,
-	0x54, 0x33, 0x36, 0x7f, 0x11, 0xe4, 0xce, 0xf3, 0x9d, 0xef, 0x3b, 0x67, 0xe6, 0xcc, 0x99, 0x73,
-	0x0c, 0x9f, 0xdb, 0x23, 0x5a, 0x9d, 0xd4, 0xaa, 0x01, 0x19, 0xf9, 0x01, 0xb7, 0x1c, 0xdf, 0x1b,
-	0xd0, 0x9b, 0x71, 0x60, 0x73, 0xea, 0x7b, 0x16, 0x23, 0xc1, 0x84, 0x3a, 0x44, 0x1b, 0x05, 0x3e,
-	0xf7, 0x8b, 0x2f, 0x6e, 0x7c, 0xff, 0xc6, 0x25, 0x55, 0xa1, 0xb0, 0x3d, 0xcf, 0xe7, 0x92, 0xc4,
-	0x22, 0xeb, 0x9e, 0x74, 0xf4, 0xba, 0xea, 0xf8, 0xc3, 0xa1, 0xef, 0x45, 0x20, 0x8a, 0x40, 0x32,
-	0x1c, 0xf1, 0x69, 0x84, 0x1d, 0x44, 0x18, 0x23, 0x76, 0xe0, 0xdc, 0x3e, 0x88, 0x51, 0x8e, 0x62,
-	0xc8, 0xd5, 0xf5, 0x78, 0x50, 0xe5, 0x74, 0x48, 0x18, 0xb7, 0x87, 0xa3, 0x90, 0xa0, 0xfe, 0x91,
-	0x80, 0x3d, 0x2c, 0xf7, 0x7a, 0xbc, 0xbc, 0x55, 0x94, 0x83, 0x38, 0xed, 0x17, 0x94, 0x8a, 0x72,
-	0x94, 0xc2, 0x71, 0xda, 0x47, 0x08, 0xb6, 0x3c, 0x7b, 0x48, 0x0a, 0x71, 0x89, 0xc8, 0x6f, 0x54,
-	0x81, 0x74, 0x9f, 0x30, 0x27, 0xa0, 0x23, 0x21, 0x29, 0x24, 0xa4, 0x69, 0x19, 0x42, 0x6f, 0x60,
-	0x8b, 0x4f, 0x47, 0xa4, 0xb0, 0x55, 0x51, 0x8e, 0x72, 0xb5, 0xb2, 0xb6, 0x26, 0x52, 0x84, 0x99,
-	0xd3, 0x11, 0xc1, 0x92, 0x8c, 0x4e, 0x61, 0x6f, 0x32, 0x76, 0x3d, 0x2b, 0x4a, 0xe1, 0x80, 0xba,
-	0x9c, 0x04, 0xac, 0xb0, 0x5d, 0x51, 0x8e, 0xd2, 0xb5, 0x03, 0xed, 0x62, 0xec, 0x7a, 0x24, 0xb0,
-	0xaf, 0xa9, 0x4b, 0xf9, 0x34, 0x14, 0x9f, 0x84, 0x94, 0x56, 0x0c, 0x3f, 0x15, 0xca, 0x15, 0x10,
-	0x7d, 0x09, 0x49, 0xe6, 0xdc, 0x92, 0xfe, 0xd8, 0x25, 0x85, 0x1d, 0xe9, 0xe3, 0x49, 0x14, 0xb3,
-	0x17, 0xc1, 0x78, 0x4e, 0x40, 0x5f, 0x41, 0x2e, 0x20, 0xcc, 0x1f, 0x07, 0x0e, 0xb1, 0x98, 0xe3,
-	0x8f, 0x48, 0x61, 0x57, 0x4a, 0x72, 0x1a, 0x8e, 0xe0, 0x9e, 0x40, 0x71, 0x36, 0x58, 0x5e, 0xa2,
-	0xb7, 0x90, 0xf2, 0x7c, 0x4e, 0x07, 0x54, 0x6c, 0x34, 0x59, 0x49, 0x1c, 0xa5, 0x6b, 0xfb, 0x5a,
-	0x27, 0x42, 0x56, 0x8e, 0x8b, 0x17, 0x44, 0xb5, 0x0c, 0xb0, 0x38, 0x3c, 0x7a, 0x0a, 0xd9, 0x8b,
-	0xf3, 0x76, 0x47, 0xc7, 0xf5, 0x86, 0xd1, 0x36, 0xcc, 0xab, 0x7c, 0xac, 0x91, 0x84, 0x9d, 0xf0,
-	0xf4, 0xea, 0xc7, 0x6d, 0x28, 0x6e, 0x3e, 0x38, 0x3a, 0x01, 0x18, 0xd0, 0x0f, 0x91, 0x49, 0xde,
-	0x5a, 0xae, 0xf6, 0xea, 0x91, 0x4c, 0x69, 0x27, 0x73, 0x36, 0x5e, 0x52, 0xa2, 0x1f, 0x00, 0x18,
-	0x99, 0x90, 0x80, 0x72, 0x4a, 0x58, 0x21, 0x5e, 0x49, 0x1c, 0xe5, 0x6a, 0xaf, 0x1f, 0xf3, 0xb3,
-	0x62, 0xea, 0x85, 0xd2, 0x29, 0x5e, 0x72, 0x82, 0x4e, 0x20, 0x4d, 0x87, 0xf6, 0x0d, 0xb1, 0xc4,
-	0xdd, 0xb2, 0x42, 0x42, 0xfa, 0x3c, 0x7c, 0xcc, 0xa7, 0x21, 0xe8, 0xb2, 0x1e, 0x80, 0xce, 0x3e,
-	0x19, 0x3a, 0x80, 0xa4, 0xed, 0xba, 0x96, 0xb8, 0x5f, 0x59, 0x4e, 0xc9, 0x56, 0x0c, 0xef, 0xda,
-	0xae, 0x2b, 0x1c, 0xa1, 0xaf, 0x61, 0xdf, 0xb5, 0x19, 0xb7, 0xd8, 0xd8, 0x71, 0x08, 0x63, 0x83,
-	0xb1, 0x1b, 0x55, 0x8f, 0xac, 0x1a, 0x41, 0x7d, 0x26, 0xec, 0xbd, 0xb9, 0x39, 0x8c, 0x88, 0xbe,
-	0x05, 0x60, 0xdc, 0x0e, 0xb8, 0xd5, 0xb7, 0xf9, 0xac, 0x3a, 0x8a, 0x5a, 0xf8, 0x66, 0xb4, 0xd9,
-	0x9b, 0xd1, 0xcc, 0xd9, 0x9b, 0x69, 0xc5, 0x70, 0x4a, 0xf2, 0x9b, 0x36, 0x27, 0xea, 0x5b, 0x80,
-	0x45, 0x1a, 0x51, 0x12, 0xb6, 0x1a, 0x5d, 0xb3, 0x95, 0x8f, 0xa1, 0x34, 0xec, 0x9e, 0x18, 0xef,
-	0xeb, 0x8d, 0xb6, 0x9e, 0x57, 0xd0, 0x13, 0x48, 0x77, 0xba, 0xa6, 0x35, 0x03, 0xe2, 0xea, 0x47,
-	0x05, 0x9e, 0xaf, 0xcd, 0x1a, 0x52, 0xa1, 0x74, 0xde, 0x79, 0xd7, 0xe9, 0x5e, 0x76, 0xac, 0x95,
-	0x42, 0xb0, 0x7a, 0xfa, 0x85, 0x8e, 0x65, 0x45, 0xa0, 0x12, 0x14, 0xdb, 0xdd, 0xcb, 0x4d, 0x76,
-	0x05, 0xbd, 0x84, 0xf2, 0x69, 0xb7, 0xa9, 0xe3, 0xba, 0xa9, 0x6f, 0x22, 0xc5, 0xd1, 0x67, 0x50,
-	0x31, 0x4e, 0xcf, 0xba, 0xd8, 0xac, 0x77, 0xcc, 0x4d, 0xac, 0x84, 0x70, 0x75, 0x8c, 0x0d, 0xd3,
-	0x38, 0xae, 0xb7, 0x37, 0x91, 0xb6, 0xd4, 0x57, 0x90, 0x9a, 0x5f, 0x17, 0xca, 0x40, 0xb2, 0xa9,
-	0x9f, 0xb5, 0xbb, 0x57, 0x7a, 0x33, 0x4c, 0xc3, 0x65, 0xdd, 0x3c, 0x6e, 0xe9, 0xcd, 0xbc, 0xd2,
-	0xc8, 0x00, 0x38, 0x13, 0xc2, 0x2c, 0x46, 0x3d, 0x87, 0xa8, 0xbf, 0x24, 0x20, 0xb7, 0xfa, 0x04,
-	0x51, 0x1d, 0xb2, 0xd4, 0xe3, 0x24, 0x98, 0xd8, 0xae, 0xac, 0x94, 0xa8, 0x88, 0x5f, 0x3c, 0x78,
-	0xaa, 0x9a, 0x11, 0x91, 0x64, 0x7d, 0x64, 0xe8, 0xd2, 0x4a, 0xb4, 0xa8, 0x5b, 0x7f, 0x1c, 0xc8,
-	0x16, 0xb5, 0x8d, 0xe5, 0x37, 0xda, 0x87, 0x9d, 0x21, 0xf5, 0xc6, 0x9c, 0xc8, 0xee, 0xb4, 0x8d,
-	0xa3, 0x15, 0xfa, 0x0e, 0x32, 0x7d, 0x7b, 0xca, 0x2c, 0x7f, 0x60, 0xfd, 0x44, 0xc8, 0x9d, 0xac,
-	0x28, 0x71, 0xf5, 0x0f, 0xa2, 0x35, 0xed, 0x29, 0xeb, 0x0e, 0x2e, 0x09, 0xb9, 0x6b, 0xc5, 0x30,
-	0xf4, 0xe7, 0x2b, 0xb1, 0xdd, 0x99, 0x7e, 0xe8, 0x7b, 0xfc, 0x76, 0xde, 0x9d, 0xd6, 0x3a, 0x38,
-	0x15, 0x94, 0x56, 0x0c, 0xa7, 0xfb, 0x8b, 0x65, 0xb1, 0x02, 0xb0, 0x70, 0x2f, 0x36, 0x2f, 0x8c,
-	0x05, 0xa5, 0x92, 0x10, 0x9b, 0x17, 0xdf, 0xc5, 0x4f, 0x21, 0xbd, 0xa4, 0x5f, 0x47, 0x51, 0x6b,
-	0x90, 0x59, 0xce, 0x08, 0x4a, 0xc1, 0xf6, 0x79, 0xa7, 0xa7, 0x9b, 0xf9, 0x18, 0x02, 0xd8, 0xb9,
-	0xd4, 0xf5, 0x77, 0x6d, 0x51, 0x16, 0x69, 0xd8, 0x3d, 0xed, 0x76, 0xcc, 0x56, 0xfb, 0x2a, 0x1f,
-	0x6f, 0x00, 0x24, 0x67, 0x1a, 0xd5, 0x80, 0xec, 0x4a, 0x63, 0x43, 0x87, 0x90, 0x75, 0x7c, 0xd7,
-	0x25, 0x8e, 0x1c, 0x58, 0xb3, 0x11, 0xd0, 0x8a, 0xe1, 0xcc, 0x02, 0x36, 0xfa, 0x8d, 0xa7, 0xf0,
-	0x44, 0xb6, 0x47, 0x2b, 0x20, 0x03, 0x12, 0x10, 0x71, 0xa9, 0x2e, 0x3c, 0x5f, 0xdb, 0xf1, 0xd0,
-	0xf7, 0x90, 0x21, 0x43, 0x9b, 0xba, 0xd1, 0x30, 0x94, 0x1e, 0x45, 0xaa, 0x74, 0x01, 0xae, 0x95,
-	0x88, 0x54, 0x49, 0x49, 0x88, 0x8a, 0x68, 0xb3, 0xae, 0x19, 0x39, 0x51, 0xaf, 0xa1, 0xb8, 0x59,
-	0x8f, 0xca, 0x90, 0x9e, 0x0b, 0xe6, 0x63, 0x0c, 0x66, 0x90, 0xd1, 0x47, 0x2f, 0x21, 0x2b, 0xd4,
-	0xd4, 0xbb, 0xb1, 0x5c, 0xca, 0x78, 0xd8, 0xeb, 0x52, 0x38, 0x13, 0x81, 0x6d, 0x81, 0xd5, 0x7e,
-	0x55, 0xa0, 0xb8, 0x66, 0x62, 0xf5, 0xc2, 0x09, 0x8b, 0x5c, 0xf8, 0xe4, 0xcc, 0x67, 0x7c, 0xdd,
-	0xf4, 0x7c, 0xb6, 0x6e, 0xd2, 0x15, 0xd7, 0xa2, 0xea, 0xe1, 0xcf, 0x7f, 0xff, 0xf7, 0x5b, 0xbc,
-	0xac, 0x16, 0x17, 0xbf, 0x0d, 0xac, 0xba, 0xf2, 0xdf, 0xc0, 0xbe, 0x51, 0xbe, 0x68, 0x68, 0x7f,
-	0xde, 0x97, 0x94, 0xbf, 0xee, 0x4b, 0xca, 0x3f, 0xf7, 0x25, 0xe5, 0xf7, 0x7f, 0x4b, 0x31, 0x28,
-	0x50, 0x5f, 0x63, 0xdc, 0x76, 0xee, 0x02, 0xff, 0x43, 0xd8, 0xac, 0x34, 0x7b, 0x44, 0xb5, 0x49,
-	0xed, 0xc7, 0xf8, 0xa4, 0xf6, 0x3e, 0x76, 0xbd, 0x23, 0xb1, 0x37, 0xff, 0x07, 0x00, 0x00, 0xff,
-	0xff, 0x17, 0xc8, 0x15, 0xec, 0x93, 0x08, 0x00, 0x00,
+	// 1315 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x94, 0x56, 0xdb, 0x6e, 0xdb, 0x46,
+	0x13, 0x16, 0x25, 0xcb, 0x96, 0x47, 0xb2, 0x22, 0xaf, 0x73, 0x90, 0xf5, 0xe7, 0x97, 0x14, 0x26,
+	0x69, 0x9c, 0x00, 0x95, 0x01, 0x36, 0x48, 0x4f, 0x40, 0x01, 0x1d, 0x98, 0x8a, 0x88, 0x2c, 0xb9,
+	0x14, 0x1d, 0x27, 0xbd, 0x21, 0x68, 0x6a, 0x65, 0x2f, 0x4c, 0x91, 0x2c, 0x97, 0x52, 0x22, 0x14,
+	0xbd, 0xe9, 0x13, 0x14, 0x68, 0x2f, 0xfa, 0x1e, 0xbd, 0xec, 0x0b, 0x14, 0xe8, 0x4d, 0x81, 0xf6,
+	0x01, 0x8a, 0xb4, 0x0f, 0x52, 0xec, 0x92, 0x92, 0xa8, 0x86, 0x8c, 0xd1, 0xbb, 0xdd, 0x99, 0xf9,
+	0xe6, 0xdb, 0x39, 0xec, 0xec, 0xc2, 0x43, 0xc3, 0x25, 0x87, 0x33, 0xe9, 0xd0, 0xc3, 0xae, 0xe3,
+	0xf9, 0xba, 0xe9, 0xd8, 0x63, 0x72, 0x3e, 0xf5, 0x0c, 0x9f, 0x38, 0xb6, 0x4e, 0xb1, 0x37, 0x23,
+	0x26, 0x6e, 0xb8, 0x9e, 0xe3, 0x3b, 0x28, 0x3d, 0x93, 0x2a, 0xb7, 0xcf, 0x1d, 0xe7, 0xdc, 0xc2,
+	0x87, 0x0c, 0x65, 0xd8, 0xb6, 0xe3, 0x73, 0x43, 0x1a, 0x58, 0x54, 0x6a, 0xa1, 0x96, 0xef, 0xce,
+	0xa6, 0xe3, 0x43, 0x9f, 0x4c, 0x30, 0xf5, 0x8d, 0x89, 0x1b, 0x1a, 0xec, 0x85, 0x6c, 0xa6, 0x33,
+	0x99, 0x38, 0x76, 0x28, 0xdc, 0x0f, 0x85, 0x14, 0x1b, 0x9e, 0x79, 0xa1, 0x7f, 0x35, 0xc5, 0xde,
+	0x3c, 0x50, 0x89, 0x3f, 0x65, 0x60, 0x4f, 0xe5, 0x27, 0x6b, 0x47, 0x0f, 0x86, 0x8a, 0x90, 0x26,
+	0xa3, 0xb2, 0x50, 0x17, 0x0e, 0xb6, 0xd5, 0x34, 0x19, 0x21, 0x04, 0x1b, 0xb6, 0x31, 0xc1, 0xe5,
+	0x34, 0x97, 0xf0, 0x35, 0xaa, 0x43, 0x7e, 0x84, 0xa9, 0xe9, 0x11, 0x97, 0x41, 0xca, 0x19, 0xae,
+	0x8a, 0x8a, 0xd0, 0x13, 0xd8, 0xf0, 0xe7, 0x2e, 0x2e, 0x6f, 0xd4, 0x85, 0x83, 0xa2, 0x24, 0x36,
+	0x66, 0x52, 0x23, 0x86, 0x2c, 0x94, 0x69, 0x73, 0x17, 0xab, 0xdc, 0x1e, 0x1d, 0xc3, 0xde, 0x6c,
+	0x6a, 0xd9, 0x7a, 0x98, 0xb3, 0x31, 0xb1, 0x7c, 0xec, 0xd1, 0x72, 0xb6, 0x2e, 0x1c, 0xe4, 0xa5,
+	0x2a, 0x73, 0xf3, 0x7c, 0x6a, 0xd9, 0xd8, 0x33, 0xce, 0x88, 0x45, 0xfc, 0x79, 0x80, 0x7f, 0x1a,
+	0x58, 0x75, 0x53, 0xea, 0x2e, 0x03, 0xaf, 0x09, 0x51, 0x03, 0x72, 0xd4, 0xbc, 0xc0, 0xa3, 0xa9,
+	0x85, 0xcb, 0x9b, 0xdc, 0x0d, 0x5a, 0x9d, 0x66, 0x18, 0x6a, 0xd4, 0xa5, 0x0d, 0xfa, 0x08, 0x8a,
+	0x1e, 0xa6, 0xce, 0xd4, 0x33, 0xb1, 0x4e, 0x4d, 0xc7, 0xc5, 0xe5, 0x2d, 0x8e, 0xda, 0x0d, 0x50,
+	0x81, 0x66, 0xc8, 0x14, 0xea, 0x8e, 0x17, 0xdd, 0xa2, 0x0f, 0x61, 0xdb, 0x76, 0x7c, 0x32, 0x26,
+	0xec, 0xc4, 0xb9, 0x7a, 0xe6, 0x20, 0x2f, 0xed, 0x33, 0x50, 0x3f, 0x14, 0xae, 0x85, 0xae, 0xae,
+	0x6c, 0xc5, 0x1a, 0xc0, 0x2a, 0x11, 0x68, 0x17, 0x76, 0x9e, 0x9f, 0xf4, 0xfa, 0xb2, 0xda, 0x6c,
+	0x29, 0x3d, 0x45, 0x7b, 0x59, 0x4a, 0xb5, 0x72, 0xb0, 0x19, 0x64, 0x42, 0xfc, 0x23, 0x0b, 0x95,
+	0xe4, 0x0c, 0x20, 0x05, 0x60, 0x4c, 0x5e, 0x87, 0x2a, 0x5e, 0xc4, 0xa2, 0xf4, 0xf0, 0xdd, 0x59,
+	0x6b, 0x3c, 0x5d, 0x02, 0xd4, 0x08, 0x18, 0x69, 0x00, 0x14, 0xcf, 0xb0, 0x47, 0x7c, 0x82, 0x69,
+	0x39, 0x5d, 0xcf, 0x1c, 0x14, 0xa5, 0xc7, 0x57, 0xb8, 0x5a, 0x53, 0x0d, 0x03, 0xf4, 0x5c, 0x8d,
+	0xf8, 0x41, 0x0a, 0xe4, 0xc9, 0xc4, 0x38, 0xc7, 0x3a, 0xab, 0x36, 0x2d, 0x67, 0xb8, 0xdb, 0x83,
+	0x2b, 0xdc, 0x2a, 0x0c, 0xc1, 0x9b, 0x04, 0xc8, 0x62, 0x49, 0xd1, 0xff, 0x20, 0x67, 0x58, 0x96,
+	0xce, 0x2a, 0xce, 0xdb, 0x2c, 0xd7, 0x4d, 0xa9, 0x5b, 0x86, 0x65, 0x31, 0x47, 0xe8, 0x09, 0xdc,
+	0xb4, 0x0c, 0xea, 0xeb, 0x74, 0x6a, 0x9a, 0x98, 0xd2, 0xf1, 0xd4, 0x0a, 0x5b, 0x8a, 0xb7, 0x12,
+	0x33, 0xbd, 0xce, 0xf4, 0xc3, 0xa5, 0x3a, 0x60, 0x44, 0x9f, 0x02, 0x50, 0xdf, 0xf0, 0x7c, 0x7d,
+	0x64, 0xf8, 0x8b, 0x7e, 0xa9, 0x34, 0x82, 0xbb, 0xd7, 0x58, 0xdc, 0xbd, 0x86, 0xb6, 0xb8, 0x7b,
+	0xdd, 0x94, 0xba, 0xcd, 0xed, 0x3b, 0x86, 0x8f, 0xc5, 0xc7, 0x00, 0xab, 0x64, 0xa2, 0x1c, 0x6c,
+	0xb4, 0x06, 0x5a, 0xb7, 0x94, 0x42, 0x79, 0xd8, 0x7a, 0xaa, 0xbc, 0x68, 0xb6, 0x7a, 0x72, 0x49,
+	0x40, 0xd7, 0x20, 0xdf, 0x1f, 0x68, 0xfa, 0x42, 0x90, 0x16, 0x7f, 0x15, 0xe0, 0x46, 0x6c, 0xe2,
+	0x90, 0x08, 0xd5, 0x93, 0xfe, 0xb3, 0xfe, 0xe0, 0xb4, 0xaf, 0xaf, 0x75, 0x84, 0x3e, 0x94, 0x9f,
+	0xcb, 0x2a, 0x6f, 0x0d, 0x54, 0x85, 0x4a, 0x6f, 0x70, 0x9a, 0xa4, 0x17, 0xd0, 0x5d, 0xa8, 0x1d,
+	0x0d, 0x3a, 0xb2, 0xda, 0xd4, 0xe4, 0x24, 0xa3, 0x34, 0xba, 0x07, 0x75, 0xe5, 0xe8, 0x78, 0xa0,
+	0x6a, 0xcd, 0xbe, 0x96, 0x64, 0x95, 0x61, 0xae, 0xda, 0xaa, 0xa2, 0x29, 0xed, 0x66, 0x2f, 0xc9,
+	0x68, 0x43, 0x7c, 0x0f, 0xb6, 0x97, 0xe5, 0x42, 0x05, 0xc8, 0x75, 0xe4, 0xe3, 0xde, 0xe0, 0xa5,
+	0xdc, 0x09, 0xd2, 0x70, 0xda, 0xd4, 0xda, 0x5d, 0xb9, 0x53, 0x12, 0x5a, 0x05, 0x00, 0x73, 0x86,
+	0xa9, 0x4e, 0x89, 0x6d, 0x62, 0xf1, 0xbb, 0x0c, 0x14, 0xd7, 0x6f, 0x24, 0xea, 0xc0, 0x0e, 0xb1,
+	0x7d, 0xec, 0xcd, 0x0c, 0x8b, 0x37, 0x4b, 0xd8, 0xcd, 0xb5, 0xb7, 0x2f, 0x6f, 0x43, 0x09, 0xed,
+	0x78, 0x8b, 0x14, 0x48, 0x64, 0xc7, 0xa6, 0xd7, 0x85, 0x33, 0xf5, 0xf8, 0xf4, 0xca, 0xaa, 0x7c,
+	0x8d, 0x6e, 0xc2, 0xe6, 0x84, 0xd8, 0x53, 0x1f, 0xf3, 0xc1, 0x95, 0x55, 0xc3, 0x1d, 0x6a, 0x42,
+	0x61, 0x64, 0xcc, 0xa9, 0xee, 0x8c, 0xf5, 0x57, 0x18, 0x5f, 0xf2, 0xa6, 0xca, 0x4b, 0xff, 0x8f,
+	0x21, 0xec, 0x18, 0x73, 0x3a, 0x18, 0x9f, 0x62, 0x7c, 0xd9, 0x4d, 0xa9, 0x30, 0x5a, 0xee, 0xd8,
+	0xa1, 0x17, 0x2e, 0x26, 0x8e, 0xed, 0x5f, 0x44, 0x07, 0x57, 0xac, 0x8f, 0x23, 0x66, 0xd5, 0x4d,
+	0xa9, 0xf9, 0xd1, 0x6a, 0x5b, 0xa9, 0x03, 0xac, 0x18, 0x58, 0x08, 0x4c, 0x59, 0x16, 0xea, 0x19,
+	0x16, 0x02, 0x5b, 0x57, 0xee, 0x40, 0x3e, 0x82, 0x8f, 0x33, 0x11, 0x25, 0x28, 0x44, 0xf3, 0x82,
+	0xb6, 0x21, 0x7b, 0xd2, 0x1f, 0xca, 0x5a, 0x29, 0x85, 0x00, 0x36, 0x4f, 0x65, 0xf9, 0x59, 0x8f,
+	0xf5, 0x47, 0x1e, 0xb6, 0x8e, 0x06, 0x7d, 0xad, 0xdb, 0x7b, 0x59, 0x4a, 0xb7, 0x00, 0x72, 0x0b,
+	0x8c, 0x78, 0x01, 0x3b, 0x6b, 0xd3, 0x0e, 0x75, 0xa0, 0x64, 0x3a, 0x96, 0x85, 0xcd, 0xe0, 0xfd,
+	0xe2, 0xa3, 0x51, 0xe0, 0xe1, 0xdd, 0x62, 0xe1, 0xb5, 0x97, 0x3a, 0x15, 0x8f, 0xb1, 0x87, 0x6d,
+	0x13, 0x77, 0x53, 0xea, 0xb5, 0x15, 0x84, 0x7b, 0x69, 0xed, 0xc2, 0x35, 0x0e, 0xd5, 0xbd, 0x85,
+	0x95, 0x68, 0xc2, 0x5e, 0x0c, 0x18, 0xdd, 0x85, 0x9d, 0x08, 0xdf, 0xf2, 0x4d, 0x2a, 0xac, 0x84,
+	0xca, 0x08, 0x3d, 0x80, 0x08, 0x83, 0x1e, 0x79, 0xa8, 0x8a, 0x2b, 0x71, 0xdf, 0x98, 0x60, 0xf1,
+	0x07, 0x01, 0x6e, 0xc4, 0x0e, 0x62, 0xd4, 0x86, 0x02, 0x9e, 0x18, 0xc4, 0x0a, 0x1f, 0xe8, 0x30,
+	0x26, 0x5e, 0x32, 0x99, 0xc9, 0x63, 0x51, 0xac, 0x64, 0x1c, 0x15, 0x48, 0xd9, 0x61, 0x17, 0xf3,
+	0x3c, 0x7a, 0x8a, 0xc2, 0x42, 0xc8, 0xce, 0xc0, 0x62, 0x5f, 0x1a, 0x05, 0x64, 0xe2, 0x19, 0x54,
+	0x92, 0x49, 0x50, 0x0d, 0xf2, 0x4b, 0xc0, 0x32, 0x01, 0xb0, 0x10, 0x29, 0x23, 0x46, 0xcb, 0xd0,
+	0xc4, 0x3e, 0xd7, 0x2d, 0x42, 0xfd, 0x60, 0x4e, 0x6f, 0xab, 0x85, 0x50, 0xd8, 0x63, 0x32, 0xd1,
+	0x80, 0xda, 0xe7, 0xd8, 0x8f, 0x79, 0x7e, 0xa9, 0x8a, 0xa9, 0xeb, 0xd8, 0x14, 0xa3, 0xcf, 0xd8,
+	0xa3, 0x17, 0xf9, 0xa5, 0x04, 0xad, 0x14, 0x56, 0x36, 0x06, 0xc9, 0x9e, 0xbe, 0x95, 0x90, 0x8a,
+	0x1f, 0xc3, 0x9d, 0xb6, 0x33, 0xb5, 0xdf, 0x4d, 0x72, 0x1d, 0xb2, 0x26, 0x33, 0xe2, 0x71, 0x64,
+	0xd5, 0x60, 0x23, 0xfd, 0x9c, 0x85, 0x4a, 0x0c, 0x6c, 0x18, 0xfc, 0x8f, 0x90, 0x07, 0xb7, 0x8e,
+	0x1d, 0x1a, 0xe7, 0x18, 0x25, 0x1d, 0xae, 0x92, 0xa4, 0x10, 0xef, 0x7f, 0xfb, 0xfb, 0xdf, 0xdf,
+	0xa7, 0x6b, 0x62, 0x65, 0xf5, 0x2d, 0xa3, 0x87, 0x6b, 0xff, 0x32, 0xfa, 0x89, 0xf0, 0x08, 0x5d,
+	0xc2, 0xfe, 0x89, 0xcb, 0x1e, 0x80, 0xff, 0xc4, 0xba, 0x1d, 0x74, 0x8c, 0xeb, 0xcf, 0xc5, 0x47,
+	0x9c, 0xe7, 0x5e, 0xa5, 0x96, 0xcc, 0x73, 0xf8, 0x35, 0x19, 0x7d, 0xc3, 0xc8, 0x5c, 0xb8, 0x95,
+	0x50, 0x1d, 0x54, 0xe0, 0x54, 0xc6, 0xab, 0x2f, 0xd8, 0xb7, 0xad, 0x72, 0x97, 0xed, 0xae, 0x28,
+	0xa4, 0x28, 0x72, 0xe6, 0xdb, 0xe8, 0x1d, 0x11, 0xa2, 0x39, 0xec, 0x27, 0x16, 0xeb, 0x5f, 0x9c,
+	0xf7, 0x83, 0x9b, 0x7d, 0x45, 0x65, 0xc5, 0x07, 0x9c, 0xf5, 0x0e, 0x4a, 0x8e, 0xf7, 0x7d, 0x5e,
+	0x6c, 0x64, 0xc1, 0xcd, 0xf8, 0x08, 0x50, 0x29, 0xfa, 0xbd, 0x6a, 0xcd, 0x95, 0x4e, 0x72, 0x15,
+	0xaf, 0x66, 0x0b, 0xb2, 0x8b, 0x0c, 0xd8, 0xef, 0x60, 0x0b, 0xc7, 0xd7, 0xf1, 0x6d, 0xc2, 0x48,
+	0x01, 0x43, 0x8a, 0x47, 0x57, 0x51, 0xb4, 0x1a, 0xbf, 0xbc, 0xa9, 0x0a, 0xbf, 0xbd, 0xa9, 0x0a,
+	0x7f, 0xbe, 0xa9, 0x0a, 0x3f, 0xfe, 0x55, 0x4d, 0x41, 0x99, 0x38, 0x0d, 0xea, 0x1b, 0xe6, 0xa5,
+	0xe7, 0xbc, 0x0e, 0x7e, 0x0c, 0x0d, 0xc3, 0x25, 0x8d, 0x99, 0xf4, 0x65, 0x7a, 0x26, 0xbd, 0x48,
+	0x9d, 0x6d, 0x72, 0xd9, 0x07, 0xff, 0x04, 0x00, 0x00, 0xff, 0xff, 0x9b, 0x26, 0xe8, 0x0c, 0x1e,
+	0x0c, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -1169,6 +1389,16 @@ const _ = grpc.SupportPackageIsVersion6
 type ReportConfigurationServiceClient interface {
 	// PostReportConfiguration creates a report configuration
 	PostReportConfiguration(ctx context.Context, in *ReportConfiguration, opts ...grpc.CallOption) (*ReportConfiguration, error)
+	// UpdateReportConfiguration updates a report configuration
+	UpdateReportConfiguration(ctx context.Context, in *ReportConfiguration, opts ...grpc.CallOption) (*Empty, error)
+	// ListReportConfigurations returns report configurations matching given query
+	GetReportConfigurations(ctx context.Context, in *RawQuery, opts ...grpc.CallOption) (*GetReportConfigurationsResponse, error)
+	// CountReportConfigurations returns the number of report configurations.
+	CountReportConfigurations(ctx context.Context, in *RawQuery, opts ...grpc.CallOption) (*CountReportConfigurationsResponse, error)
+	// GetReportConfiguration returns the report configuration with given ID
+	GetReportConfiguration(ctx context.Context, in *ResourceByID, opts ...grpc.CallOption) (*ReportConfiguration, error)
+	// DeleteReportConfiguration removes the report configuration with given ID
+	DeleteReportConfiguration(ctx context.Context, in *ResourceByID, opts ...grpc.CallOption) (*Empty, error)
 }
 
 type reportConfigurationServiceClient struct {
@@ -1181,7 +1411,52 @@ func NewReportConfigurationServiceClient(cc grpc.ClientConnInterface) ReportConf
 
 func (c *reportConfigurationServiceClient) PostReportConfiguration(ctx context.Context, in *ReportConfiguration, opts ...grpc.CallOption) (*ReportConfiguration, error) {
 	out := new(ReportConfiguration)
-	err := c.cc.Invoke(ctx, "/ReportConfigurationService/PostReportConfiguration", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/v2.ReportConfigurationService/PostReportConfiguration", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *reportConfigurationServiceClient) UpdateReportConfiguration(ctx context.Context, in *ReportConfiguration, opts ...grpc.CallOption) (*Empty, error) {
+	out := new(Empty)
+	err := c.cc.Invoke(ctx, "/v2.ReportConfigurationService/UpdateReportConfiguration", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *reportConfigurationServiceClient) GetReportConfigurations(ctx context.Context, in *RawQuery, opts ...grpc.CallOption) (*GetReportConfigurationsResponse, error) {
+	out := new(GetReportConfigurationsResponse)
+	err := c.cc.Invoke(ctx, "/v2.ReportConfigurationService/GetReportConfigurations", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *reportConfigurationServiceClient) CountReportConfigurations(ctx context.Context, in *RawQuery, opts ...grpc.CallOption) (*CountReportConfigurationsResponse, error) {
+	out := new(CountReportConfigurationsResponse)
+	err := c.cc.Invoke(ctx, "/v2.ReportConfigurationService/CountReportConfigurations", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *reportConfigurationServiceClient) GetReportConfiguration(ctx context.Context, in *ResourceByID, opts ...grpc.CallOption) (*ReportConfiguration, error) {
+	out := new(ReportConfiguration)
+	err := c.cc.Invoke(ctx, "/v2.ReportConfigurationService/GetReportConfiguration", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *reportConfigurationServiceClient) DeleteReportConfiguration(ctx context.Context, in *ResourceByID, opts ...grpc.CallOption) (*Empty, error) {
+	out := new(Empty)
+	err := c.cc.Invoke(ctx, "/v2.ReportConfigurationService/DeleteReportConfiguration", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -1192,6 +1467,16 @@ func (c *reportConfigurationServiceClient) PostReportConfiguration(ctx context.C
 type ReportConfigurationServiceServer interface {
 	// PostReportConfiguration creates a report configuration
 	PostReportConfiguration(context.Context, *ReportConfiguration) (*ReportConfiguration, error)
+	// UpdateReportConfiguration updates a report configuration
+	UpdateReportConfiguration(context.Context, *ReportConfiguration) (*Empty, error)
+	// ListReportConfigurations returns report configurations matching given query
+	GetReportConfigurations(context.Context, *RawQuery) (*GetReportConfigurationsResponse, error)
+	// CountReportConfigurations returns the number of report configurations.
+	CountReportConfigurations(context.Context, *RawQuery) (*CountReportConfigurationsResponse, error)
+	// GetReportConfiguration returns the report configuration with given ID
+	GetReportConfiguration(context.Context, *ResourceByID) (*ReportConfiguration, error)
+	// DeleteReportConfiguration removes the report configuration with given ID
+	DeleteReportConfiguration(context.Context, *ResourceByID) (*Empty, error)
 }
 
 // UnimplementedReportConfigurationServiceServer can be embedded to have forward compatible implementations.
@@ -1200,6 +1485,21 @@ type UnimplementedReportConfigurationServiceServer struct {
 
 func (*UnimplementedReportConfigurationServiceServer) PostReportConfiguration(ctx context.Context, req *ReportConfiguration) (*ReportConfiguration, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method PostReportConfiguration not implemented")
+}
+func (*UnimplementedReportConfigurationServiceServer) UpdateReportConfiguration(ctx context.Context, req *ReportConfiguration) (*Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateReportConfiguration not implemented")
+}
+func (*UnimplementedReportConfigurationServiceServer) GetReportConfigurations(ctx context.Context, req *RawQuery) (*GetReportConfigurationsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetReportConfigurations not implemented")
+}
+func (*UnimplementedReportConfigurationServiceServer) CountReportConfigurations(ctx context.Context, req *RawQuery) (*CountReportConfigurationsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CountReportConfigurations not implemented")
+}
+func (*UnimplementedReportConfigurationServiceServer) GetReportConfiguration(ctx context.Context, req *ResourceByID) (*ReportConfiguration, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetReportConfiguration not implemented")
+}
+func (*UnimplementedReportConfigurationServiceServer) DeleteReportConfiguration(ctx context.Context, req *ResourceByID) (*Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteReportConfiguration not implemented")
 }
 
 func RegisterReportConfigurationServiceServer(s *grpc.Server, srv ReportConfigurationServiceServer) {
@@ -1216,7 +1516,7 @@ func _ReportConfigurationService_PostReportConfiguration_Handler(srv interface{}
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ReportConfigurationService/PostReportConfiguration",
+		FullMethod: "/v2.ReportConfigurationService/PostReportConfiguration",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(ReportConfigurationServiceServer).PostReportConfiguration(ctx, req.(*ReportConfiguration))
@@ -1224,13 +1524,123 @@ func _ReportConfigurationService_PostReportConfiguration_Handler(srv interface{}
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ReportConfigurationService_UpdateReportConfiguration_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ReportConfiguration)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ReportConfigurationServiceServer).UpdateReportConfiguration(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/v2.ReportConfigurationService/UpdateReportConfiguration",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ReportConfigurationServiceServer).UpdateReportConfiguration(ctx, req.(*ReportConfiguration))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ReportConfigurationService_GetReportConfigurations_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RawQuery)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ReportConfigurationServiceServer).GetReportConfigurations(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/v2.ReportConfigurationService/GetReportConfigurations",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ReportConfigurationServiceServer).GetReportConfigurations(ctx, req.(*RawQuery))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ReportConfigurationService_CountReportConfigurations_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RawQuery)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ReportConfigurationServiceServer).CountReportConfigurations(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/v2.ReportConfigurationService/CountReportConfigurations",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ReportConfigurationServiceServer).CountReportConfigurations(ctx, req.(*RawQuery))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ReportConfigurationService_GetReportConfiguration_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ResourceByID)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ReportConfigurationServiceServer).GetReportConfiguration(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/v2.ReportConfigurationService/GetReportConfiguration",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ReportConfigurationServiceServer).GetReportConfiguration(ctx, req.(*ResourceByID))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ReportConfigurationService_DeleteReportConfiguration_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ResourceByID)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ReportConfigurationServiceServer).DeleteReportConfiguration(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/v2.ReportConfigurationService/DeleteReportConfiguration",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ReportConfigurationServiceServer).DeleteReportConfiguration(ctx, req.(*ResourceByID))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var _ReportConfigurationService_serviceDesc = grpc.ServiceDesc{
-	ServiceName: "ReportConfigurationService",
+	ServiceName: "v2.ReportConfigurationService",
 	HandlerType: (*ReportConfigurationServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
 			MethodName: "PostReportConfiguration",
 			Handler:    _ReportConfigurationService_PostReportConfiguration_Handler,
+		},
+		{
+			MethodName: "UpdateReportConfiguration",
+			Handler:    _ReportConfigurationService_UpdateReportConfiguration_Handler,
+		},
+		{
+			MethodName: "GetReportConfigurations",
+			Handler:    _ReportConfigurationService_GetReportConfigurations_Handler,
+		},
+		{
+			MethodName: "CountReportConfigurations",
+			Handler:    _ReportConfigurationService_CountReportConfigurations_Handler,
+		},
+		{
+			MethodName: "GetReportConfiguration",
+			Handler:    _ReportConfigurationService_GetReportConfiguration_Handler,
+		},
+		{
+			MethodName: "DeleteReportConfiguration",
+			Handler:    _ReportConfigurationService_DeleteReportConfiguration_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
@@ -1711,20 +2121,68 @@ func (m *ResourceScope) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
-func (m *ResourceScope_CollectionId) MarshalTo(dAtA []byte) (int, error) {
+func (m *ResourceScope_CollectionScope) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *ResourceScope_CollectionId) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *ResourceScope_CollectionScope) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
-	i -= len(m.CollectionId)
-	copy(dAtA[i:], m.CollectionId)
-	i = encodeVarintReportConfigurationService(dAtA, i, uint64(len(m.CollectionId)))
-	i--
-	dAtA[i] = 0xa
+	if m.CollectionScope != nil {
+		{
+			size, err := m.CollectionScope.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintReportConfigurationService(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0xa
+	}
 	return len(dAtA) - i, nil
 }
+func (m *CollectionReference) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *CollectionReference) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *CollectionReference) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.XXX_unrecognized != nil {
+		i -= len(m.XXX_unrecognized)
+		copy(dAtA[i:], m.XXX_unrecognized)
+	}
+	if len(m.CollectionName) > 0 {
+		i -= len(m.CollectionName)
+		copy(dAtA[i:], m.CollectionName)
+		i = encodeVarintReportConfigurationService(dAtA, i, uint64(len(m.CollectionName)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.CollectionId) > 0 {
+		i -= len(m.CollectionId)
+		copy(dAtA[i:], m.CollectionId)
+		i = encodeVarintReportConfigurationService(dAtA, i, uint64(len(m.CollectionId)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
 func (m *NotifierConfiguration) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
@@ -1748,6 +2206,13 @@ func (m *NotifierConfiguration) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	if m.XXX_unrecognized != nil {
 		i -= len(m.XXX_unrecognized)
 		copy(dAtA[i:], m.XXX_unrecognized)
+	}
+	if len(m.NotifierName) > 0 {
+		i -= len(m.NotifierName)
+		copy(dAtA[i:], m.NotifierName)
+		i = encodeVarintReportConfigurationService(dAtA, i, uint64(len(m.NotifierName)))
+		i--
+		dAtA[i] = 0x12
 	}
 	if m.NotifierConfig != nil {
 		{
@@ -1821,6 +2286,79 @@ func (m *EmailNotifierConfiguration) MarshalToSizedBuffer(dAtA []byte) (int, err
 		i = encodeVarintReportConfigurationService(dAtA, i, uint64(len(m.NotifierId)))
 		i--
 		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *GetReportConfigurationsResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *GetReportConfigurationsResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *GetReportConfigurationsResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.XXX_unrecognized != nil {
+		i -= len(m.XXX_unrecognized)
+		copy(dAtA[i:], m.XXX_unrecognized)
+	}
+	if len(m.ReportConfigs) > 0 {
+		for iNdEx := len(m.ReportConfigs) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.ReportConfigs[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintReportConfigurationService(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0xa
+		}
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *CountReportConfigurationsResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *CountReportConfigurationsResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *CountReportConfigurationsResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.XXX_unrecognized != nil {
+		i -= len(m.XXX_unrecognized)
+		copy(dAtA[i:], m.XXX_unrecognized)
+	}
+	if m.Count != 0 {
+		i = encodeVarintReportConfigurationService(dAtA, i, uint64(m.Count))
+		i--
+		dAtA[i] = 0x8
 	}
 	return len(dAtA) - i, nil
 }
@@ -2055,16 +2593,38 @@ func (m *ResourceScope) Size() (n int) {
 	return n
 }
 
-func (m *ResourceScope_CollectionId) Size() (n int) {
+func (m *ResourceScope_CollectionScope) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.CollectionScope != nil {
+		l = m.CollectionScope.Size()
+		n += 1 + l + sovReportConfigurationService(uint64(l))
+	}
+	return n
+}
+func (m *CollectionReference) Size() (n int) {
 	if m == nil {
 		return 0
 	}
 	var l int
 	_ = l
 	l = len(m.CollectionId)
-	n += 1 + l + sovReportConfigurationService(uint64(l))
+	if l > 0 {
+		n += 1 + l + sovReportConfigurationService(uint64(l))
+	}
+	l = len(m.CollectionName)
+	if l > 0 {
+		n += 1 + l + sovReportConfigurationService(uint64(l))
+	}
+	if m.XXX_unrecognized != nil {
+		n += len(m.XXX_unrecognized)
+	}
 	return n
 }
+
 func (m *NotifierConfiguration) Size() (n int) {
 	if m == nil {
 		return 0
@@ -2073,6 +2633,10 @@ func (m *NotifierConfiguration) Size() (n int) {
 	_ = l
 	if m.NotifierConfig != nil {
 		n += m.NotifierConfig.Size()
+	}
+	l = len(m.NotifierName)
+	if l > 0 {
+		n += 1 + l + sovReportConfigurationService(uint64(l))
 	}
 	if m.XXX_unrecognized != nil {
 		n += len(m.XXX_unrecognized)
@@ -2107,6 +2671,39 @@ func (m *EmailNotifierConfiguration) Size() (n int) {
 			l = len(s)
 			n += 1 + l + sovReportConfigurationService(uint64(l))
 		}
+	}
+	if m.XXX_unrecognized != nil {
+		n += len(m.XXX_unrecognized)
+	}
+	return n
+}
+
+func (m *GetReportConfigurationsResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if len(m.ReportConfigs) > 0 {
+		for _, e := range m.ReportConfigs {
+			l = e.Size()
+			n += 1 + l + sovReportConfigurationService(uint64(l))
+		}
+	}
+	if m.XXX_unrecognized != nil {
+		n += len(m.XXX_unrecognized)
+	}
+	return n
+}
+
+func (m *CountReportConfigurationsResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.Count != 0 {
+		n += 1 + sovReportConfigurationService(uint64(m.Count))
 	}
 	if m.XXX_unrecognized != nil {
 		n += len(m.XXX_unrecognized)
@@ -3175,6 +3772,92 @@ func (m *ResourceScope) Unmarshal(dAtA []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field CollectionScope", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowReportConfigurationService
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthReportConfigurationService
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthReportConfigurationService
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			v := &CollectionReference{}
+			if err := v.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			m.ScopeReference = &ResourceScope_CollectionScope{v}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipReportConfigurationService(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthReportConfigurationService
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.XXX_unrecognized = append(m.XXX_unrecognized, dAtA[iNdEx:iNdEx+skippy]...)
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *CollectionReference) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowReportConfigurationService
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: CollectionReference: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: CollectionReference: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field CollectionId", wireType)
 			}
 			var stringLen uint64
@@ -3203,7 +3886,39 @@ func (m *ResourceScope) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.ScopeReference = &ResourceScope_CollectionId{string(dAtA[iNdEx:postIndex])}
+			m.CollectionId = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field CollectionName", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowReportConfigurationService
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthReportConfigurationService
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthReportConfigurationService
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.CollectionName = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
@@ -3290,6 +4005,38 @@ func (m *NotifierConfiguration) Unmarshal(dAtA []byte) error {
 				return err
 			}
 			m.NotifierConfig = &NotifierConfiguration_EmailConfig{v}
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field NotifierName", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowReportConfigurationService
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthReportConfigurationService
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthReportConfigurationService
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.NotifierName = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
@@ -3406,6 +4153,161 @@ func (m *EmailNotifierConfiguration) Unmarshal(dAtA []byte) error {
 			}
 			m.MailingLists = append(m.MailingLists, string(dAtA[iNdEx:postIndex]))
 			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipReportConfigurationService(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthReportConfigurationService
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.XXX_unrecognized = append(m.XXX_unrecognized, dAtA[iNdEx:iNdEx+skippy]...)
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *GetReportConfigurationsResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowReportConfigurationService
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: GetReportConfigurationsResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: GetReportConfigurationsResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ReportConfigs", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowReportConfigurationService
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthReportConfigurationService
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthReportConfigurationService
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.ReportConfigs = append(m.ReportConfigs, &ReportConfiguration{})
+			if err := m.ReportConfigs[len(m.ReportConfigs)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipReportConfigurationService(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthReportConfigurationService
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.XXX_unrecognized = append(m.XXX_unrecognized, dAtA[iNdEx:iNdEx+skippy]...)
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *CountReportConfigurationsResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowReportConfigurationService
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: CountReportConfigurationsResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: CountReportConfigurationsResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Count", wireType)
+			}
+			m.Count = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowReportConfigurationService
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.Count |= int32(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
 		default:
 			iNdEx = preIndex
 			skippy, err := skipReportConfigurationService(dAtA[iNdEx:])

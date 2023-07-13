@@ -56,14 +56,16 @@ RUN GOOS=$(go env GOOS) GOARCH=$(go env GOARCH) scripts/go-build.sh operator
 # Copy the operator binary to a location from where it will be taken into the final image.
 RUN cp -a bin/$(go env GOOS)_$(go env GOARCH)/operator stackrox-operator
 
-FROM registry.access.redhat.com/ubi8-micro:8.7
+FROM registry.access.redhat.com/ubi8-micro:8.8
 
 ARG roxpath
 
 ARG ROX_IMAGE_FLAVOR
 ENV ROX_IMAGE_FLAVOR=${ROX_IMAGE_FLAVOR}
+ENV MAPKUBEAPIS_MAPFILE=/etc/operator/mapkubeapis/Map.yaml
 
 COPY --from=builder ${roxpath}/stackrox-operator /usr/local/bin/
+COPY --from=builder ${roxpath}/operator/config/mapkubeapis/Map.yaml ${MAPKUBEAPIS_MAPFILE}
 
 # The following are numeric uid and gid of `nobody` user in UBI.
 # We can't use symbolic names because otherwise k8s will fail to start the pod with an error like this:

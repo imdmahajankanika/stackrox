@@ -8,8 +8,8 @@ import (
 	context "context"
 	reflect "reflect"
 
-	gomock "github.com/golang/mock/gomock"
 	storage "github.com/stackrox/rox/generated/storage"
+	gomock "go.uber.org/mock/gomock"
 )
 
 // MockNotifier is a mock of Notifier interface.
@@ -47,20 +47,6 @@ func (m *MockNotifier) Close(arg0 context.Context) error {
 func (mr *MockNotifierMockRecorder) Close(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Close", reflect.TypeOf((*MockNotifier)(nil).Close), arg0)
-}
-
-// IsSecuredClusterNotifier mocks base method.
-func (m *MockNotifier) IsSecuredClusterNotifier() bool {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "IsSecuredClusterNotifier")
-	ret0, _ := ret[0].(bool)
-	return ret0
-}
-
-// IsSecuredClusterNotifier indicates an expected call of IsSecuredClusterNotifier.
-func (mr *MockNotifierMockRecorder) IsSecuredClusterNotifier() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsSecuredClusterNotifier", reflect.TypeOf((*MockNotifier)(nil).IsSecuredClusterNotifier))
 }
 
 // ProtoNotifier mocks base method.

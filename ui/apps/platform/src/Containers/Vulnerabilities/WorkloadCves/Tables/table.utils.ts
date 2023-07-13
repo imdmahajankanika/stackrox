@@ -1,6 +1,6 @@
 import { gql } from '@apollo/client';
+import sortBy from 'lodash/sortBy';
 import { severityRankings } from 'constants/vulnerabilities';
-import { sortBy } from 'lodash';
 import { VulnerabilitySeverity, isVulnerabilitySeverity } from 'types/cve.proto';
 import { ApiSortOption } from 'types/search';
 
@@ -60,7 +60,7 @@ export type ComponentVulnerabilityBase = {
     source: SourceType;
     layerIndex: number | null;
     imageVulnerabilities: {
-        id: string;
+        vulnerabilityId: string;
         severity: string;
         fixedByVersion: string;
     }[];
@@ -73,7 +73,7 @@ export type DeploymentComponentVulnerability = Omit<
     'imageVulnerabilities'
 > & {
     imageVulnerabilities: {
-        id: string;
+        vulnerabilityId: string;
         severity: string;
         cvss: number;
         scoreVersion: string;
@@ -172,7 +172,7 @@ function extractCommonComponentFields(
         }
     }
 
-    const vulnerabilityId = vulnerability?.id ?? 'N/A';
+    const vulnerabilityId = vulnerability?.vulnerabilityId ?? 'N/A';
     const severity =
         vulnerability?.severity && isVulnerabilitySeverity(vulnerability.severity)
             ? vulnerability.severity

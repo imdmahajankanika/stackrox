@@ -1,5 +1,4 @@
 //go:build sql_integration
-// +build sql_integration
 
 package datastore
 
@@ -7,13 +6,11 @@ import (
 	"context"
 	"testing"
 
-	"github.com/golang/mock/gomock"
 	"github.com/stackrox/rox/central/node/datastore/search"
 	pgStore "github.com/stackrox/rox/central/node/datastore/store/postgres"
 	"github.com/stackrox/rox/central/ranking"
 	mockRisks "github.com/stackrox/rox/central/risk/datastore/mocks"
 	"github.com/stackrox/rox/generated/storage"
-	"github.com/stackrox/rox/pkg/env"
 	"github.com/stackrox/rox/pkg/fixtures"
 	"github.com/stackrox/rox/pkg/nodes/converter"
 	"github.com/stackrox/rox/pkg/postgres"
@@ -21,15 +18,10 @@ import (
 	"github.com/stackrox/rox/pkg/sac"
 	"github.com/stackrox/rox/pkg/uuid"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/mock/gomock"
 )
 
 func BenchmarkGetManyNodes(b *testing.B) {
-	b.Setenv(env.PostgresDatastoreEnabled.EnvVar(), "true")
-
-	if !env.PostgresDatastoreEnabled.BooleanSetting() {
-		b.Skip("Skip postgres store tests")
-		b.SkipNow()
-	}
 
 	ctx := sac.WithAllAccess(context.Background())
 
@@ -50,7 +42,7 @@ func BenchmarkGetManyNodes(b *testing.B) {
 	store := pgStore.CreateTableAndNewStore(ctx, b, db, gormDB, false)
 	indexer := pgStore.NewIndexer(db)
 	searcher := search.NewV2(store, indexer)
-	datastore := NewWithPostgres(store, indexer, searcher, mockRisk, ranking.NewRanker(), ranking.NewRanker())
+	datastore := NewWithPostgres(store, searcher, mockRisk, ranking.NewRanker(), ranking.NewRanker())
 
 	ids := make([]string, 0, 100)
 	nodes := make([]*storage.Node, 0, 100)

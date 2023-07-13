@@ -5,6 +5,8 @@ import (
 	"fmt"
 
 	"github.com/pkg/errors"
+	delegatedRegistryConfigConvert "github.com/stackrox/rox/central/delegatedregistryconfig/convert"
+	"github.com/stackrox/rox/central/delegatedregistryconfig/util/imageintegration"
 	hashManager "github.com/stackrox/rox/central/hash/manager"
 	"github.com/stackrox/rox/central/localscanner"
 	"github.com/stackrox/rox/central/metrics"
@@ -15,15 +17,13 @@ import (
 	"github.com/stackrox/rox/central/sensor/service/common"
 	"github.com/stackrox/rox/central/sensor/service/pipeline"
 	"github.com/stackrox/rox/central/sensor/telemetry"
+	v1 "github.com/stackrox/rox/generated/api/v1"
 	"github.com/stackrox/rox/generated/internalapi/central"
 	"github.com/stackrox/rox/generated/storage"
 	"github.com/stackrox/rox/pkg/booleanpolicy/policyversion"
 	"github.com/stackrox/rox/pkg/centralsensor"
 	"github.com/stackrox/rox/pkg/concurrency"
-	"github.com/stackrox/rox/pkg/env"
 	"github.com/stackrox/rox/pkg/logging"
-	"github.com/stackrox/rox/pkg/notifier"
-	pkgNotifiers "github.com/stackrox/rox/pkg/notifiers"
 	"github.com/stackrox/rox/pkg/postgres/pgutils"
 	"github.com/stackrox/rox/pkg/reflectutils"
 	"github.com/stackrox/rox/pkg/sac"
@@ -55,12 +55,13 @@ type sensorConnection struct {
 
 	eventPipeline pipeline.ClusterPipeline
 
-	clusterMgr         common.ClusterManager
-	networkEntityMgr   common.NetworkEntityManager
-	policyMgr          common.PolicyManager
-	baselineMgr        common.ProcessBaselineManager
-	networkBaselineMgr common.NetworkBaselineManager
-	notifierProcessor  notifier.Processor
+	clusterMgr                 common.ClusterManager
+	networkEntityMgr           common.NetworkEntityManager
+	policyMgr                  common.PolicyManager
+	baselineMgr                common.ProcessBaselineManager
+	networkBaselineMgr         common.NetworkBaselineManager
+	delegatedRegistryConfigMgr common.DelegatedRegistryConfigManager
+	imageIntegrationMgr        common.ImageIntegrationManager
 
 	sensorHello  *central.SensorHello
 	capabilities set.Set[centralsensor.SensorCapability]
@@ -75,7 +76,8 @@ func newConnection(ctx context.Context,
 	policyMgr common.PolicyManager,
 	baselineMgr common.ProcessBaselineManager,
 	networkBaselineMgr common.NetworkBaselineManager,
-	notifierProcessor notifier.Processor,
+	delegatedRegistryConfigMgr common.DelegatedRegistryConfigManager,
+	imageIntegrationMgr common.ImageIntegrationManager,
 	hashMgr hashManager.Manager,
 ) *sensorConnection {
 
@@ -86,13 +88,14 @@ func newConnection(ctx context.Context,
 		eventPipeline: eventPipeline,
 		queues:        make(map[string]*dedupingQueue),
 
-		clusterID:          cluster.GetId(),
-		clusterMgr:         clusterMgr,
-		policyMgr:          policyMgr,
-		networkEntityMgr:   networkEntityMgr,
-		baselineMgr:        baselineMgr,
-		networkBaselineMgr: networkBaselineMgr,
-		notifierProcessor:  notifierProcessor,
+		clusterID:                  cluster.GetId(),
+		clusterMgr:                 clusterMgr,
+		policyMgr:                  policyMgr,
+		networkEntityMgr:           networkEntityMgr,
+		baselineMgr:                baselineMgr,
+		networkBaselineMgr:         networkBaselineMgr,
+		delegatedRegistryConfigMgr: delegatedRegistryConfigMgr,
+		imageIntegrationMgr:        imageIntegrationMgr,
 
 		sensorHello:  sensorHello,
 		capabilities: centralsensor.CapSetFromStringSlice(sensorHello.GetCapabilities()...),
@@ -300,25 +303,6 @@ func (c *sensorConnection) processIssueLocalScannerCertsRequest(ctx context.Cont
 	return nil
 }
 
-// getNotifierSyncMsg fetches stored notifiers and prepares them for delivery to sensor.
-func (c *sensorConnection) getNotifierSyncMsg(ctx context.Context) *central.MsgToSensor {
-	return getNotifierSyncMsgFromNotifiers(c.notifierProcessor.GetNotifiers(ctx))
-}
-
-func getNotifierSyncMsgFromNotifiers(notifiers []pkgNotifiers.Notifier) *central.MsgToSensor {
-	var protoNotifiers []*storage.Notifier
-	for _, notifier := range notifiers {
-		protoNotifiers = append(protoNotifiers, notifier.ProtoNotifier())
-	}
-	return &central.MsgToSensor{
-		Msg: &central.MsgToSensor_NotifierSync{
-			NotifierSync: &central.NotifierSync{
-				Notifiers: protoNotifiers,
-			},
-		},
-	}
-}
-
 // getPolicySyncMsg fetches stored policies and prepares them for delivery to sensor.
 func (c *sensorConnection) getPolicySyncMsg(ctx context.Context) (*central.MsgToSensor, error) {
 	policies, err := c.policyMgr.GetAllPolicies(ctx)
@@ -476,6 +460,56 @@ func (c *sensorConnection) getAuditLogSyncMsg(ctx context.Context) (*central.Msg
 	}, nil
 }
 
+func (c *sensorConnection) getDelegatedRegistryConfigMsg(ctx context.Context) (*central.MsgToSensor, error) {
+	config, exists, err := c.delegatedRegistryConfigMgr.GetConfig(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	if !exists {
+		// Sensor's ProcessMessage handler will ignore a nil config, so send nothing
+		log.Debugf("Not sending nil delegated registry config to cluster %q", c.clusterID)
+		return nil, nil
+	}
+
+	return &central.MsgToSensor{
+		Msg: &central.MsgToSensor_DelegatedRegistryConfig{
+			DelegatedRegistryConfig: delegatedRegistryConfigConvert.StorageToInternalAPI(config),
+		},
+	}, nil
+}
+
+// getImageIntegrationMsg builds a MsgToSensor containing registry integrations that should
+// be sent to sensor. Returns nil if are no eligible integrations.
+func (c *sensorConnection) getImageIntegrationMsg(ctx context.Context) (*central.MsgToSensor, error) {
+	iis, err := c.imageIntegrationMgr.GetImageIntegrations(ctx, &v1.GetImageIntegrationsRequest{})
+	if err != nil {
+		return nil, err
+	}
+
+	var imageIntegrations []*storage.ImageIntegration
+	for _, ii := range iis {
+		if !imageintegration.ValidForSync(ii) {
+			continue
+		}
+
+		imageIntegrations = append(imageIntegrations, ii)
+		log.Debugf("Sending registry integration %q (%v) to cluster %q", ii.GetName(), ii.GetId(), c.clusterID)
+	}
+
+	if len(imageIntegrations) == 0 {
+		return nil, nil
+	}
+
+	return &central.MsgToSensor{
+		Msg: &central.MsgToSensor_ImageIntegrations{
+			ImageIntegrations: &central.ImageIntegrations{
+				UpdatedIntegrations: imageIntegrations,
+			},
+		},
+	}, nil
+}
+
 func (c *sensorConnection) Run(ctx context.Context, server central.SensorService_CommunicateServer, connectionCapabilities set.Set[centralsensor.SensorCapability]) error {
 	// Synchronously send the config to ensure syncing before Sensor marks the connection as Central reachable
 	msg, err := c.getClusterConfigMsg(ctx)
@@ -511,15 +545,34 @@ func (c *sensorConnection) Run(ctx context.Context, server central.SensorService
 		if err := server.Send(msg); err != nil {
 			return errors.Wrapf(err, "unable to sync initial network baselines to cluster %q", c.clusterID)
 		}
+
 	}
 
-	if env.SecuredClusterNotifiers.BooleanSetting() && connectionCapabilities.Contains(centralsensor.SecuredClusterNotifications) {
-		msg := c.getNotifierSyncMsg(ctx)
+	if connectionCapabilities.Contains(centralsensor.DelegatedRegistryCap) {
+		// Sync delegated registry config.
+		msg, err := c.getDelegatedRegistryConfigMsg(ctx)
 		if err != nil {
-			return errors.Wrapf(err, "unable to get notifier sync msg for %q", c.clusterID)
+			return errors.Wrapf(err, "unable to get delegated registry config msg for %q", c.clusterID)
 		}
-		if err := server.Send(msg); err != nil {
-			return errors.Wrapf(err, "unable to sync initial notifiers to cluster %q", c.clusterID)
+		if msg != nil {
+			if err := server.Send(msg); err != nil {
+				return errors.Wrapf(err, "unable to sync initial delegated registry config to cluster %q", c.clusterID)
+			}
+
+			log.Infof("Sent delegated registry config %q to cluster %q", msg.GetDelegatedRegistryConfig(), c.clusterID)
+		}
+
+		// Sync integrations.
+		msg, err = c.getImageIntegrationMsg(ctx)
+		if err != nil {
+			return errors.Wrapf(err, "unable to get image integrations msg for %q", c.clusterID)
+		}
+		if msg != nil {
+			if err := server.Send(msg); err != nil {
+				return errors.Wrapf(err, "unable to sync initial image integrations to cluster %q", c.clusterID)
+			}
+
+			log.Infof("Sent %d image integrations to cluster %q", len(msg.GetImageIntegrations().GetUpdatedIntegrations()), c.clusterID)
 		}
 	}
 

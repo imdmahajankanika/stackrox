@@ -2,14 +2,11 @@ package store
 
 import (
 	"github.com/stackrox/rox/central/globaldb"
-	"github.com/stackrox/rox/central/networkpolicies/datastore/internal/store"
-	"github.com/stackrox/rox/central/networkpolicies/datastore/internal/undodeploymentstore"
-	pgStore "github.com/stackrox/rox/central/networkpolicies/datastore/internal/undodeploymentstore/postgres"
-	"github.com/stackrox/rox/central/networkpolicies/datastore/internal/undodeploymentstore/rocksdb"
+	"github.com/stackrox/rox/central/networkpolicies/datastore/internal/search"
+	"github.com/stackrox/rox/central/networkpolicies/datastore/internal/store/postgres"
+	undoPGStore "github.com/stackrox/rox/central/networkpolicies/datastore/internal/undodeploymentstore/postgres"
 	"github.com/stackrox/rox/central/networkpolicies/datastore/internal/undostore"
-	"github.com/stackrox/rox/pkg/env"
 	"github.com/stackrox/rox/pkg/sync"
-	"github.com/stackrox/rox/pkg/utils"
 )
 
 var (
@@ -19,16 +16,11 @@ var (
 )
 
 func initialize() {
-	var undoDeploymentStorage undodeploymentstore.UndoDeploymentStore
-	if env.PostgresDatastoreEnabled.BooleanSetting() {
-		undoDeploymentStorage = pgStore.New(globaldb.GetPostgres())
-	} else {
-		var err error
-		undoDeploymentStorage, err = rocksdb.New(globaldb.GetRocksDB())
-		utils.CrashOnError(err)
-	}
+	undoDeploymentStorage := undoPGStore.New(globaldb.GetPostgres())
+	networkPolicyStorage := postgres.New(globaldb.GetPostgres())
+	networkPolicySearcher := search.New(postgres.NewIndexer(globaldb.GetPostgres()))
 
-	as = New(store.Singleton(), undostore.Singleton(), undoDeploymentStorage)
+	as = New(networkPolicyStorage, networkPolicySearcher, undostore.Singleton(), undoDeploymentStorage)
 }
 
 // Singleton provides the interface for non-service external interaction.

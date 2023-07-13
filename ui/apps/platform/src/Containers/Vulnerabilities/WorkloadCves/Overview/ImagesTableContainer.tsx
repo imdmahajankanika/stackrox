@@ -5,25 +5,31 @@ import { Bullseye, Spinner, Divider } from '@patternfly/react-core';
 import useURLSort from 'hooks/useURLSort';
 import useURLPagination from 'hooks/useURLPagination';
 import useURLSearch from 'hooks/useURLSearch';
-import { getHasSearchApplied, getRequestQueryStringForSearchFilter } from 'utils/searchUtils';
+import { getHasSearchApplied } from 'utils/searchUtils';
 import ImagesTable, { imageListQuery } from '../Tables/ImagesTable';
 import TableErrorComponent from '../components/TableErrorComponent';
 import { EntityCounts } from '../components/EntityTypeToggleGroup';
-import { parseQuerySearchFilter } from '../searchUtils';
+import { getCveStatusScopedQueryString, parseQuerySearchFilter } from '../searchUtils';
 import { defaultImageSortFields, imagesDefaultSort } from '../sortUtils';
-import { DefaultFilters } from '../types';
+import { DefaultFilters, VulnerabilitySeverityLabel, CveStatusTab } from '../types';
 import TableEntityToolbar from '../components/TableEntityToolbar';
 
 type ImagesTableContainerProps = {
     defaultFilters: DefaultFilters;
     countsData: EntityCounts;
+    cveStatusTab?: CveStatusTab; // TODO Make this required once Observed/Deferred/FP states are re-implemented
+    pagination: ReturnType<typeof useURLPagination>;
 };
 
-function ImagesTableContainer({ defaultFilters, countsData }: ImagesTableContainerProps) {
+function ImagesTableContainer({
+    defaultFilters,
+    countsData,
+    cveStatusTab,
+    pagination,
+}: ImagesTableContainerProps) {
     const { searchFilter } = useURLSearch();
     const querySearchFilter = parseQuerySearchFilter(searchFilter);
     const isFiltered = getHasSearchApplied(querySearchFilter);
-    const pagination = useURLPagination(20);
     const { page, perPage, setPage } = pagination;
     const sort = useURLSort({
         sortFields: defaultImageSortFields,
@@ -34,9 +40,7 @@ function ImagesTableContainer({ defaultFilters, countsData }: ImagesTableContain
 
     const { error, loading, data, previousData } = useQuery(imageListQuery, {
         variables: {
-            query: getRequestQueryStringForSearchFilter({
-                ...querySearchFilter,
-            }),
+            query: getCveStatusScopedQueryString(querySearchFilter, cveStatusTab),
             pagination: {
                 offset: (page - 1) * perPage,
                 limit: perPage,
@@ -65,12 +69,13 @@ function ImagesTableContainer({ defaultFilters, countsData }: ImagesTableContain
             {error && (
                 <TableErrorComponent error={error} message="Adjust your filters and try again" />
             )}
-            {tableData && (
+            {!error && tableData && (
                 <div className="workload-cves-table-container">
                     <ImagesTable
                         images={tableData.images}
                         getSortParams={getSortParams}
                         isFiltered={isFiltered}
+                        filteredSeverities={searchFilter.Severity as VulnerabilitySeverityLabel[]}
                     />
                 </div>
             )}

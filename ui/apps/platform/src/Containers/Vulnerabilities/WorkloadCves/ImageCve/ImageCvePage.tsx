@@ -53,10 +53,11 @@ import BySeveritySummaryCard, {
 } from '../SummaryCards/BySeveritySummaryCard';
 import { resourceCountByCveSeverityAndStatusFragment } from '../SummaryCards/CvesByStatusSummaryCard';
 import { Resource } from '../components/FilterResourceDropdown';
+import { VulnerabilitySeverityLabel } from '../types';
 
-const workloadCveOverviewImagePath = getOverviewCvesPath({
+const workloadCveOverviewCvePath = getOverviewCvesPath({
     cveStatusTab: 'Observed',
-    entityTab: 'Image',
+    entityTab: 'CVE',
 });
 
 export const imageCveMetadataQuery = gql`
@@ -281,7 +282,7 @@ function ImageCvePage() {
             />
             <PageSection variant="light" className="pf-u-py-md">
                 <Breadcrumb>
-                    <BreadcrumbItemLink to={workloadCveOverviewImagePath}>CVEs</BreadcrumbItemLink>
+                    <BreadcrumbItemLink to={workloadCveOverviewCvePath}>CVEs</BreadcrumbItemLink>
                     {!metadataRequest.error && (
                         <BreadcrumbItem isActive>
                             {cveName ?? (
@@ -308,7 +309,13 @@ function ImageCvePage() {
             <PageSection className="pf-u-display-flex pf-u-flex-direction-column pf-u-flex-grow-1">
                 <div className="pf-u-background-color-100">
                     <div className="pf-u-px-sm">
-                        <WorkloadTableToolbar supportedResourceFilters={imageCveResourceFilters} />
+                        <WorkloadTableToolbar
+                            supportedResourceFilters={imageCveResourceFilters}
+                            autocompleteSearchContext={{
+                                'CVE ID': cveId,
+                            }}
+                            onFilterChange={() => setPage(1)}
+                        />
                     </div>
                     <div className="pf-u-px-lg pf-u-pb-lg">
                         {summaryRequest.error && (
@@ -326,7 +333,7 @@ function ImageCvePage() {
                                 screenreaderText="Loading image cve summary data"
                             />
                         )}
-                        {summaryRequest.data && (
+                        {!summaryRequest.error && summaryRequest.data && (
                             <Grid hasGutter>
                                 <GridItem sm={12} md={6} xl2={4}>
                                     <AffectedImages
@@ -366,7 +373,6 @@ function ImageCvePage() {
                         </SplitItem>
                         <SplitItem>
                             <Pagination
-                                isCompact
                                 itemCount={tableRowCount}
                                 page={page}
                                 perPage={perPage}
@@ -408,6 +414,9 @@ function ImageCvePage() {
                                                 deployments={deploymentData?.deployments ?? []}
                                                 getSortParams={getSortParams}
                                                 isFiltered={isFiltered}
+                                                filteredSeverities={
+                                                    searchFilter.Severity as VulnerabilitySeverityLabel[]
+                                                }
                                             />
                                         )}
                                     </div>

@@ -47,12 +47,13 @@ function FilterResourceDropdown({
     return (
         <Select
             variant="single"
-            aria-label="resource"
+            toggleAriaLabel="resource filter menu toggle"
+            aria-label="resource filter menu items"
             onToggle={onToggle}
             onSelect={onResourceSelect}
             selections={resource}
             isOpen={isOpen}
-            className="pf-u-flex-none"
+            className="pf-u-flex-basis-0"
         >
             {supportedResourceFilters
                 ? resourceOptions.filter((res) => supportedResourceFilters.has(res.key as Resource))

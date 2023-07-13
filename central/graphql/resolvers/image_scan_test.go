@@ -4,16 +4,15 @@ import (
 	"context"
 	"testing"
 
-	"github.com/golang/mock/gomock"
 	"github.com/graph-gophers/graphql-go"
 	imageCVEsDSMocks "github.com/stackrox/rox/central/cve/image/datastore/mocks"
 	imageDSMocks "github.com/stackrox/rox/central/image/datastore/mocks"
 	imageComponentsDSMocks "github.com/stackrox/rox/central/imagecomponent/datastore/mocks"
 	"github.com/stackrox/rox/generated/storage"
-	"github.com/stackrox/rox/pkg/env"
 	"github.com/stackrox/rox/pkg/fixtures"
 	"github.com/stackrox/rox/pkg/search"
 	"github.com/stretchr/testify/suite"
+	"go.uber.org/mock/gomock"
 )
 
 const (
@@ -60,15 +59,6 @@ type ImageScanResolverTestSuite struct {
 
 	resolver *Resolver
 	schema   *graphql.Schema
-}
-
-func (s *ImageScanResolverTestSuite) SetupSuite() {
-	s.T().Setenv(env.PostgresDatastoreEnabled.EnvVar(), "true")
-
-	if !env.PostgresDatastoreEnabled.BooleanSetting() {
-		s.T().Skip("Skip postgres store tests")
-		s.T().SkipNow()
-	}
 }
 
 func (s *ImageScanResolverTestSuite) SetupTest() {

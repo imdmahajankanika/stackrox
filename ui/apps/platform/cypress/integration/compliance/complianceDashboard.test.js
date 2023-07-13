@@ -10,6 +10,18 @@ import {
 } from './Compliance.helpers';
 import { selectors } from './Compliance.selectors';
 
+function getWidgetSelector(headerText) {
+    return `.widget:has([data-testid="widget-header"]:contains("${headerText}"))`;
+}
+
+function getStandardAcrossEntitiesLink(entityNameOrdinaryCasePlural) {
+    return `${getWidgetSelector(`Passing standards across ${entityNameOrdinaryCasePlural}`)} a`;
+}
+
+function getStandardSunburstControlsLink(standardName) {
+    return `${getWidgetSelector(standardName)} .widget-detail-bullet span:contains("Controls")`;
+}
+
 describe('Compliance Dashboard', () => {
     withAuth();
 
@@ -58,10 +70,10 @@ describe('Compliance Dashboard', () => {
         visitComplianceDashboard();
 
         interactAndWaitForComplianceStandard(() => {
-            cy.get(selectors.widget.passingStandardsAcrossClusters.axisLinks).first().click();
+            cy.get(getStandardAcrossEntitiesLink('clusters')).first().click();
         });
         cy.location('search').should('contain', '?s[groupBy]=CLUSTER'); // followed by a standard
-        cy.get('[data-testid="panel-header"]').contains('CLUSTER');
+        cy.get('[data-testid="panel-header"]').contains('cluster');
         cy.get(selectors.list.table.firstGroup).should('be.visible');
     });
 
@@ -69,10 +81,10 @@ describe('Compliance Dashboard', () => {
         visitComplianceDashboard();
 
         interactAndWaitForComplianceStandard(() => {
-            cy.get(selectors.widget.passingStandardsAcrossNamespaces.axisLinks).first().click();
+            cy.get(getStandardAcrossEntitiesLink('namespaces')).first().click();
         });
         cy.location('search').should('contain', '?s[groupBy]=NAMESPACE'); // followed by a standard
-        cy.get('[data-testid="panel-header"]').contains('NAMESPACE');
+        cy.get('[data-testid="panel-header"]').contains('namespace');
         cy.get(selectors.list.table.firstGroup).should('be.visible');
     });
 
@@ -80,10 +92,10 @@ describe('Compliance Dashboard', () => {
         visitComplianceDashboard();
 
         interactAndWaitForComplianceStandard(() => {
-            cy.get(selectors.widget.passingStandardsAcrossNodes.axisLinks).first().click();
+            cy.get(getStandardAcrossEntitiesLink('nodes')).first().click();
         });
         cy.location('search').should('contain', '?s[groupBy]=NODE'); // followed by a standard
-        cy.get('[data-testid="panel-header"]').contains('NODE');
+        cy.get('[data-testid="panel-header"]').contains('node');
         cy.get(selectors.list.table.firstGroup).should('be.visible');
     });
 
@@ -91,7 +103,7 @@ describe('Compliance Dashboard', () => {
         visitComplianceDashboard();
 
         interactAndWaitForComplianceStandard(() => {
-            cy.get(selectors.widget.PCICompliance.controls).first().click();
+            cy.get(getStandardSunburstControlsLink('PCI DSS 3.2.1 Compliance')).first().click();
         });
         cy.location('search').should('eq', '?s[standard]=PCI DSS 3.2.1'.replace(/ /g, '%20'));
     });

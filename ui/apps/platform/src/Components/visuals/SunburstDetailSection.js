@@ -67,33 +67,28 @@ class SunburstDetailSection extends Component {
         return (
             <div className="py-2 px-3 lc:border-none lc:mb-0 lc:pb-0">
                 {bullets.map(
-                    (
-                        {
-                            text,
-                            link,
-                            className,
-                            value,
-                            color: graphColor,
-                            textColor,
-                            labelValue,
-                            labelColor,
-                        },
-                        idx
-                    ) => {
+                    ({
+                        text,
+                        link,
+                        className,
+                        value,
+                        color: graphColor,
+                        textColor,
+                        labelValue,
+                        labelColor,
+                    }) => {
                         const color = textColor || graphColor;
                         return (
                             <div
                                 key={text}
-                                className={`widget-detail-bullet border-b border-base-300 pb-3 mb-1 font-600 ${
-                                    parentDatum && parentDatum.name && idx === 0
-                                        ? 'text-base-500'
-                                        : ''
-                                }`}
+                                className="widget-detail-bullet border-b border-base-300 pb-3 mb-1"
                             >
                                 {link && (
                                     <Link
                                         title={text}
-                                        className={`underline leading-normal flex w-full word-break ${className}`}
+                                        className={`underline leading-normal flex w-full word-break ${
+                                            className ?? ''
+                                        }`}
                                         style={color ? { color } : null}
                                         to={link}
                                     >
@@ -131,8 +126,8 @@ class SunburstDetailSection extends Component {
     getLockHint = () => {
         const { clicked } = this.props;
         return (
-            <div className="border-t border-base-300 border-dashed flex justify-end px-2 h-7 text-base-500 text-sm">
-                <div className="flex items-center font-condensed opacity-75">
+            <div className="border-t border-base-300 border-dashed flex justify-end px-2 h-7 text-sm">
+                <div className="flex items-center">
                     <Icon.Info size="16" className="pr-1" />
                     {`click to ${clicked ? 'un' : ''}lock selection`}
                 </div>

@@ -1,18 +1,15 @@
 package resources
 
 import (
-	"context"
 	"testing"
 	"time"
 
 	timestamp "github.com/gogo/protobuf/types"
 	"github.com/stackrox/rox/generated/internalapi/central"
 	"github.com/stackrox/rox/generated/storage"
-	"github.com/stackrox/rox/pkg/docker/config"
 	imageUtils "github.com/stackrox/rox/pkg/images/utils"
 	"github.com/stackrox/rox/pkg/kubernetes"
 	"github.com/stackrox/rox/sensor/common/registry"
-	nsStore "github.com/stackrox/rox/sensor/common/resources/namespaces"
 	"github.com/stackrox/rox/sensor/kubernetes/listener/resources/references"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -30,12 +27,14 @@ const (
 	testClusterID = "12b1af66-be55-4e54-948d-ac9c311ca4b2"
 )
 
-func getMockNamespaceStore(t *testing.T) *nsStore.NamespaceStore {
-	s := nsStore.NewTestNamespaceStore(t)
-	s.AddNamespace(&storage.NamespaceMetadata{Id: "FAKENSID", Name: "namespace"})
-	s.AddNamespace(&storage.NamespaceMetadata{Id: "KUBESYSID", Name: "kube-system"})
-	return s
-}
+var (
+	mockNamespaceStore = func() *namespaceStore {
+		s := newNamespaceStore()
+		s.addNamespace(&storage.NamespaceMetadata{Id: "FAKENSID", Name: "namespace"})
+		s.addNamespace(&storage.NamespaceMetadata{Id: "KUBESYSID", Name: "kube-system"})
+		return s
+	}()
+)
 
 func hierarchyFromPodLister(l *mockPodLister) references.ParentHierarchy {
 	ph := references.NewParentHierarchy()
@@ -89,7 +88,7 @@ func TestPopulateNonStaticFieldWithPod(t *testing.T) {
 	for _, c := range cases {
 		ph := references.NewParentHierarchy()
 		newDeploymentEventFromResource(c.inputObj, &c.action, "Pod", testClusterID, nil,
-			getMockNamespaceStore(t), ph, "", storeProvider.orchestratorNamespaces, storeProvider.Registries())
+			mockNamespaceStore, ph, "", storeProvider.orchestratorNamespaces, storeProvider.Registries())
 		assert.Equal(t, c.expectedAction, c.action)
 	}
 }
@@ -335,7 +334,7 @@ func TestPopulateImageMetadata(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			registryStore := registry.NewRegistryStore(alwaysInsecureCheckTLS)
 			if c.isClusterLocal {
-				require.NoError(t, registryStore.UpsertRegistry(context.Background(), "testdev", "image-registry.openshift-image-registry.svc:5000", config.DockerConfigEntry{}))
+				registryStore.AddClusterLocalRegistryHost("image-registry.openshift-image-registry.svc:5000")
 			}
 
 			wrap := deploymentWrap{
@@ -348,6 +347,7 @@ func TestPopulateImageMetadata(t *testing.T) {
 				wrap.Containers = append(wrap.Containers, &storage.Container{
 					Image: img,
 				})
+
 			}
 
 			pods := make([]*v1.Pod, 0, len(c.pods))
@@ -1134,7 +1134,7 @@ func TestConvert(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 			actual := newDeploymentEventFromResource(c.inputObj, &c.action, c.deploymentType, testClusterID,
-				c.podLister, getMockNamespaceStore(t), hierarchyFromPodLister(c.podLister), "",
+				c.podLister, mockNamespaceStore, hierarchyFromPodLister(c.podLister), "",
 				storeProvider.orchestratorNamespaces, storeProvider.Registries()).GetDeployment()
 			if actual != nil {
 				actual.StateTimestamp = 0

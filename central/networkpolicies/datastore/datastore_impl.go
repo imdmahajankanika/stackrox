@@ -5,14 +5,18 @@ import (
 	"fmt"
 	"time"
 
+	netPolSearcher "github.com/stackrox/rox/central/networkpolicies/datastore/internal/search"
 	"github.com/stackrox/rox/central/networkpolicies/datastore/internal/store"
 	"github.com/stackrox/rox/central/networkpolicies/datastore/internal/undodeploymentstore"
 	"github.com/stackrox/rox/central/networkpolicies/datastore/internal/undostore"
 	"github.com/stackrox/rox/central/role/resources"
+	v1 "github.com/stackrox/rox/generated/api/v1"
 	"github.com/stackrox/rox/generated/storage"
 	"github.com/stackrox/rox/pkg/postgres/pgutils"
 	"github.com/stackrox/rox/pkg/protoconv"
 	"github.com/stackrox/rox/pkg/sac"
+	"github.com/stackrox/rox/pkg/search"
+	"github.com/stackrox/rox/pkg/stringutils"
 	"github.com/stackrox/rox/pkg/sync"
 )
 
@@ -21,7 +25,8 @@ var (
 )
 
 type datastoreImpl struct {
-	storage store.Store
+	storage  store.Store
+	searcher netPolSearcher.Searcher
 
 	undoStorageLock       sync.Mutex
 	undoStorage           undostore.UndoStore
@@ -55,7 +60,21 @@ func (ds *datastoreImpl) doForMatching(ctx context.Context, clusterID, namespace
 	})
 }
 
+func getQuery(clusterID, namespace string) *v1.Query {
+	query := search.NewQueryBuilder()
+	if clusterID != "" {
+		query = query.AddExactMatches(search.ClusterID, clusterID)
+	}
+	if namespace != "" {
+		query = query.AddExactMatches(search.Namespace, namespace)
+	}
+	return query.ProtoQuery()
+}
+
 func (ds *datastoreImpl) GetNetworkPolicies(ctx context.Context, clusterID, namespace string) ([]*storage.NetworkPolicy, error) {
+	if !stringutils.AllEmpty(clusterID, namespace) {
+		return ds.storage.GetByQuery(ctx, getQuery(clusterID, namespace))
+	}
 	var netPols []*storage.NetworkPolicy
 	err := pgutils.RetryIfPostgres(
 		func() error {
@@ -81,31 +100,10 @@ func (ds *datastoreImpl) GetNetworkPolicies(ctx context.Context, clusterID, name
 }
 
 func (ds *datastoreImpl) CountMatchingNetworkPolicies(ctx context.Context, clusterID, namespace string) (int, error) {
-	if namespace == "" {
-		netPols, err := ds.GetNetworkPolicies(ctx, clusterID, "")
-		if err != nil {
-			return 0, err
-		}
-		return len(netPols), nil
+	if stringutils.AllEmpty(clusterID, namespace) {
+		return ds.storage.Count(ctx)
 	}
-
-	scopeKeys := []sac.ScopeKey{sac.ClusterScopeKey(clusterID), sac.NamespaceScopeKey(namespace)}
-	if ok, err := netpolSAC.AccessAllowed(ctx, storage.Access_READ_ACCESS, scopeKeys...); err != nil || !ok {
-		return 0, err
-	}
-	var count int
-	err := pgutils.RetryIfPostgres(
-		func() error {
-			count = 0
-			return ds.doForMatching(ctx, clusterID, namespace, func(np *storage.NetworkPolicy) {
-				count++
-			})
-		},
-	)
-	if err != nil {
-		return 0, err
-	}
-	return count, nil
+	return ds.searcher.Count(ctx, getQuery(clusterID, namespace))
 }
 
 func (ds *datastoreImpl) UpsertNetworkPolicy(ctx context.Context, np *storage.NetworkPolicy) error {

@@ -9,7 +9,6 @@ import (
 
 	"github.com/stackrox/rox/central/role/resources"
 	"github.com/stackrox/rox/generated/storage"
-	"github.com/stackrox/rox/pkg/env"
 	"github.com/stackrox/rox/pkg/features"
 	"github.com/stackrox/rox/pkg/fixtures"
 	"github.com/stackrox/rox/pkg/postgres/pgtest"
@@ -32,12 +31,6 @@ type ReportConfigurationPostgresDatastoreTests struct {
 }
 
 func (s *ReportConfigurationPostgresDatastoreTests) SetupSuite() {
-	s.T().Setenv(env.PostgresDatastoreEnabled.EnvVar(), "true")
-
-	if !env.PostgresDatastoreEnabled.BooleanSetting() {
-		s.T().Skip("Skip postgres store tests")
-		s.T().SkipNow()
-	}
 
 	var err error
 	s.testDB = pgtest.ForT(s.T())
@@ -47,7 +40,7 @@ func (s *ReportConfigurationPostgresDatastoreTests) SetupSuite() {
 	s.ctx = sac.WithGlobalAccessScopeChecker(context.Background(),
 		sac.AllowFixedScopes(
 			sac.AccessModeScopeKeys(storage.Access_READ_ACCESS, storage.Access_READ_WRITE_ACCESS),
-			sac.ResourceScopeKeys(resources.VulnerabilityReports)))
+			sac.ResourceScopeKeys(resources.WorkflowAdministration)))
 }
 
 func (s *ReportConfigurationPostgresDatastoreTests) TearDownSuite() {

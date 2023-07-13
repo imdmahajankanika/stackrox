@@ -1,5 +1,4 @@
 //go:build sql_integration
-// +build sql_integration
 
 package postgres
 
@@ -8,7 +7,6 @@ import (
 	"testing"
 
 	"github.com/stackrox/rox/generated/storage"
-	"github.com/stackrox/rox/pkg/env"
 	"github.com/stackrox/rox/pkg/postgres"
 	"github.com/stackrox/rox/pkg/postgres/pgtest"
 	"github.com/stackrox/rox/pkg/sac"
@@ -29,12 +27,6 @@ func TestNodesStore(t *testing.T) {
 }
 
 func (s *NodesStoreSuite) SetupTest() {
-	s.T().Setenv(env.PostgresDatastoreEnabled.EnvVar(), "true")
-
-	if !env.PostgresDatastoreEnabled.BooleanSetting() {
-		s.T().Skip("Skip postgres store tests")
-		s.T().SkipNow()
-	}
 
 	s.ctx = sac.WithAllAccess(context.Background())
 	source := pgtest.GetConnectionString(s.T())

@@ -9,47 +9,40 @@ import (
 	"testing"
 
 	"github.com/stackrox/rox/generated/storage"
-	"github.com/stackrox/rox/pkg/env"
 	"github.com/stackrox/rox/pkg/postgres/pgtest"
 	"github.com/stackrox/rox/pkg/sac"
 	"github.com/stackrox/rox/pkg/testutils"
 	"github.com/stretchr/testify/suite"
 )
 
-type TestSingleUuidKeyStructsStoreSuite struct {
+type TestSingleUUIDKeyStructsStoreSuite struct {
 	suite.Suite
 	store  Store
 	testDB *pgtest.TestPostgres
 }
 
-func TestTestSingleUuidKeyStructsStore(t *testing.T) {
-	suite.Run(t, new(TestSingleUuidKeyStructsStoreSuite))
+func TestTestSingleUUIDKeyStructsStore(t *testing.T) {
+	suite.Run(t, new(TestSingleUUIDKeyStructsStoreSuite))
 }
 
-func (s *TestSingleUuidKeyStructsStoreSuite) SetupSuite() {
-	s.T().Setenv(env.PostgresDatastoreEnabled.EnvVar(), "true")
-
-	if !env.PostgresDatastoreEnabled.BooleanSetting() {
-		s.T().Skip("Skip postgres store tests")
-		s.T().SkipNow()
-	}
+func (s *TestSingleUUIDKeyStructsStoreSuite) SetupSuite() {
 
 	s.testDB = pgtest.ForT(s.T())
 	s.store = New(s.testDB.DB)
 }
 
-func (s *TestSingleUuidKeyStructsStoreSuite) SetupTest() {
+func (s *TestSingleUUIDKeyStructsStoreSuite) SetupTest() {
 	ctx := sac.WithAllAccess(context.Background())
 	tag, err := s.testDB.Exec(ctx, "TRUNCATE test_single_uuid_key_structs CASCADE")
 	s.T().Log("test_single_uuid_key_structs", tag)
 	s.NoError(err)
 }
 
-func (s *TestSingleUuidKeyStructsStoreSuite) TearDownSuite() {
+func (s *TestSingleUUIDKeyStructsStoreSuite) TearDownSuite() {
 	s.testDB.Teardown(s.T())
 }
 
-func (s *TestSingleUuidKeyStructsStoreSuite) TestStore() {
+func (s *TestSingleUUIDKeyStructsStoreSuite) TestStore() {
 	ctx := sac.WithAllAccess(context.Background())
 
 	store := s.store

@@ -9,47 +9,40 @@ import (
 	"testing"
 
 	"github.com/stackrox/rox/generated/storage"
-	"github.com/stackrox/rox/pkg/env"
 	"github.com/stackrox/rox/pkg/postgres/pgtest"
 	"github.com/stackrox/rox/pkg/sac"
 	"github.com/stackrox/rox/pkg/testutils"
 	"github.com/stretchr/testify/suite"
 )
 
-type ApiTokensStoreSuite struct {
+type APITokensStoreSuite struct {
 	suite.Suite
 	store  Store
 	testDB *pgtest.TestPostgres
 }
 
-func TestApiTokensStore(t *testing.T) {
-	suite.Run(t, new(ApiTokensStoreSuite))
+func TestAPITokensStore(t *testing.T) {
+	suite.Run(t, new(APITokensStoreSuite))
 }
 
-func (s *ApiTokensStoreSuite) SetupSuite() {
-	s.T().Setenv(env.PostgresDatastoreEnabled.EnvVar(), "true")
-
-	if !env.PostgresDatastoreEnabled.BooleanSetting() {
-		s.T().Skip("Skip postgres store tests")
-		s.T().SkipNow()
-	}
+func (s *APITokensStoreSuite) SetupSuite() {
 
 	s.testDB = pgtest.ForT(s.T())
 	s.store = New(s.testDB.DB)
 }
 
-func (s *ApiTokensStoreSuite) SetupTest() {
+func (s *APITokensStoreSuite) SetupTest() {
 	ctx := sac.WithAllAccess(context.Background())
 	tag, err := s.testDB.Exec(ctx, "TRUNCATE api_tokens CASCADE")
 	s.T().Log("api_tokens", tag)
 	s.NoError(err)
 }
 
-func (s *ApiTokensStoreSuite) TearDownSuite() {
+func (s *APITokensStoreSuite) TearDownSuite() {
 	s.testDB.Teardown(s.T())
 }
 
-func (s *ApiTokensStoreSuite) TestStore() {
+func (s *APITokensStoreSuite) TestStore() {
 	ctx := sac.WithAllAccess(context.Background())
 
 	store := s.store

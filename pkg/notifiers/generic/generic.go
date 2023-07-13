@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/gogo/protobuf/proto"
@@ -16,7 +17,6 @@ import (
 	"github.com/pkg/errors"
 	v1 "github.com/stackrox/rox/generated/api/v1"
 	"github.com/stackrox/rox/generated/storage"
-	"github.com/stackrox/rox/pkg/env"
 	"github.com/stackrox/rox/pkg/errorhelpers"
 	"github.com/stackrox/rox/pkg/httputil/proxy"
 	"github.com/stackrox/rox/pkg/logging"
@@ -36,6 +36,11 @@ const (
 	alertMessageKey         = "alert"
 	auditMessageKey         = "audit"
 	networkPolicyMessageKey = "networkpolicy"
+
+	// serviceOperatorCAPath points to the secret of the service account, which within an OpenShift environment
+	// also has the service-ca.crt, which includes the CA to verify certificates issued by the service-ca operator.
+	// This could be i.e. the default ingress controller certificate.
+	serviceOperatorCAPath = "/var/run/secrets/kubernetes.io/serviceaccount/service-ca.crt"
 )
 
 // generic notifier plugin
@@ -122,6 +127,10 @@ func newGeneric(notifier *storage.Notifier) (*generic, error) {
 			return nil, errors.New("could not add CA Cert passed in configuration")
 		}
 	}
+	// Trust local cluster services.
+	if serviceCA, err := os.ReadFile(serviceOperatorCAPath); err == nil {
+		rootCAs.AppendCertsFromPEM(serviceCA)
+	}
 	extraFieldsJSON, err := getExtraFieldJSON(conf.ExtraFields)
 	if err != nil {
 		return nil, err
@@ -157,10 +166,6 @@ func (g *generic) Test(ctx context.Context) error {
 		},
 	}
 	return g.AlertNotify(ctx, alert)
-}
-
-func (g *generic) IsSecuredClusterNotifier() bool {
-	return env.SecuredClusterNotifiers.BooleanSetting()
 }
 
 func (g *generic) constructJSON(message proto.Message, msgKey string) (io.Reader, error) {
