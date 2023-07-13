@@ -56,8 +56,8 @@ func (s *storeImpl) Upsert(ctx context.Context, obj *storage.Blob, reader io.Rea
 	}
 	// Augment permission because we require read permission internally
 	ctx = sac.WithGlobalAccessScopeChecker(ctx,
-		sac.AllowFixedScopes(
-			sac.AccessModeScopeKeys(storage.Access_READ_ACCESS, storage.Access_READ_WRITE_ACCESS),
+		sac.AllowFixedResourceLevelScopes(
+			sac.AccessModeScopeKeyList(storage.Access_READ_ACCESS, storage.Access_READ_WRITE_ACCESS),
 			sac.ResourceScopeKeys(resources.Administration)))
 
 	tx, err := s.db.Begin(ctx)
@@ -185,8 +185,8 @@ func (s *storeImpl) Delete(ctx context.Context, name string) error {
 	}
 	// Augment permission because we require read permission internally
 	ctx = sac.WithGlobalAccessScopeChecker(ctx,
-		sac.AllowFixedScopes(
-			sac.AccessModeScopeKeys(storage.Access_READ_ACCESS, storage.Access_READ_WRITE_ACCESS),
+		sac.AllowFixedResourceLevelScopes(
+			sac.AccessModeScopeKeyList(storage.Access_READ_ACCESS, storage.Access_READ_WRITE_ACCESS),
 			sac.ResourceScopeKeys(resources.Administration)))
 	tx, err := s.db.Begin(ctx)
 	if err != nil {
