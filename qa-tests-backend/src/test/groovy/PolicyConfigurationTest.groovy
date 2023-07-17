@@ -25,7 +25,6 @@ import services.ClusterService
 import services.ImageService
 import services.NodeService
 import services.PolicyService
-import util.Timer
 
 import org.junit.Assume
 import spock.lang.Shared
@@ -162,13 +161,11 @@ class PolicyConfigurationTest extends BaseSpecification {
         orchestrator.createDeployment(NGINX_WITH_DIGEST)
 
         when:
-        Timer t = new Timer(60, 1)
-        def image
-        while (image == null && t.IsValid()) {
-            image = ImageService.getImage(
-                    "sha256:a05b0cdd4fc1be3b224ba9662ebdf98fe44c09c0c9215b45f84344c12867002e")
+        withRetry(30, 2) {
+            def image = ImageService.getImage(
+                    "sha256:86ae264c3f4acb99b2dee4d0098c40cb8c46dcf9e1148f05d3a51c4df6758c12")
+            assert image != null
         }
-        assert image != null
 
         and:
         "Run busybox latest with same digest as previous image"
