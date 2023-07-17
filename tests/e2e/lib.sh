@@ -98,7 +98,6 @@ export_test_environment() {
     ci_export ROX_BASELINE_GENERATION_DURATION "${ROX_BASELINE_GENERATION_DURATION:-1m}"
     ci_export ROX_NETWORK_BASELINE_OBSERVATION_PERIOD "${ROX_NETWORK_BASELINE_OBSERVATION_PERIOD:-2m}"
     ci_export ROX_DISABLE_COMPLIANCE_STANDARDS "${ROX_DISABLE_COMPLIANCE_STANDARDS:-true}"
-    ci_export ROX_NETWORK_GRAPH_PATTERNFLY "${ROX_NETWORK_GRAPH_PATTERNFLY:-true}"
     ci_export ROX_QUAY_ROBOT_ACCOUNTS "${ROX_QUAY_ROBOT_ACCOUNTS:-true}"
     ci_export ROX_SYSLOG_EXTRA_FIELDS "${ROX_SYSLOG_EXTRA_FIELDS:-true}"
     ci_export ROX_VULN_MGMT_REPORTING_ENHANCEMENTS "${ROX_VULN_MGMT_REPORTING_ENHANCEMENTS:-false}"
@@ -432,6 +431,9 @@ patch_resources_for_test() {
     for target_port in 8080 8081 8082 8443 8444 8445 8446 8447 8448; do
         check_endpoint_availability "$target_port"
     done
+
+    # Ensure the API is available as well after patching the load balancer.
+    wait_for_api
 }
 
 check_endpoint_availability() {
