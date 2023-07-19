@@ -328,13 +328,13 @@ function launch_central {
         )
       fi
 
-      if [[ -n "$CI" ]]; then
-        helm lint "$unzip_dir/chart"
-        helm lint "$unzip_dir/chart" -n stackrox
-        helm lint "$unzip_dir/chart" -n stackrox "${helm_args[@]}"
-      fi
-
       local helm_chart="$unzip_dir/chart"
+
+      if [[ -n "$CI" ]]; then
+        helm lint "${helm_chart}"
+        helm lint "${helm_chart}" -n stackrox
+        helm lint "${helm_chart}" -n stackrox "${helm_args[@]}"
+      fi
 
       if [[ -n "${CENTRAL_CHART_DIR_OVERRIDE}" ]]; then
         helm_chart="${CENTRAL_CHART_DIR_OVERRIDE}"
@@ -585,19 +585,18 @@ function launch_sensor {
         )
       fi
 
+      local helm_chart="$k8s_dir/sensor-deploy/chart"
+
       if [[ -n "$CI" ]]; then
-        helm lint "$k8s_dir/sensor-deploy/chart"
-        helm lint "$k8s_dir/sensor-deploy/chart" -n stackrox
-        helm lint "$k8s_dir/sensor-deploy/chart" -n stackrox "${helm_args[@]}" "${extra_helm_config[@]}"
+        helm lint "${helm_chart}"
+        helm lint "${helm_chart}" -n stackrox
+        helm lint "${helm_chart}" -n stackrox "${helm_args[@]}" "${extra_helm_config[@]}"
       fi
 
       if [[ "$sensor_namespace" != "stackrox" ]]; then
         kubectl create namespace "$sensor_namespace" &>/dev/null || true
         kubectl -n "$sensor_namespace" get secret stackrox &>/dev/null || kubectl -n "$sensor_namespace" create -f - < <("${common_dir}/pull-secret.sh" stackrox docker.io)
       fi
-
-
-      local helm_chart="$k8s_dir/sensor-deploy/chart"
 
       if [[ -n "${sensor_chart_dir_override}" ]]; then
         helm_chart="${sensor_chart_dir_override}"

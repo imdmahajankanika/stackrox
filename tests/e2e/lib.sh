@@ -48,7 +48,6 @@ deploy_stackrox_with_custom_central_and_sensor_versions() {
         die "expected central chart version and sensor chart version as parameters in deploy_stackrox_with_custom_central_and_sensor_versions: deploy_stackrox_with_custom_central_and_sensor_versions <central chart version> <sensor chart version>"
     fi
     ci_export CENTRAL_CHART_VERSION_OVERRIDE "$1"
-    sensor_chart_version_override="$2"
     ci_export DEPLOY_STACKROX_VIA_OPERATOR "false"
     ci_export OUTPUT_FORMAT "helm"
     ci_export DISABLE_RHACS_IMAGE_REPOSITORY_PARAMS "true"
@@ -69,12 +68,13 @@ deploy_stackrox_with_custom_central_and_sensor_versions() {
     fi
 
     if [[ $helm_charts =~ $sensor_regex ]]; then
+        sensor_chart_version_override="$2"
         sensor_chart_dir_override="stackrox-oss/stackrox-secured-cluster-services"
     else
         echo "stackrox-secured-cluster-services helm chart for version ${sensor_chart_version_override} not found in stackrox-oss repo"
     fi
 
-    deploy_stackrox "" "${sensor_chart_version_override}" "${sensor_chart_dir_override:-}"
+    deploy_stackrox "" "${sensor_chart_version_override:-}" "${sensor_chart_dir_override:-}"
 
     ci_export CENTRAL_CHART_DIR_OVERRIDE ""
 }
