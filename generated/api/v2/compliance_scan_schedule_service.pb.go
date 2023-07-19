@@ -58,6 +58,7 @@ func (NodeRole) EnumDescriptor() ([]byte, []int) {
 
 // ClusterScanStatus holds status based on cluster in the event that a schedule was
 // successfully applied to some clusters but not others.
+// Next available tag: 3
 type ClusterScanStatus struct {
 	ClusterId            string   `protobuf:"bytes,1,opt,name=cluster_id,json=clusterId,proto3" json:"cluster_id,omitempty"`
 	Errors               []string `protobuf:"bytes,2,rep,name=errors,proto3" json:"errors,omitempty"`
@@ -130,6 +131,7 @@ func (m *ClusterScanStatus) Clone() *ClusterScanStatus {
 	return cloned
 }
 
+// Next available tag: 7
 type BaseComplianceScanScheduleSettings struct {
 	AutoApplyRemediations  bool       `protobuf:"varint,1,opt,name=auto_apply_remediations,json=autoApplyRemediations,proto3" json:"auto_apply_remediations,omitempty"`
 	AutoUpdateRemediations bool       `protobuf:"varint,2,opt,name=auto_update_remediations,json=autoUpdateRemediations,proto3" json:"auto_update_remediations,omitempty"`
@@ -239,6 +241,7 @@ func (m *BaseComplianceScanScheduleSettings) Clone() *BaseComplianceScanSchedule
 	return cloned
 }
 
+// Next available tag: 4
 type ComplianceScanScheduleConfiguration struct {
 	ScanName             string                              `protobuf:"bytes,1,opt,name=scan_name,json=scanName,proto3" json:"scan_name,omitempty"`
 	ScanScheduleConfig   *BaseComplianceScanScheduleSettings `protobuf:"bytes,2,opt,name=scan_schedule_config,json=scanScheduleConfig,proto3" json:"scan_schedule_config,omitempty"`
@@ -320,6 +323,7 @@ func (m *ComplianceScanScheduleConfiguration) Clone() *ComplianceScanScheduleCon
 	return cloned
 }
 
+// Next available tag: 7
 type ComplianceScanScheduleStatus struct {
 	ScanName           string                              `protobuf:"bytes,1,opt,name=scan_name,json=scanName,proto3" json:"scan_name,omitempty"`
 	ScanScheduleConfig *BaseComplianceScanScheduleSettings `protobuf:"bytes,2,opt,name=scan_schedule_config,json=scanScheduleConfig,proto3" json:"scan_schedule_config,omitempty"`
@@ -431,6 +435,7 @@ func (m *ComplianceScanScheduleStatus) Clone() *ComplianceScanScheduleStatus {
 	return cloned
 }
 
+// Next available tag: 2
 type ComplianceScanScheduleConfigRequest struct {
 	ScanName             string   `protobuf:"bytes,1,opt,name=scan_name,json=scanName,proto3" json:"scan_name,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
@@ -491,6 +496,7 @@ func (m *ComplianceScanScheduleConfigRequest) Clone() *ComplianceScanScheduleCon
 	return cloned
 }
 
+// Next available tag: 2
 type ListComplianceScanScheduleResponse struct {
 	Schedules            []*ComplianceScanScheduleStatus `protobuf:"bytes,1,rep,name=schedules,proto3" json:"schedules,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}                        `json:"-"`
