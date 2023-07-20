@@ -72,6 +72,9 @@ deploy_stackrox_with_custom_central_and_sensor_versions() {
         sensor_chart_dir_override="stackrox-oss/stackrox-secured-cluster-services"
     else
         unset sensor_chart_version_override
+        sensor_chart_dir_override="latest-secured-cluster-services"
+        mkdir "${sensor_chart_dir_override}"
+        roxctl helm output secured-cluster-services --image-defaults=development_build --output-dir "${sensor_chart_dir_override}" --remove --debug
         echo "stackrox-secured-cluster-services helm chart for version ${sensor_chart_version_override} not found in stackrox-oss repo"
     fi
 
