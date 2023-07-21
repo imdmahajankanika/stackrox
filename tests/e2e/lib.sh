@@ -65,14 +65,14 @@ deploy_stackrox_with_custom_central_and_sensor_versions() {
 
     if  [[ $helm_charts =~ $central_regex ]]; then
         ci_export CENTRAL_CHART_DIR_OVERRIDE "stackrox-oss/stackrox-central-services"
-    elif [[ latest_tag != $CENTRAL_CHART_VERSION_OVERRIDE ]]; then
+    elif [[ "$latest_tag" != "$CENTRAL_CHART_VERSION_OVERRIDE" ]]; then
         echo >&2 "stackrox-central-services helm chart for version ${CENTRAL_CHART_VERSION_OVERRIDE} not found in stackrox-oss repo nor is it the latest tag."
         exit 1
     fi
 
     if [[ $helm_charts =~ $sensor_regex ]]; then
         sensor_chart_dir_override="stackrox-oss/stackrox-secured-cluster-services"
-    elif [[ latest_tag == $sensor_chart_version_override ]]; then
+    elif [[ "$latest_tag" == "$sensor_chart_version_override" ]]; then
         sensor_chart_dir_override="latest-secured-cluster-services"
         roxctl helm output secured-cluster-services --image-defaults=development_build --output-dir "${sensor_chart_dir_override}" --remove --debug
         echo "Downloaded stackrox-secured-cluster-services helm chart for version ${sensor_chart_version_override} to ${sensor_chart_dir_override}"
