@@ -24,14 +24,10 @@ ifeq ($(TAG),)
 	TAG=$(shell git describe --tags --abbrev=10 --dirty --long --exclude '*-nightly-*')
 endif
 
-DEFAULT_IMAGE_REGISTRY := quay.io/stackrox-io
-BUILD_IMAGE_VERSION := $(shell sed 's/\s*\#.*//' BUILD_IMAGE_VERSION)
-BUILD_IMAGE := $(DEFAULT_IMAGE_REGISTRY)/apollo-ci:$(BUILD_IMAGE_VERSION)
+GO_VERSION := $(shell head -n 1 ../EXPECTED_GO_VERSION)
+BUILD_IMAGE := docker.io/library/golang:$(shell echo ${GO_VERSION} | sed 's/go//')
 
 ifeq ($(shell uname -ms),Darwin arm64)
-	# TODO(ROX-12064) build these images in the CI pipeline
-	# Uncomment the line below to enable native arm64 builder images
-	# BUILD_IMAGE = quay.io/rhacs-eng/sandbox:apollo-ci-stackrox-build-0.3.49-arm64
 	ARCH := aarch64
 	GOARCH := arm64
 else
@@ -40,7 +36,7 @@ else
 endif
 
 BUILD_FLAGS := CGO_ENABLED=0 GOOS=linux GOARCH=${GOARCH}
-BUILD_CMD := go build -trimpath -ldflags="-X github.com/stackrox/stackrox/scanner/v4/internal/version.Version=$(TAG)" -o image/scanner/bin/scanner ./cmd/scanner
+BUILD_CMD := go build -trimpath -ldflags="-X github.com/stackrox/stackrox/scanner/internal/version.Version=$(TAG)" -o image/scanner/bin/scanner ./cmd/scanner
 
 comma:= ,
 empty:=
@@ -108,6 +104,27 @@ db-image:
 ###########
 
 ###########
+## Tools ##
+###########
+
+deps: go.mod
+	$(SILENT)echo "+ $@"
+	$(SILENT)go mod tidy
+ifdef CI
+	$(SILENT)git diff --exit-code -- go.mod go.sum || { \
+		echo "go.mod/go.sum files were updated after running 'go mod tidy', run this command on your local machine and commit the results." ; \
+		exit 1 ; \
+	}
+	go mod verify
+endif
+	$(SILENT)touch deps
+
+.PHONY: ossls-notice
+ossls-notice: deps $(OSSLS_BIN)
+	$(OSSLS_BIN) version
+	$(OSSLS_BIN) audit --export image/scanner/THIRD_PARTY_NOTICES
+
+###########
 ## Clean ##
 ###########
 
@@ -129,24 +146,3 @@ clean-gobin:
 clean-deps:
 	$(SILENT)echo "+ $@"
 	$(SILENT)rm -f deps
-
-###########
-## Tools ##
-###########
-
-deps: go.mod
-	$(SILENT)echo "+ $@"
-	$(SILENT)go mod tidy
-ifdef CI
-	$(SILENT)git diff --exit-code -- go.mod go.sum || { \
-		echo "go.mod/go.sum files were updated after running 'go mod tidy', run this command on your local machine and commit the results." ; \
-		exit 1 ; \
-	}
-	go mod verify
-endif
-	$(SILENT)touch deps
-
-.PHONY: ossls-notice
-ossls-notice: deps $(OSSLS_BIN)
-	$(OSSLS_BIN) version
-	$(OSSLS_BIN) audit --export image/scanner/THIRD_PARTY_NOTICES

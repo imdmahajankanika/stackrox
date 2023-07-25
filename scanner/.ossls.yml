@@ -1,5 +1,5 @@
 gomod:
-  mod-file: go.mod
+  mod-file: ../go.mod
 
 patterns:
 - "*AUTHOR*"
