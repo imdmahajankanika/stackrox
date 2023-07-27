@@ -1,17 +1,26 @@
 package listener
 
 import (
+	"context"
+	"fmt"
 	"testing"
 
 	"github.com/stackrox/rox/generated/internalapi/central"
 	"github.com/stackrox/rox/pkg/concurrency"
 	"github.com/stackrox/rox/pkg/sync"
 	"github.com/stackrox/rox/pkg/uuid"
+	"github.com/stackrox/rox/sensor/kubernetes/eventpipeline/component"
 	mocks2 "github.com/stackrox/rox/sensor/kubernetes/eventpipeline/component/mocks"
 	"github.com/stackrox/rox/sensor/kubernetes/listener/resources/mocks"
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/mock/gomock"
 	"k8s.io/apimachinery/pkg/types"
+)
+
+type contextKey int
+
+const (
+	ctxKeyTest contextKey = iota
 )
 
 func TestResourceEventHandlerImpl(t *testing.T) {
@@ -58,7 +67,8 @@ func makeExpectedMap(expectedIDs ...*hasAnID) *map[types.UID]struct{} {
 }
 
 func (suite *ResourceEventHandlerImplTestSuite) addObj(handler *resourceEventHandlerImpl, obj *hasAnID, expectedMap *map[types.UID]struct{}) {
-	suite.dispatcher.EXPECT().ProcessEvent(obj, nil, central.ResourceAction_SYNC_RESOURCE)
+	suite.dispatcher.EXPECT().ProcessEvent(obj, nil, central.ResourceAction_SYNC_RESOURCE).
+		Return(&component.ResourceEvent{})
 	suite.resolver.EXPECT().Send(gomock.Any())
 	handler.OnAdd(obj)
 	suite.Equal(*expectedMap, handler.seenIDs)
@@ -71,10 +81,15 @@ func (suite *ResourceEventHandlerImplTestSuite) assertFinished(handler *resource
 }
 
 func (suite *ResourceEventHandlerImplTestSuite) newHandlerImpl() *resourceEventHandlerImpl {
+	return suite.newHandlerImplWithContext(context.Background())
+}
+
+func (suite *ResourceEventHandlerImplTestSuite) newHandlerImplWithContext(ctx context.Context) *resourceEventHandlerImpl {
 	var treatCreatesAsUpdates concurrency.Flag
 	treatCreatesAsUpdates.Set(true)
 	var eventLock sync.Mutex
 	return &resourceEventHandlerImpl{
+		context:          ctx,
 		eventLock:        &eventLock,
 		dispatcher:       suite.dispatcher,
 		resolver:         suite.resolver,
@@ -99,6 +114,17 @@ func (suite *ResourceEventHandlerImplTestSuite) TestIDsAddedToSyncSet() {
 	suite.addObj(handler, testMsgTwo, expectedMap)
 
 	suite.Empty(handler.missingInitialIDs)
+}
+
+func (suite *ResourceEventHandlerImplTestSuite) TestContextIsPassed() {
+	ctx := context.WithValue(context.Background(), ctxKeyTest, "abc")
+	handler := suite.newHandlerImplWithContext(ctx)
+
+	obj := randomID()
+	suite.dispatcher.EXPECT().ProcessEvent(obj, nil, central.ResourceAction_SYNC_RESOURCE).
+		Return(&component.ResourceEvent{})
+	suite.resolver.EXPECT().Send(matchContextValue("abc"))
+	handler.OnAdd(obj)
 }
 
 func (suite *ResourceEventHandlerImplTestSuite) TestIDsAddedToMissingSet() {
@@ -169,7 +195,8 @@ func (suite *ResourceEventHandlerImplTestSuite) TestCompleteSync() {
 	handler.PopulateInitialObjects([]interface{}{testMsgOne, testMsgTwo})
 	suite.Equal(*expectedMap, handler.missingInitialIDs)
 
-	suite.dispatcher.EXPECT().ProcessEvent(testMsgTwo, nil, central.ResourceAction_SYNC_RESOURCE)
+	suite.dispatcher.EXPECT().ProcessEvent(testMsgTwo, nil, central.ResourceAction_SYNC_RESOURCE).
+		Return(&component.ResourceEvent{})
 	suite.resolver.EXPECT().Send(gomock.Any())
 	handler.OnAdd(testMsgTwo)
 	suite.assertFinished(handler)
@@ -198,3 +225,27 @@ func (suite *ResourceEventHandlerImplTestSuite) TestEmptySeenAndEmptyPopulate() 
 	handlerTwo.PopulateInitialObjects([]interface{}{})
 	suite.assertFinished(handlerTwo)
 }
+
+func matchContextValue(value string) gomock.Matcher {
+	return &contextMatcher{value}
+}
+
+type contextMatcher struct {
+	value string
+}
+
+// Matches implements gomock.Matcher
+func (m *contextMatcher) Matches(x interface{}) bool {
+	event, ok := x.(*component.ResourceEvent)
+	if !ok {
+		return false
+	}
+	return event.Context.Value(ctxKeyTest) == m.value
+}
+
+// String implements gomock.Matcher
+func (m *contextMatcher) String() string {
+	return fmt.Sprintf("received context should have value %s", m.value)
+}
+
+var _ gomock.Matcher = &contextMatcher{}

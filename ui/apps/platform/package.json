@@ -20,12 +20,11 @@
         "@patternfly/react-table": "4.112.39",
         "@patternfly/react-topology": "4.93.5",
         "@patternfly/react-user-feedback": "^1.1.2",
-        "@stackrox/ui-components": "*",
         "axios": "^0.25.0",
         "classnames": "^2.3.2",
         "computed-style-to-inline-style": "^3.0.0",
         "connected-react-router": "^6.9.2",
-        "core-js": "^3.1.4",
+        "core-js": "^3.31.1",
         "d3-axis": "^1.0.12",
         "d3-brush": "^3.0.0",
         "d3-polygon": "^3.0.1",
@@ -41,6 +40,7 @@
         "graphql": "^15.5.0",
         "history": "^4.9.0",
         "html2canvas": "1.0.0-rc.7",
+        "initials": "^3.1.2",
         "js-base64": "^3.7.2",
         "jspdf": "^2.3.1",
         "jspdf-autotable": "^3.5.14",
@@ -50,7 +50,6 @@
         "monaco-editor": "^0.21.3",
         "monaco-editor-webpack-plugin": "^2.1.0",
         "monaco-yaml": "^4.0.4",
-        "normalizr": "^3.6.1",
         "object-resolve-path": "^1.1.1",
         "pluralize": "^8.0.0",
         "prop-types": "^15.7.2",
@@ -91,7 +90,6 @@
         "reselect": "^4.1.2",
         "store": "^2.0.12",
         "styled-components": "^5.3.1",
-        "tippy.js": "^6.3.7",
         "use-deep-compare-effect": "^1.8.1",
         "yup": "^1.2.0"
     },
@@ -128,7 +126,7 @@
         "@types/segment-analytics": "^0.0.34",
         "autoprefixer": "^10.2.5",
         "babel-eslint": "^10.1.0",
-        "cypress": "^12.15.0",
+        "cypress": "^12.17.1",
         "eslint": "^7.32.0",
         "eslint-config-airbnb": "^18.2.1",
         "eslint-config-airbnb-typescript": "12.3.1",
@@ -163,9 +161,6 @@
         "typescript": "^5.1.5"
     },
     "browserslist": [
-        ">0.2%",
-        "not dead",
-        "not ie <= 11",
-        "not op_mini all"
+        "Chrome >= 80"
     ]
 }

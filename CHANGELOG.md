@@ -10,6 +10,7 @@ Please avoid adding duplicate information across this changelog and JIRA/doc inp
 ### Added Features
 
 - Telemetry collection enabled by default for self-managed installations. Opt-out is available on bundle generation, or at any time via the System Configuration UI.
+- A new environment variable `ROX_REGISTRY_MIRRORING_ENABLED` has been added that when set to `true` will enable processing registry mirrors during image enrichment. Mirror details are obtained via the `ImageContentSourcePolicy`, `ImageDigestMirrorSet`, and `ImageTagMirrorSet` CRs.
 
 ### Removed Features
 
@@ -23,10 +24,13 @@ Please avoid adding duplicate information across this changelog and JIRA/doc inp
 ### Technical Changes
 
 - ROX-16962: A new parameter `spec.admissionControl.replicas` has been added to the `SecuredCluster` CRD.
-- ROX-18073: The implementation of Add Capabilities policy criteria has been fixed to ensure violations are generated \
-correctly for the specified values.
+- ROX-18073: The implementation of Add Capabilities policy criteria has been fixed to ensure violations are generated
+  correctly for the specified values.
 - Rollback to a 3.y release or the 4.0 release will no longer be supported starting from 4.3.
 - Rollbacks from future releases to the 4.2 or later release will no longer require `ForceRollbackVersion` to be set.
+- ROX-18173: A few previously public endpoints now require authentication: `/v1/metadata`,
+  `/v1/database/status`, `/v1/mitreattackvectors`. This reduces the surface for DoS attacks and
+  prevents an attacker from taking advantage of the information served by these endpoints.
 
 ## [4.1.0]
 

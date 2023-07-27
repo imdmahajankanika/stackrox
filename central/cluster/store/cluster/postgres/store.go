@@ -7,11 +7,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/hashicorp/go-multierror"
 	"github.com/jackc/pgx/v4"
 	"github.com/pkg/errors"
 	"github.com/stackrox/rox/central/metrics"
-	"github.com/stackrox/rox/central/role/resources"
 	v1 "github.com/stackrox/rox/generated/api/v1"
 	"github.com/stackrox/rox/generated/storage"
 	"github.com/stackrox/rox/pkg/logging"
@@ -20,9 +18,8 @@ import (
 	"github.com/stackrox/rox/pkg/postgres/pgutils"
 	pkgSchema "github.com/stackrox/rox/pkg/postgres/schema"
 	"github.com/stackrox/rox/pkg/sac"
-	"github.com/stackrox/rox/pkg/search"
+	"github.com/stackrox/rox/pkg/sac/resources"
 	pgSearch "github.com/stackrox/rox/pkg/search/postgres"
-	"github.com/stackrox/rox/pkg/sync"
 	"gorm.io/gorm"
 )
 
@@ -30,13 +27,10 @@ const (
 	baseTable = "clusters"
 	storeName = "Cluster"
 
-	batchAfter = 100
-
 	// using copyFrom, we may not even want to batch.  It would probably be simpler
 	// to deal with failures if we just sent it all.  Something to think about as we
 	// proceed and move into more e2e and larger performance testing
-	batchSize       = 10000
-	deleteBatchSize = 5000
+	batchSize = 10000
 )
 
 var (
@@ -45,10 +39,12 @@ var (
 	targetResource = resources.Cluster
 )
 
+type storeType = storage.Cluster
+
 // Store is the interface to interact with the storage for storage.Cluster
 type Store interface {
-	Upsert(ctx context.Context, obj *storage.Cluster) error
-	UpsertMany(ctx context.Context, objs []*storage.Cluster) error
+	Upsert(ctx context.Context, obj *storeType) error
+	UpsertMany(ctx context.Context, objs []*storeType) error
 	Delete(ctx context.Context, id string) error
 	DeleteByQuery(ctx context.Context, q *v1.Query) error
 	DeleteMany(ctx context.Context, identifiers []string) error
@@ -56,38 +52,32 @@ type Store interface {
 	Count(ctx context.Context) (int, error)
 	Exists(ctx context.Context, id string) (bool, error)
 
-	Get(ctx context.Context, id string) (*storage.Cluster, bool, error)
-	GetByQuery(ctx context.Context, query *v1.Query) ([]*storage.Cluster, error)
-	GetMany(ctx context.Context, identifiers []string) ([]*storage.Cluster, []int, error)
+	Get(ctx context.Context, id string) (*storeType, bool, error)
+	GetByQuery(ctx context.Context, query *v1.Query) ([]*storeType, error)
+	GetMany(ctx context.Context, identifiers []string) ([]*storeType, []int, error)
 	GetIDs(ctx context.Context) ([]string, error)
 
-	Walk(ctx context.Context, fn func(obj *storage.Cluster) error) error
-}
-
-type storeImpl struct {
-	*pgSearch.GenericStore[storage.Cluster, *storage.Cluster]
-	db    postgres.DB
-	mutex sync.RWMutex
+	Walk(ctx context.Context, fn func(obj *storeType) error) error
 }
 
 // New returns a new Store instance using the provided sql instance.
 func New(db postgres.DB) Store {
-	return &storeImpl{
-		db: db,
-		GenericStore: pgSearch.NewGenericStore[storage.Cluster, *storage.Cluster](
-			db,
-			schema,
-			pkGetter,
-			metricsSetAcquireDBConnDuration,
-			metricsSetPostgresOperationDurationTime,
-			targetResource,
-		),
-	}
+	return pgSearch.NewGenericStore[storeType, *storeType](
+		db,
+		schema,
+		pkGetter,
+		insertIntoClusters,
+		nil,
+		metricsSetAcquireDBConnDuration,
+		metricsSetPostgresOperationDurationTime,
+		isUpsertAllowed,
+		targetResource,
+	)
 }
 
 // region Helper functions
 
-func pkGetter(obj *storage.Cluster) string {
+func pkGetter(obj *storeType) string {
 	return obj.GetId()
 }
 
@@ -98,8 +88,25 @@ func metricsSetPostgresOperationDurationTime(start time.Time, op ops.Op) {
 func metricsSetAcquireDBConnDuration(start time.Time, op ops.Op) {
 	metrics.SetAcquireDBConnDuration(start, op, storeName)
 }
+func isUpsertAllowed(ctx context.Context, objs ...*storeType) error {
+	scopeChecker := sac.GlobalAccessScopeChecker(ctx).AccessMode(storage.Access_READ_WRITE_ACCESS).Resource(targetResource)
+	if scopeChecker.IsAllowed() {
+		return nil
+	}
+	var deniedIDs []string
+	for _, obj := range objs {
+		subScopeChecker := scopeChecker.ClusterID(obj.GetId())
+		if !subScopeChecker.IsAllowed() {
+			deniedIDs = append(deniedIDs, obj.GetId())
+		}
+	}
+	if len(deniedIDs) != 0 {
+		return errors.Wrapf(sac.ErrResourceAccessDenied, "modifying clusters with IDs [%s] was denied", strings.Join(deniedIDs, ", "))
+	}
+	return nil
+}
 
-func insertIntoClusters(_ context.Context, batch *pgx.Batch, obj *storage.Cluster) error {
+func insertIntoClusters(batch *pgx.Batch, obj *storage.Cluster) error {
 
 	serialized, marshalErr := obj.Marshal()
 	if marshalErr != nil {
@@ -110,7 +117,7 @@ func insertIntoClusters(_ context.Context, batch *pgx.Batch, obj *storage.Cluste
 		// parent primary keys start
 		pgutils.NilOrUUID(obj.GetId()),
 		obj.GetName(),
-		obj.GetLabels(),
+		pgutils.EmptyOrMap(obj.GetLabels()),
 		serialized,
 	}
 
@@ -120,116 +127,9 @@ func insertIntoClusters(_ context.Context, batch *pgx.Batch, obj *storage.Cluste
 	return nil
 }
 
-func (s *storeImpl) upsert(ctx context.Context, objs ...*storage.Cluster) error {
-	conn, err := s.AcquireConn(ctx, ops.Get)
-	if err != nil {
-		return err
-	}
-	defer conn.Release()
-
-	for _, obj := range objs {
-		batch := &pgx.Batch{}
-		if err := insertIntoClusters(ctx, batch, obj); err != nil {
-			return err
-		}
-		batchResults := conn.SendBatch(ctx, batch)
-		var result *multierror.Error
-		for i := 0; i < batch.Len(); i++ {
-			_, err := batchResults.Exec()
-			result = multierror.Append(result, err)
-		}
-		if err := batchResults.Close(); err != nil {
-			return err
-		}
-		if err := result.ErrorOrNil(); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
 // endregion Helper functions
 
-//// Interface functions
-
-// Upsert saves the current state of an object in storage.
-func (s *storeImpl) Upsert(ctx context.Context, obj *storage.Cluster) error {
-	defer metrics.SetPostgresOperationDurationTime(time.Now(), ops.Upsert, "Cluster")
-
-	scopeChecker := sac.GlobalAccessScopeChecker(ctx).AccessMode(storage.Access_READ_WRITE_ACCESS).Resource(targetResource).
-		ClusterID(obj.GetId())
-	if !scopeChecker.IsAllowed() {
-		return sac.ErrResourceAccessDenied
-	}
-
-	return pgutils.Retry(func() error {
-		return s.upsert(ctx, obj)
-	})
-}
-
-// UpsertMany saves the state of multiple objects in the storage.
-func (s *storeImpl) UpsertMany(ctx context.Context, objs []*storage.Cluster) error {
-	defer metrics.SetPostgresOperationDurationTime(time.Now(), ops.UpdateMany, "Cluster")
-
-	scopeChecker := sac.GlobalAccessScopeChecker(ctx).AccessMode(storage.Access_READ_WRITE_ACCESS).Resource(targetResource)
-	if !scopeChecker.IsAllowed() {
-		var deniedIDs []string
-		for _, obj := range objs {
-			subScopeChecker := scopeChecker.ClusterID(obj.GetId())
-			if !subScopeChecker.IsAllowed() {
-				deniedIDs = append(deniedIDs, obj.GetId())
-			}
-		}
-		if len(deniedIDs) != 0 {
-			return errors.Wrapf(sac.ErrResourceAccessDenied, "modifying clusters with IDs [%s] was denied", strings.Join(deniedIDs, ", "))
-		}
-	}
-	return s.upsert(ctx, objs...)
-}
-
-// DeleteMany removes the objects associated to the specified IDs from the store.
-func (s *storeImpl) DeleteMany(ctx context.Context, identifiers []string) error {
-	defer metrics.SetPostgresOperationDurationTime(time.Now(), ops.RemoveMany, "Cluster")
-
-	var sacQueryFilter *v1.Query
-
-	sacQueryFilter, err := pgSearch.GetReadWriteSACQuery(ctx, targetResource)
-	if err != nil {
-		return err
-	}
-
-	// Batch the deletes
-	localBatchSize := deleteBatchSize
-	numRecordsToDelete := len(identifiers)
-	for {
-		if len(identifiers) == 0 {
-			break
-		}
-
-		if len(identifiers) < localBatchSize {
-			localBatchSize = len(identifiers)
-		}
-
-		identifierBatch := identifiers[:localBatchSize]
-		q := search.ConjunctionQuery(
-			sacQueryFilter,
-			search.NewQueryBuilder().AddDocIDs(identifierBatch...).ProtoQuery(),
-		)
-
-		if err := pgSearch.RunDeleteRequestForSchema(ctx, schema, q, s.db); err != nil {
-			return errors.Wrapf(err, "unable to delete the records.  Successfully deleted %d out of %d", numRecordsToDelete-len(identifiers), numRecordsToDelete)
-		}
-
-		// Move the slice forward to start the next batch
-		identifiers = identifiers[localBatchSize:]
-	}
-
-	return nil
-}
-
-//// Interface functions - END
-
-//// Used for testing
+// region Used for testing
 
 // CreateTableAndNewStore returns a new Store instance for testing.
 func CreateTableAndNewStore(ctx context.Context, db postgres.DB, gormDB *gorm.DB) Store {
@@ -247,4 +147,4 @@ func dropTableClusters(ctx context.Context, db postgres.DB) {
 
 }
 
-//// Used for testing - END
+// endregion Used for testing

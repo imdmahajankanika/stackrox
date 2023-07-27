@@ -7,11 +7,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/hashicorp/go-multierror"
 	"github.com/jackc/pgx/v4"
 	"github.com/pkg/errors"
 	"github.com/stackrox/rox/central/metrics"
-	"github.com/stackrox/rox/central/role/resources"
 	v1 "github.com/stackrox/rox/generated/api/v1"
 	"github.com/stackrox/rox/generated/storage"
 	"github.com/stackrox/rox/pkg/logging"
@@ -20,9 +18,8 @@ import (
 	"github.com/stackrox/rox/pkg/postgres/pgutils"
 	pkgSchema "github.com/stackrox/rox/pkg/postgres/schema"
 	"github.com/stackrox/rox/pkg/sac"
-	"github.com/stackrox/rox/pkg/search"
+	"github.com/stackrox/rox/pkg/sac/resources"
 	pgSearch "github.com/stackrox/rox/pkg/search/postgres"
-	"github.com/stackrox/rox/pkg/sync"
 	"gorm.io/gorm"
 )
 
@@ -30,13 +27,10 @@ const (
 	baseTable = "secrets"
 	storeName = "Secret"
 
-	batchAfter = 100
-
 	// using copyFrom, we may not even want to batch.  It would probably be simpler
 	// to deal with failures if we just sent it all.  Something to think about as we
 	// proceed and move into more e2e and larger performance testing
-	batchSize       = 10000
-	deleteBatchSize = 5000
+	batchSize = 10000
 )
 
 var (
@@ -45,10 +39,12 @@ var (
 	targetResource = resources.Secret
 )
 
+type storeType = storage.Secret
+
 // Store is the interface to interact with the storage for storage.Secret
 type Store interface {
-	Upsert(ctx context.Context, obj *storage.Secret) error
-	UpsertMany(ctx context.Context, objs []*storage.Secret) error
+	Upsert(ctx context.Context, obj *storeType) error
+	UpsertMany(ctx context.Context, objs []*storeType) error
 	Delete(ctx context.Context, id string) error
 	DeleteByQuery(ctx context.Context, q *v1.Query) error
 	DeleteMany(ctx context.Context, identifiers []string) error
@@ -56,38 +52,32 @@ type Store interface {
 	Count(ctx context.Context) (int, error)
 	Exists(ctx context.Context, id string) (bool, error)
 
-	Get(ctx context.Context, id string) (*storage.Secret, bool, error)
-	GetByQuery(ctx context.Context, query *v1.Query) ([]*storage.Secret, error)
-	GetMany(ctx context.Context, identifiers []string) ([]*storage.Secret, []int, error)
+	Get(ctx context.Context, id string) (*storeType, bool, error)
+	GetByQuery(ctx context.Context, query *v1.Query) ([]*storeType, error)
+	GetMany(ctx context.Context, identifiers []string) ([]*storeType, []int, error)
 	GetIDs(ctx context.Context) ([]string, error)
 
-	Walk(ctx context.Context, fn func(obj *storage.Secret) error) error
-}
-
-type storeImpl struct {
-	*pgSearch.GenericStore[storage.Secret, *storage.Secret]
-	db    postgres.DB
-	mutex sync.RWMutex
+	Walk(ctx context.Context, fn func(obj *storeType) error) error
 }
 
 // New returns a new Store instance using the provided sql instance.
 func New(db postgres.DB) Store {
-	return &storeImpl{
-		db: db,
-		GenericStore: pgSearch.NewGenericStore[storage.Secret, *storage.Secret](
-			db,
-			schema,
-			pkGetter,
-			metricsSetAcquireDBConnDuration,
-			metricsSetPostgresOperationDurationTime,
-			targetResource,
-		),
-	}
+	return pgSearch.NewGenericStore[storeType, *storeType](
+		db,
+		schema,
+		pkGetter,
+		insertIntoSecrets,
+		copyFromSecrets,
+		metricsSetAcquireDBConnDuration,
+		metricsSetPostgresOperationDurationTime,
+		isUpsertAllowed,
+		targetResource,
+	)
 }
 
 // region Helper functions
 
-func pkGetter(obj *storage.Secret) string {
+func pkGetter(obj *storeType) string {
 	return obj.GetId()
 }
 
@@ -98,8 +88,25 @@ func metricsSetPostgresOperationDurationTime(start time.Time, op ops.Op) {
 func metricsSetAcquireDBConnDuration(start time.Time, op ops.Op) {
 	metrics.SetAcquireDBConnDuration(start, op, storeName)
 }
+func isUpsertAllowed(ctx context.Context, objs ...*storeType) error {
+	scopeChecker := sac.GlobalAccessScopeChecker(ctx).AccessMode(storage.Access_READ_WRITE_ACCESS).Resource(targetResource)
+	if scopeChecker.IsAllowed() {
+		return nil
+	}
+	var deniedIDs []string
+	for _, obj := range objs {
+		subScopeChecker := scopeChecker.ClusterID(obj.GetClusterId()).Namespace(obj.GetNamespace())
+		if !subScopeChecker.IsAllowed() {
+			deniedIDs = append(deniedIDs, obj.GetId())
+		}
+	}
+	if len(deniedIDs) != 0 {
+		return errors.Wrapf(sac.ErrResourceAccessDenied, "modifying secrets with IDs [%s] was denied", strings.Join(deniedIDs, ", "))
+	}
+	return nil
+}
 
-func insertIntoSecrets(ctx context.Context, batch *pgx.Batch, obj *storage.Secret) error {
+func insertIntoSecrets(batch *pgx.Batch, obj *storage.Secret) error {
 
 	serialized, marshalErr := obj.Marshal()
 	if marshalErr != nil {
@@ -123,7 +130,7 @@ func insertIntoSecrets(ctx context.Context, batch *pgx.Batch, obj *storage.Secre
 	var query string
 
 	for childIndex, child := range obj.GetFiles() {
-		if err := insertIntoSecretsFiles(ctx, batch, child, obj.GetId(), childIndex); err != nil {
+		if err := insertIntoSecretsFiles(batch, child, obj.GetId(), childIndex); err != nil {
 			return err
 		}
 	}
@@ -133,7 +140,7 @@ func insertIntoSecrets(ctx context.Context, batch *pgx.Batch, obj *storage.Secre
 	return nil
 }
 
-func insertIntoSecretsFiles(ctx context.Context, batch *pgx.Batch, obj *storage.SecretDataFile, secretID string, idx int) error {
+func insertIntoSecretsFiles(batch *pgx.Batch, obj *storage.SecretDataFile, secretID string, idx int) error {
 
 	values := []interface{}{
 		// parent primary keys start
@@ -149,7 +156,7 @@ func insertIntoSecretsFiles(ctx context.Context, batch *pgx.Batch, obj *storage.
 	var query string
 
 	for childIndex, child := range obj.GetImagePullSecret().GetRegistries() {
-		if err := insertIntoSecretsFilesRegistries(ctx, batch, child, secretID, idx, childIndex); err != nil {
+		if err := insertIntoSecretsFilesRegistries(batch, child, secretID, idx, childIndex); err != nil {
 			return err
 		}
 	}
@@ -159,7 +166,7 @@ func insertIntoSecretsFiles(ctx context.Context, batch *pgx.Batch, obj *storage.
 	return nil
 }
 
-func insertIntoSecretsFilesRegistries(_ context.Context, batch *pgx.Batch, obj *storage.ImagePullSecret_Registry, secretID string, secretFileIdx int, idx int) error {
+func insertIntoSecretsFilesRegistries(batch *pgx.Batch, obj *storage.ImagePullSecret_Registry, secretID string, secretFileIdx int, idx int) error {
 
 	values := []interface{}{
 		// parent primary keys start
@@ -175,30 +182,20 @@ func insertIntoSecretsFilesRegistries(_ context.Context, batch *pgx.Batch, obj *
 	return nil
 }
 
-func (s *storeImpl) copyFromSecrets(ctx context.Context, tx *postgres.Tx, objs ...*storage.Secret) error {
-
-	inputRows := [][]interface{}{}
-
-	var err error
+func copyFromSecrets(ctx context.Context, s pgSearch.Deleter, tx *postgres.Tx, objs ...*storage.Secret) error {
+	inputRows := make([][]interface{}, 0, batchSize)
 
 	// This is a copy so first we must delete the rows and re-add them
 	// Which is essentially the desired behaviour of an upsert.
-	var deletes []string
+	deletes := make([]string, 0, batchSize)
 
 	copyCols := []string{
-
 		"id",
-
 		"name",
-
 		"clusterid",
-
 		"clustername",
-
 		"namespace",
-
 		"createdat",
-
 		"serialized",
 	}
 
@@ -214,19 +211,12 @@ func (s *storeImpl) copyFromSecrets(ctx context.Context, tx *postgres.Tx, objs .
 		}
 
 		inputRows = append(inputRows, []interface{}{
-
 			pgutils.NilOrUUID(obj.GetId()),
-
 			obj.GetName(),
-
 			pgutils.NilOrUUID(obj.GetClusterId()),
-
 			obj.GetClusterName(),
-
 			obj.GetNamespace(),
-
 			pgutils.NilOrTime(obj.GetCreatedAt()),
-
 			serialized,
 		})
 
@@ -242,14 +232,11 @@ func (s *storeImpl) copyFromSecrets(ctx context.Context, tx *postgres.Tx, objs .
 				return err
 			}
 			// clear the inserts and vals for the next batch
-			deletes = nil
+			deletes = deletes[:0]
 
-			_, err = tx.CopyFrom(ctx, pgx.Identifier{"secrets"}, copyCols, pgx.CopyFromRows(inputRows))
-
-			if err != nil {
+			if _, err := tx.CopyFrom(ctx, pgx.Identifier{"secrets"}, copyCols, pgx.CopyFromRows(inputRows)); err != nil {
 				return err
 			}
-
 			// clear the input rows for the next batch
 			inputRows = inputRows[:0]
 		}
@@ -258,28 +245,21 @@ func (s *storeImpl) copyFromSecrets(ctx context.Context, tx *postgres.Tx, objs .
 	for idx, obj := range objs {
 		_ = idx // idx may or may not be used depending on how nested we are, so avoid compile-time errors.
 
-		if err = s.copyFromSecretsFiles(ctx, tx, obj.GetId(), obj.GetFiles()...); err != nil {
+		if err := copyFromSecretsFiles(ctx, s, tx, obj.GetId(), obj.GetFiles()...); err != nil {
 			return err
 		}
 	}
 
-	return err
+	return nil
 }
 
-func (s *storeImpl) copyFromSecretsFiles(ctx context.Context, tx *postgres.Tx, secretID string, objs ...*storage.SecretDataFile) error {
-
-	inputRows := [][]interface{}{}
-
-	var err error
+func copyFromSecretsFiles(ctx context.Context, s pgSearch.Deleter, tx *postgres.Tx, secretID string, objs ...*storage.SecretDataFile) error {
+	inputRows := make([][]interface{}, 0, batchSize)
 
 	copyCols := []string{
-
 		"secrets_id",
-
 		"idx",
-
 		"type",
-
 		"cert_enddate",
 	}
 
@@ -290,13 +270,9 @@ func (s *storeImpl) copyFromSecretsFiles(ctx context.Context, tx *postgres.Tx, s
 			"to simply use the object.  %s", obj)
 
 		inputRows = append(inputRows, []interface{}{
-
 			pgutils.NilOrUUID(secretID),
-
 			idx,
-
 			obj.GetType(),
-
 			pgutils.NilOrTime(obj.GetCert().GetEndDate()),
 		})
 
@@ -305,12 +281,9 @@ func (s *storeImpl) copyFromSecretsFiles(ctx context.Context, tx *postgres.Tx, s
 			// copy does not upsert so have to delete first.  parent deletion cascades so only need to
 			// delete for the top level parent
 
-			_, err = tx.CopyFrom(ctx, pgx.Identifier{"secrets_files"}, copyCols, pgx.CopyFromRows(inputRows))
-
-			if err != nil {
+			if _, err := tx.CopyFrom(ctx, pgx.Identifier{"secrets_files"}, copyCols, pgx.CopyFromRows(inputRows)); err != nil {
 				return err
 			}
-
 			// clear the input rows for the next batch
 			inputRows = inputRows[:0]
 		}
@@ -319,28 +292,21 @@ func (s *storeImpl) copyFromSecretsFiles(ctx context.Context, tx *postgres.Tx, s
 	for idx, obj := range objs {
 		_ = idx // idx may or may not be used depending on how nested we are, so avoid compile-time errors.
 
-		if err = s.copyFromSecretsFilesRegistries(ctx, tx, secretID, idx, obj.GetImagePullSecret().GetRegistries()...); err != nil {
+		if err := copyFromSecretsFilesRegistries(ctx, s, tx, secretID, idx, obj.GetImagePullSecret().GetRegistries()...); err != nil {
 			return err
 		}
 	}
 
-	return err
+	return nil
 }
 
-func (s *storeImpl) copyFromSecretsFilesRegistries(ctx context.Context, tx *postgres.Tx, secretID string, secretFileIdx int, objs ...*storage.ImagePullSecret_Registry) error {
-
-	inputRows := [][]interface{}{}
-
-	var err error
+func copyFromSecretsFilesRegistries(ctx context.Context, s pgSearch.Deleter, tx *postgres.Tx, secretID string, secretFileIdx int, objs ...*storage.ImagePullSecret_Registry) error {
+	inputRows := make([][]interface{}, 0, batchSize)
 
 	copyCols := []string{
-
 		"secrets_id",
-
 		"secrets_files_idx",
-
 		"idx",
-
 		"name",
 	}
 
@@ -351,13 +317,9 @@ func (s *storeImpl) copyFromSecretsFilesRegistries(ctx context.Context, tx *post
 			"to simply use the object.  %s", obj)
 
 		inputRows = append(inputRows, []interface{}{
-
 			pgutils.NilOrUUID(secretID),
-
 			secretFileIdx,
-
 			idx,
-
 			obj.GetName(),
 		})
 
@@ -366,169 +328,20 @@ func (s *storeImpl) copyFromSecretsFilesRegistries(ctx context.Context, tx *post
 			// copy does not upsert so have to delete first.  parent deletion cascades so only need to
 			// delete for the top level parent
 
-			_, err = tx.CopyFrom(ctx, pgx.Identifier{"secrets_files_registries"}, copyCols, pgx.CopyFromRows(inputRows))
-
-			if err != nil {
+			if _, err := tx.CopyFrom(ctx, pgx.Identifier{"secrets_files_registries"}, copyCols, pgx.CopyFromRows(inputRows)); err != nil {
 				return err
 			}
-
 			// clear the input rows for the next batch
 			inputRows = inputRows[:0]
 		}
 	}
 
-	return err
-}
-
-func (s *storeImpl) copyFrom(ctx context.Context, objs ...*storage.Secret) error {
-	conn, err := s.AcquireConn(ctx, ops.Get)
-	if err != nil {
-		return err
-	}
-	defer conn.Release()
-
-	tx, err := conn.Begin(ctx)
-	if err != nil {
-		return err
-	}
-
-	if err := s.copyFromSecrets(ctx, tx, objs...); err != nil {
-		if err := tx.Rollback(ctx); err != nil {
-			return err
-		}
-		return err
-	}
-	if err := tx.Commit(ctx); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (s *storeImpl) upsert(ctx context.Context, objs ...*storage.Secret) error {
-	conn, err := s.AcquireConn(ctx, ops.Get)
-	if err != nil {
-		return err
-	}
-	defer conn.Release()
-
-	for _, obj := range objs {
-		batch := &pgx.Batch{}
-		if err := insertIntoSecrets(ctx, batch, obj); err != nil {
-			return err
-		}
-		batchResults := conn.SendBatch(ctx, batch)
-		var result *multierror.Error
-		for i := 0; i < batch.Len(); i++ {
-			_, err := batchResults.Exec()
-			result = multierror.Append(result, err)
-		}
-		if err := batchResults.Close(); err != nil {
-			return err
-		}
-		if err := result.ErrorOrNil(); err != nil {
-			return err
-		}
-	}
 	return nil
 }
 
 // endregion Helper functions
 
-//// Interface functions
-
-// Upsert saves the current state of an object in storage.
-func (s *storeImpl) Upsert(ctx context.Context, obj *storage.Secret) error {
-	defer metrics.SetPostgresOperationDurationTime(time.Now(), ops.Upsert, "Secret")
-
-	scopeChecker := sac.GlobalAccessScopeChecker(ctx).AccessMode(storage.Access_READ_WRITE_ACCESS).Resource(targetResource).
-		ClusterID(obj.GetClusterId()).Namespace(obj.GetNamespace())
-	if !scopeChecker.IsAllowed() {
-		return sac.ErrResourceAccessDenied
-	}
-
-	return pgutils.Retry(func() error {
-		return s.upsert(ctx, obj)
-	})
-}
-
-// UpsertMany saves the state of multiple objects in the storage.
-func (s *storeImpl) UpsertMany(ctx context.Context, objs []*storage.Secret) error {
-	defer metrics.SetPostgresOperationDurationTime(time.Now(), ops.UpdateMany, "Secret")
-
-	scopeChecker := sac.GlobalAccessScopeChecker(ctx).AccessMode(storage.Access_READ_WRITE_ACCESS).Resource(targetResource)
-	if !scopeChecker.IsAllowed() {
-		var deniedIDs []string
-		for _, obj := range objs {
-			subScopeChecker := scopeChecker.ClusterID(obj.GetClusterId()).Namespace(obj.GetNamespace())
-			if !subScopeChecker.IsAllowed() {
-				deniedIDs = append(deniedIDs, obj.GetId())
-			}
-		}
-		if len(deniedIDs) != 0 {
-			return errors.Wrapf(sac.ErrResourceAccessDenied, "modifying secrets with IDs [%s] was denied", strings.Join(deniedIDs, ", "))
-		}
-	}
-
-	return pgutils.Retry(func() error {
-		// Lock since copyFrom requires a delete first before being executed.  If multiple processes are updating
-		// same subset of rows, both deletes could occur before the copyFrom resulting in unique constraint
-		// violations
-		if len(objs) < batchAfter {
-			s.mutex.RLock()
-			defer s.mutex.RUnlock()
-
-			return s.upsert(ctx, objs...)
-		}
-		s.mutex.Lock()
-		defer s.mutex.Unlock()
-
-		return s.copyFrom(ctx, objs...)
-	})
-}
-
-// DeleteMany removes the objects associated to the specified IDs from the store.
-func (s *storeImpl) DeleteMany(ctx context.Context, identifiers []string) error {
-	defer metrics.SetPostgresOperationDurationTime(time.Now(), ops.RemoveMany, "Secret")
-
-	var sacQueryFilter *v1.Query
-
-	sacQueryFilter, err := pgSearch.GetReadWriteSACQuery(ctx, targetResource)
-	if err != nil {
-		return err
-	}
-
-	// Batch the deletes
-	localBatchSize := deleteBatchSize
-	numRecordsToDelete := len(identifiers)
-	for {
-		if len(identifiers) == 0 {
-			break
-		}
-
-		if len(identifiers) < localBatchSize {
-			localBatchSize = len(identifiers)
-		}
-
-		identifierBatch := identifiers[:localBatchSize]
-		q := search.ConjunctionQuery(
-			sacQueryFilter,
-			search.NewQueryBuilder().AddDocIDs(identifierBatch...).ProtoQuery(),
-		)
-
-		if err := pgSearch.RunDeleteRequestForSchema(ctx, schema, q, s.db); err != nil {
-			return errors.Wrapf(err, "unable to delete the records.  Successfully deleted %d out of %d", numRecordsToDelete-len(identifiers), numRecordsToDelete)
-		}
-
-		// Move the slice forward to start the next batch
-		identifiers = identifiers[localBatchSize:]
-	}
-
-	return nil
-}
-
-//// Interface functions - END
-
-//// Used for testing
+// region Used for testing
 
 // CreateTableAndNewStore returns a new Store instance for testing.
 func CreateTableAndNewStore(ctx context.Context, db postgres.DB, gormDB *gorm.DB) Store {
@@ -558,4 +371,4 @@ func dropTableSecretsFilesRegistries(ctx context.Context, db postgres.DB) {
 
 }
 
-//// Used for testing - END
+// endregion Used for testing

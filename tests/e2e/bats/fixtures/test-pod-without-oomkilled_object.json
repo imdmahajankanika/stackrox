@@ -147,10 +147,6 @@
                         "value": "sensor.stackrox.svc:443"
                     },
                     {
-                        "name": "ROX_COMPLIANCE_OPERATOR_INTEGRATION",
-                        "value": "true"
-                    },
-                    {
                         "name": "ROX_CSV_EXPORT",
                         "value": "false"
                     },
@@ -165,10 +161,6 @@
                     {
                         "name": "ROX_NETWORK_DETECTION_BASELINE_SIMULATION",
                         "value": "true"
-                    },
-                    {
-                        "name": "ROX_NETWORK_GRAPH_PATTERNFLY",
-                        "value": "false"
                     },
                     {
                         "name": "ROX_PROCESSES_LISTENING_ON_PORT",

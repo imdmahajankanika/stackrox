@@ -14,27 +14,25 @@ import sortBy from 'lodash/sortBy';
 import uniqBy from 'lodash/uniqBy';
 
 import FormLabelGroup from 'Components/PatternFly/FormLabelGroup';
-import { Collection, listCollections } from 'services/CollectionsService';
+import { Collection, CollectionSlim, listCollections } from 'services/CollectionsService';
 import CollectionsFormModal, {
     CollectionFormModalAction,
 } from 'Containers/Collections/CollectionFormModal';
 import { useCollectionFormSubmission } from 'Containers/Collections/hooks/useCollectionFormSubmission';
 import useSelectToggle from 'hooks/patternfly/useSelectToggle';
 import { usePaginatedQuery } from 'hooks/usePaginatedQuery';
-import { ReportScope } from 'hooks/useFetchReport';
+import { ReportScope } from './useReportFormValues';
 
 const COLLECTION_PAGE_SIZE = 10;
 
 type CollectionSelectionProps = {
-    selectedScopeId: string;
-    initialReportScope: ReportScope | null;
-    onChange: (selection: string) => void;
+    selectedScope: ReportScope | null;
+    onChange: (selection: CollectionSlim | null) => void;
     allowCreate: boolean;
 };
 
 function CollectionSelection({
-    selectedScopeId,
-    initialReportScope,
+    selectedScope,
     onChange,
     allowCreate,
 }: CollectionSelectionProps): ReactElement {
@@ -62,10 +60,6 @@ function CollectionSelection({
         COLLECTION_PAGE_SIZE
     );
 
-    const isLegacyReportScopeSelected =
-        initialReportScope?.type === 'AccessControlScope' &&
-        initialReportScope?.id === selectedScopeId;
-
     // Combines the server-side fetched pages of collections data with the local cache
     // of created collections to create a flattened array sorted by name. This is intended to keep
     // the collection dropdown up to date with any collections that the user creates while in the form.
@@ -77,37 +71,33 @@ function CollectionSelection({
     // This functionality can likely be removed if we move to a library based method of data fetching.
     const [createdCollections, setCreatedCollections] = useState<Collection[]>([]);
     const sortedCollections = useMemo(() => {
-        const availableScopes: Pick<Collection, 'id' | 'name' | 'description'>[] = [
-            ...data.flat(),
-            ...createdCollections,
-        ];
-        // Adding the initial report scope, if available, allows the collection name to be displayed even
-        // if it has not yet been fetched via the dropdown's pagination.
-        if (initialReportScope && initialReportScope.type === 'CollectionScope') {
-            availableScopes.push(initialReportScope);
-        }
+        const availableScopes: CollectionSlim[] = [...data.flat(), ...createdCollections];
 
         // This is inefficient due to the multiple loops and the fact that we are already tracking
         // uniqueness for the _server side_ values, but need to do it twice to handle possible client
         // side values. However, 'N' should be small here and we are memoizing the result.
         const sorted = sortBy(availableScopes, ({ name }) => name.toLowerCase());
         return uniqBy(sorted, 'id');
-    }, [data, createdCollections, initialReportScope]);
+    }, [data, createdCollections]);
 
     // This makes sure that if a collection was deleted then we clear the scopeId
     useEffect(() => {
-        const selectedCollection = sortedCollections.find(
-            (collection) => collection.id === selectedScopeId
-        );
-        if (!selectedCollection) {
-            onChange('');
+        if (!isFetchingNextPage) {
+            const selectedCollection = sortedCollections.find(
+                (collection) => collection.id === selectedScope?.id
+            );
+            if (!selectedCollection) {
+                onChange(null);
+            }
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [data]);
+    }, [data, isFetchingNextPage]);
 
     function onOpenViewCollectionModal() {
-        setModalAction({ type: 'view', collectionId: selectedScopeId });
-        setIsCollectionModalOpen((current) => !current);
+        if (selectedScope) {
+            setModalAction({ type: 'view', collectionId: selectedScope.id });
+            setIsCollectionModalOpen((current) => !current);
+        }
     }
 
     function onOpenCreateCollectionModal() {
@@ -115,9 +105,14 @@ function CollectionSelection({
         setIsCollectionModalOpen((current) => !current);
     }
 
-    function onScopeChange(_id, selection) {
-        onToggle(false);
-        onChange(selection);
+    function onScopeChange(_id, scopeId) {
+        const selectedCollection = sortedCollections.find(
+            (collection) => collection.id === scopeId
+        );
+        if (selectedCollection) {
+            onToggle(false);
+            onChange(selectedCollection);
+        }
     }
 
     let selectLoadingVariant: SelectProps['loadingVariant'];
@@ -137,12 +132,8 @@ function CollectionSelection({
                 isRequired
                 label="Configure report scope"
                 fieldId="scopeId"
-                touched={isLegacyReportScopeSelected ? { scopeId: true } : {}}
-                errors={
-                    isLegacyReportScopeSelected
-                        ? { scopeId: 'Choose a new collection to use as the report scope' }
-                        : {}
-                }
+                touched={{}}
+                errors={{}}
             >
                 <Flex
                     direction={{ default: 'row' }}
@@ -153,7 +144,7 @@ function CollectionSelection({
                         <Select
                             id="scopeId"
                             onSelect={onScopeChange}
-                            selections={isLegacyReportScopeSelected ? '' : selectedScopeId}
+                            selections={selectedScope?.id}
                             placeholderText="Select a collection"
                             variant={SelectVariant.typeahead}
                             isOpen={isOpen}
@@ -165,15 +156,15 @@ function CollectionSelection({
                                 maxHeight: '275px',
                                 overflowY: 'auto',
                             }}
-                            validated={
-                                isLegacyReportScopeSelected
-                                    ? ValidatedOptions.error
-                                    : ValidatedOptions.default
-                            }
+                            validated={ValidatedOptions.default}
                         >
-                            {sortedCollections.map(({ id, name, description }) => (
-                                <SelectOption key={id} value={id} description={description}>
-                                    {name}
+                            {sortedCollections.map((collection) => (
+                                <SelectOption
+                                    key={collection.id}
+                                    value={collection.id}
+                                    description={collection.description}
+                                >
+                                    {collection.name}
                                 </SelectOption>
                             ))}
                         </Select>
@@ -182,7 +173,7 @@ function CollectionSelection({
                         <Button
                             variant={ButtonVariant.tertiary}
                             onClick={onOpenViewCollectionModal}
-                            isDisabled={selectedScopeId === ''}
+                            isDisabled={!selectedScope}
                         >
                             View
                         </Button>
@@ -208,7 +199,7 @@ function CollectionSelection({
                     setConfigError={setConfigError}
                     onSubmit={(collection) =>
                         onSubmit(collection).then((collectionResponse) => {
-                            onChange(collectionResponse.id);
+                            onChange(collectionResponse);
                             setIsCollectionModalOpen(false);
                             setCreatedCollections((oldCollections) => [
                                 ...oldCollections,

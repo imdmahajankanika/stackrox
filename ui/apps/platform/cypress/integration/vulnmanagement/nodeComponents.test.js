@@ -6,13 +6,12 @@ import {
     callbackForPairOfDescendingNumberValuesFromElements,
 } from '../../helpers/sort';
 import {
-    getCountAndNounFromNodeCVEsLinkResults,
     hasTableColumnHeadings,
     interactAndWaitForVulnerabilityManagementEntities,
     verifyConditionalCVEs,
     verifySecondaryEntities,
     visitVulnerabilityManagementEntities,
-} from '../../helpers/vulnmanagement/entities';
+} from './VulnerabilityManagement.helpers';
 
 const entitiesKey = 'node-components';
 
@@ -118,18 +117,8 @@ describe('Vulnerability Management Node Components', () => {
     // Argument 3 in verify functions is index of column which has the links.
     // The one-based index includes checkbox, hidden, invisible.
 
-    it('should display either links for node CVEs or text for No CVEs', function () {
-        if (hasOrchestratorFlavor('openshift')) {
-            this.skip(); // TODO verify and remove
-        }
-
-        verifyConditionalCVEs(
-            entitiesKey,
-            'node-cves',
-            4,
-            'vulnCounter',
-            getCountAndNounFromNodeCVEsLinkResults
-        );
+    it('should display either links for node CVEs or text for No CVEs', () => {
+        verifyConditionalCVEs(entitiesKey, 'node-cves', 4, 'vulnCounter');
     });
 
     it('should display links for nodes', () => {

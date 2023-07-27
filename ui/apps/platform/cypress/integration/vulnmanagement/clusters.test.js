@@ -1,27 +1,16 @@
 import withAuth from '../../helpers/basicAuth';
-import { hasOrchestratorFlavor } from '../../helpers/features';
 import {
     assertSortedItems,
     callbackForPairOfAscendingNumberValuesFromElements,
     callbackForPairOfDescendingNumberValuesFromElements,
 } from '../../helpers/sort';
 import {
-    getCountAndNounFromImageCVEsLinkResults,
-    getCountAndNounFromNodeCVEsLinkResults,
     hasTableColumnHeadings,
     interactAndWaitForVulnerabilityManagementEntities,
     verifyConditionalCVEs,
     verifySecondaryEntities,
     visitVulnerabilityManagementEntities,
-} from '../../helpers/vulnmanagement/entities';
-
-function getCountAndNounFromClusterCVEsLinkResults([, count]) {
-    return {
-        panelHeaderText: `${count} Platform ${count === '1' ? 'CVE' : 'CVES'}`,
-        relatedEntitiesCount: count,
-        relatedEntitiesNoun: count === '1' ? 'CLUSTER CVE' : 'CLUSTER CVES',
-    };
-}
+} from './VulnerabilityManagement.helpers';
 
 const entitiesKey = 'clusters';
 
@@ -85,41 +74,15 @@ describe('Vulnerability Management Clusters', () => {
     // The one-based index includes checkbox, hidden, invisible.
 
     it('should display either links for image CVEs or text for No CVEs', () => {
-        verifyConditionalCVEs(
-            entitiesKey,
-            'image-cves',
-            3,
-            'imageVulnerabilityCounter',
-            getCountAndNounFromImageCVEsLinkResults
-        );
+        verifyConditionalCVEs(entitiesKey, 'image-cves', 3, 'imageVulnerabilityCounter');
     });
 
-    it('should display either links for node CVEs or text for No CVEs', function () {
-        if (hasOrchestratorFlavor('openshift')) {
-            this.skip(); // TODO verify and remove
-        }
-
-        verifyConditionalCVEs(
-            entitiesKey,
-            'node-cves',
-            4,
-            'nodeVulnerabilityCounter',
-            getCountAndNounFromNodeCVEsLinkResults
-        );
+    it('should display either links for node CVEs or text for No CVEs', () => {
+        verifyConditionalCVEs(entitiesKey, 'node-cves', 4, 'nodeVulnerabilityCounter');
     });
 
-    it('should display either links for cluster CVEs or text for No CVEs', function () {
-        if (hasOrchestratorFlavor('openshift')) {
-            this.skip(); // TODO verify and remove
-        }
-
-        verifyConditionalCVEs(
-            entitiesKey,
-            'cluster-cves',
-            5,
-            'clusterVulnerabilityCounter',
-            getCountAndNounFromClusterCVEsLinkResults
-        );
+    it('should display either links for cluster CVEs or text for No CVEs', () => {
+        verifyConditionalCVEs(entitiesKey, 'cluster-cves', 5, 'clusterVulnerabilityCounter');
     });
 
     it('should display links for namespaces', () => {

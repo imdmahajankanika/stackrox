@@ -1,18 +1,16 @@
 import withAuth from '../../helpers/basicAuth';
-import { hasOrchestratorFlavor } from '../../helpers/features';
 import {
     assertSortedItems,
     callbackForPairOfAscendingNumberValuesFromElements,
     callbackForPairOfDescendingNumberValuesFromElements,
 } from '../../helpers/sort';
 import {
-    getCountAndNounFromImageCVEsLinkResults,
     hasTableColumnHeadings,
     interactAndWaitForVulnerabilityManagementEntities,
     verifyConditionalCVEs,
     verifySecondaryEntities,
     visitVulnerabilityManagementEntities,
-} from '../../helpers/vulnmanagement/entities';
+} from './VulnerabilityManagement.helpers';
 
 const entitiesKey = 'image-components';
 
@@ -116,18 +114,8 @@ describe('Vulnerability Management Image Components', () => {
     // Argument 3 in verify functions is index of column which has the links.
     // The one-based index includes checkbox, hidden, invisible.
 
-    it('should display either links for image CVEs or text for No CVEs', function () {
-        if (hasOrchestratorFlavor('openshift')) {
-            this.skip(); // TODO verify and remove
-        }
-
-        verifyConditionalCVEs(
-            entitiesKey,
-            'image-cves',
-            4,
-            'vulnCounter',
-            getCountAndNounFromImageCVEsLinkResults
-        );
+    it('should display either links for image CVEs or text for No CVEs', () => {
+        verifyConditionalCVEs(entitiesKey, 'image-cves', 4, 'vulnCounter');
     });
 
     it('should display links for images', () => {
