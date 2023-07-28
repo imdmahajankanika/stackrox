@@ -100,58 +100,6 @@ func (v V4GRPCClient) GetImageAnalysis(ctx context.Context, image *storage.Image
 	return res, indexReport, nil
 }
 
-//
-//func convertIndexReportToV1GetImageComponentsResponse(indexReport scannerV4.IndexReport, image *storage.Image) (*scannerV1.GetImageComponentsResponse, error) {
-//	res := &scannerV1.GetImageComponentsResponse{}
-//	if indexReport.Success {
-//		res.Status = scannerV1.ScanStatus_SUCCEEDED
-//		res.ScannerVersion = image.GetScan().ScannerVersion
-//		// TODO: Convert indexReport package information to scannerV1.GetImageComponentsResponse components
-//		ns, isRhelComponent := getNamespace(indexReport)
-//		res.Components.Namespace = ns
-//		for _, pkg := range indexReport.Packages {
-//			envMap := indexReport.Environments
-//			envList := envMap[pkg.Id].GetEnvironments()
-//			isLanguageComponent := false
-//
-//			// Check if it's a language component
-//			for _, env := range envList {
-//				repoIdList := env.RepositoryIds
-//				for _, repoId := range repoIdList {
-//					id, err := strconv.Atoi(repoId)
-//					if err != nil {
-//						log.Errorf("Error converting repoId to int: %v", err)
-//						continue
-//					}
-//					repoName := indexReport.Repositories[id].Name
-//					if languageComponents[repoName] {
-//						// TODO: We know it's a language component
-//						isLanguageComponent = true
-//						break
-//					}
-//				}
-//				if isLanguageComponent {
-//					break
-//				}
-//			}
-//
-//			if !isLanguageComponent {
-//				if isRhelComponent {
-//					// TODO: Process as RHEL component
-//				} else {
-//					// TODO: Process as OS component
-//				}
-//			}
-//		}
-//	} else {
-//		if len(indexReport.Err) > 0 {
-//			return nil, errors.New(indexReport.Err)
-//		}
-//		return nil, errors.New("Failed to fetch index report")
-//	}
-//	return res, nil
-//}
-
 func getNamespace(report scannerV4.IndexReport) (string, bool) {
 	if len(report.Distributions) == 1 {
 		dist := report.Distributions[0]
