@@ -14,7 +14,7 @@ require (
 	github.com/PagerDuty/go-pagerduty v1.7.0
 	github.com/RoaringBitmap/roaring v1.3.0
 	github.com/VividCortex/ewma v1.2.0
-	github.com/adhocore/gronx v1.6.4
+	github.com/adhocore/gronx v1.6.5
 	github.com/andygrunwald/go-jira v1.16.0
 	github.com/aws/aws-sdk-go v1.44.289
 	github.com/cenkalti/backoff/v3 v3.2.2
@@ -74,7 +74,7 @@ require (
 	github.com/nxadm/tail v1.4.8
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/onsi/ginkgo/v2 v2.11.0
-	github.com/onsi/gomega v1.27.8
+	github.com/onsi/gomega v1.27.10
 	github.com/opencontainers/go-digest v1.0.0
 	github.com/openshift/api v0.0.0-20230502160752-c71432710382
 	github.com/openshift/client-go v0.0.0-20230120202327-72f107311084
@@ -85,8 +85,8 @@ require (
 	github.com/prometheus/client_golang v1.16.0
 	github.com/prometheus/client_model v0.4.0
 	github.com/prometheus/common v0.44.0
-	github.com/quay/claircore v1.5.10
-	github.com/quay/zlog v1.1.4
+	github.com/quay/claircore v1.5.13
+	github.com/quay/zlog v1.1.5
 	github.com/rs/zerolog v1.29.1
 	github.com/russellhaering/gosaml2 v0.9.1
 	github.com/russellhaering/goxmldsig v1.4.0
@@ -121,7 +121,7 @@ require (
 	golang.org/x/time v0.3.0
 	golang.org/x/tools v0.11.0
 	golang.stackrox.io/grpc-http1 v0.2.9
-	google.golang.org/api v0.133.0
+	google.golang.org/api v0.134.0
 	google.golang.org/genproto v0.0.0-20230706204954-ccb25ca9f130
 	google.golang.org/grpc v1.57.0
 	google.golang.org/grpc/examples v0.0.0-20210902184326-c93e472777b9
