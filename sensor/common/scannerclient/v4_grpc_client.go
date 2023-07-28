@@ -2,7 +2,6 @@ package scannerclient
 
 import (
 	"context"
-	"strconv"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -64,7 +63,7 @@ func (v V4GRPCClient) Dial(endpoint string) (Client, error) {
 	}, nil
 }
 
-func (v V4GRPCClient) GetImageAnalysis(ctx context.Context, image *storage.Image, cfg *types.Config) (*scannerV1.GetImageComponentsResponse, error) {
+func (v V4GRPCClient) GetImageAnalysis(ctx context.Context, image *storage.Image, cfg *types.Config) (*scannerV1.GetImageComponentsResponse, *scannerV4.IndexReport, error) {
 	name := image.GetName().GetFullName()
 	indexReport, err := v.indexerClient.CreateIndexReport(ctx, &scannerV4.CreateIndexReportRequest{
 		HashId:               "",
@@ -76,72 +75,82 @@ func (v V4GRPCClient) GetImageAnalysis(ctx context.Context, image *storage.Image
 
 	if err != nil {
 		log.Debugf("Unable to get image components from local Scanner for image %s: %v", name, err)
-		return nil, errors.Wrap(err, "getting image components from scanner")
+		return nil, nil, errors.Wrap(err, "getting image components from scanner")
 	}
 
 	log.Debugf("Received image indexing report from local Scanner for image %s", name)
 
-	//convert indexReport to scannerV4.CreateIndexReportResponse
-	resp, err := convertIndexReportToV1GetImageComponentsResponse(*indexReport, image)
-	//return resp or return indexReport directly?
-	if err != nil {
-		log.Debugf("Failed to convert indexer report to image components from local Scanner for image %s: %v", name, err)
-		return nil, errors.Wrap(err, "converting indexer report from scanner")
-	}
-
-	return resp, nil
-}
-
-func convertIndexReportToV1GetImageComponentsResponse(indexReport scannerV4.IndexReport, image *storage.Image) (*scannerV1.GetImageComponentsResponse, error) {
+	// Convert indexReport to scannerV1.GetImageComponentsResponse
 	res := &scannerV1.GetImageComponentsResponse{}
 	if indexReport.Success {
 		res.Status = scannerV1.ScanStatus_SUCCEEDED
 		res.ScannerVersion = image.GetScan().ScannerVersion
-		// TODO: Convert indexReport package information to scannerV1.GetImageComponentsResponse components
-		ns, isRhelComponent := getNamespace(indexReport)
-		res.Components.Namespace = ns
-		for _, pkg := range indexReport.Packages {
-			envMap := indexReport.Environments
-			envList := envMap[pkg.Id].GetEnvironments()
-			isLanguageComponent := false
-
-			// Check if it's a language component
-			for _, env := range envList {
-				repoIdList := env.RepositoryIds
-				for _, repoId := range repoIdList {
-					id, err := strconv.Atoi(repoId)
-					if err != nil {
-						log.Errorf("Error converting repoId to int: %v", err)
-						continue
-					}
-					repoName := indexReport.Repositories[id].Name
-					if languageComponents[repoName] {
-						// TODO: We know it's a language component
-						isLanguageComponent = true
-						break
-					}
-				}
-				if isLanguageComponent {
-					break
-				}
-			}
-
-			if !isLanguageComponent {
-				if isRhelComponent {
-					// TODO: Process as RHEL component
-				} else {
-					// TODO: Process as OS component
-				}
-			}
-		}
 	} else {
-		if len(indexReport.Err) > 0 {
-			return nil, errors.New(indexReport.Err)
-		}
-		return nil, errors.New("Failed to fetch index report")
+		// Handle conversion failure
+		err = errors.New("indexer report conversion failed")
+		log.Debugf("Failed to convert indexer report to image components from local Scanner for image %s", name)
+		return nil, nil, errors.Wrap(err, "converting indexer report from scanner")
 	}
-	return res, nil
+	//return resp or return indexReport directly?
+	if err != nil {
+		log.Debugf("Failed to convert indexer report to image components from local Scanner for image %s: %v", name, err)
+		return nil, nil, errors.Wrap(err, "converting indexer report from scanner")
+	}
+
+	return res, indexReport, nil
 }
+
+//
+//func convertIndexReportToV1GetImageComponentsResponse(indexReport scannerV4.IndexReport, image *storage.Image) (*scannerV1.GetImageComponentsResponse, error) {
+//	res := &scannerV1.GetImageComponentsResponse{}
+//	if indexReport.Success {
+//		res.Status = scannerV1.ScanStatus_SUCCEEDED
+//		res.ScannerVersion = image.GetScan().ScannerVersion
+//		// TODO: Convert indexReport package information to scannerV1.GetImageComponentsResponse components
+//		ns, isRhelComponent := getNamespace(indexReport)
+//		res.Components.Namespace = ns
+//		for _, pkg := range indexReport.Packages {
+//			envMap := indexReport.Environments
+//			envList := envMap[pkg.Id].GetEnvironments()
+//			isLanguageComponent := false
+//
+//			// Check if it's a language component
+//			for _, env := range envList {
+//				repoIdList := env.RepositoryIds
+//				for _, repoId := range repoIdList {
+//					id, err := strconv.Atoi(repoId)
+//					if err != nil {
+//						log.Errorf("Error converting repoId to int: %v", err)
+//						continue
+//					}
+//					repoName := indexReport.Repositories[id].Name
+//					if languageComponents[repoName] {
+//						// TODO: We know it's a language component
+//						isLanguageComponent = true
+//						break
+//					}
+//				}
+//				if isLanguageComponent {
+//					break
+//				}
+//			}
+//
+//			if !isLanguageComponent {
+//				if isRhelComponent {
+//					// TODO: Process as RHEL component
+//				} else {
+//					// TODO: Process as OS component
+//				}
+//			}
+//		}
+//	} else {
+//		if len(indexReport.Err) > 0 {
+//			return nil, errors.New(indexReport.Err)
+//		}
+//		return nil, errors.New("Failed to fetch index report")
+//	}
+//	return res, nil
+//}
 
 func getNamespace(report scannerV4.IndexReport) (string, bool) {
 	if len(report.Distributions) == 1 {

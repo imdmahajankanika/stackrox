@@ -8,6 +8,7 @@ import (
 
 	pkgErrors "github.com/pkg/errors"
 	v1 "github.com/stackrox/rox/generated/api/v1"
+	scannerV4 "github.com/stackrox/rox/generated/internalapi/scanner/v4"
 	"github.com/stackrox/rox/generated/storage"
 	"github.com/stackrox/rox/pkg/concurrency"
 	"github.com/stackrox/rox/pkg/env"
@@ -48,7 +49,7 @@ var (
 // LocalScan wraps the functions required for enriching local images. This allows us to inject different values for testing purposes.
 type LocalScan struct {
 	// NOTE: If you change these, make sure to also change the respective values within the tests.
-	scanImg                           func(context.Context, *storage.Image, registryTypes.ImageRegistry, scannerclient.Client) (*scannerV1.GetImageComponentsResponse, error)
+	scanImg                           func(context.Context, *storage.Image, registryTypes.ImageRegistry, scannerclient.Client) (*scannerV1.GetImageComponentsResponse, *scannerV4.IndexReport, error)
 	fetchSignaturesWithRetry          func(context.Context, signatures.SignatureFetcher, *storage.Image, string, registryTypes.Registry) ([]*storage.Signature, error)
 	scannerClientSingleton            func() scannerclient.Client
 	getRegistryForImageInNamespace    func(*storage.ImageName, string) (registryTypes.ImageRegistry, error)
@@ -183,35 +184,42 @@ func (s *LocalScan) enrichLocalImageFromRegistry(ctx context.Context, centralCli
 	reg := s.enrichImageWithMetadata(errorList, registries, image)
 
 	// Perform partial scan (image analysis / identify components) via local scanner.
-	scannerResp := s.fetchImageAnalysis(ctx, errorList, reg, image)
+	scannerResp, _ := s.fetchImageAnalysis(ctx, errorList, reg, image)
 
 	// Fetch signatures associated with image from registry.
 	sigs := s.fetchSignatures(ctx, errorList, reg, image)
 
 	// Send local enriched data to central to receive a fully enrich image. This includes image vulnerabilities and
 	// signature verification results.
-	centralResp, err := centralClient.EnrichLocalImageInternal(ctx, &v1.EnrichLocalImageInternalRequest{
-		ImageId:        image.GetId(),
-		ImageName:      image.GetName(),
-		Metadata:       image.GetMetadata(),
-		Components:     scannerResp.GetComponents(),
-		Notes:          scannerResp.GetNotes(),
-		ImageSignature: &storage.ImageSignature{Signatures: sigs},
-		ImageNotes:     image.GetNotes(),
-		Error:          errorList.String(),
-		RequestId:      requestID,
-		Force:          force,
-	})
-	if err != nil {
-		log.Debugf("Unable to enrich image %q: %v", image.GetName().GetFullName(), err)
-		return nil, pkgErrors.Wrapf(err, "enriching image %q via central", image.GetName())
+	if env.EnableScannerV4.BooleanSetting() && !env.RHCOSNodeScanning.BooleanSetting() {
+		//TODO call scanner v4 matcher with scanner v4 indexReport
+		return nil, nil
+	} else {
+		centralResp, err := centralClient.EnrichLocalImageInternal(ctx, &v1.EnrichLocalImageInternalRequest{
+			ImageId:        image.GetId(),
+			ImageName:      image.GetName(),
+			Metadata:       image.GetMetadata(),
+			Components:     scannerResp.GetComponents(),
+			Notes:          scannerResp.GetNotes(),
+			ImageSignature: &storage.ImageSignature{Signatures: sigs},
+			ImageNotes:     image.GetNotes(),
+			Error:          errorList.String(),
+			RequestId:      requestID,
+			Force:          force,
+		})
+
+		if err != nil {
+			log.Debugf("Unable to enrich image %q: %v", image.GetName().GetFullName(), err)
+			return nil, pkgErrors.Wrapf(err, "enriching image %q via central", image.GetName())
+		}
+
+		if errorList.Empty() {
+			log.Debugf("Retrieved image enrichment results for %q with id %q", image.GetName().GetFullName(), image.GetId())
+		}
+
+		return centralResp.GetImage(), errorList.ToError()
 	}
 
-	if errorList.Empty() {
-		log.Debugf("Retrieved image enrichment results for %q with id %q", image.GetName().GetFullName(), image.GetId())
-	}
-
-	return centralResp.GetImage(), errorList.ToError()
 }
 
 // enrichImageWithMetadata will loop through registries returning the first that succeeds in enriching image with metadata.
@@ -242,22 +250,22 @@ func (s *LocalScan) enrichImageWithMetadata(errorList *errorhelpers.ErrorList, r
 }
 
 // fetchImageAnalysis analyzes an image via the local scanner. Does nothing if errorList contains errors.
-func (s *LocalScan) fetchImageAnalysis(ctx context.Context, errorList *errorhelpers.ErrorList, registry registryTypes.ImageRegistry, image *storage.Image) *scannerV1.GetImageComponentsResponse {
+func (s *LocalScan) fetchImageAnalysis(ctx context.Context, errorList *errorhelpers.ErrorList, registry registryTypes.ImageRegistry, image *storage.Image) (*scannerV1.GetImageComponentsResponse, *scannerV4.IndexReport) {
 	if !errorList.Empty() {
 		// do nothing if errors previously encountered.
-		return nil
+		return nil, nil
 	}
 
 	// Scan the image via local scanner.
-	scannerResp, err := s.scanImg(ctx, image, registry, s.scannerClientSingleton())
+	scannerResp, report, err := s.scanImg(ctx, image, registry, s.scannerClientSingleton())
 	if err != nil {
 		log.Debugf("Scan for image %q with id %v failed: %v", image.GetName().GetFullName(), image.GetId(), err)
 		image.Notes = append(image.Notes, storage.Image_MISSING_SCAN_DATA)
 		errorList.AddError(pkgErrors.Wrapf(err, "scanning image %q locally", image.GetName()))
-		return nil
+		return nil, nil
 	}
 
-	return scannerResp
+	return scannerResp, report
 }
 
 // fetchSignatures fetches signatures from the registry for an image. Does nothing if errorList contains errors.
@@ -281,18 +289,18 @@ func (s *LocalScan) fetchSignatures(ctx context.Context, errorList *errorhelpers
 
 // scanImage will scan the given image and return its components.
 func scanImage(ctx context.Context, image *storage.Image,
-	registry registryTypes.ImageRegistry, scannerClient scannerclient.Client) (*scannerV1.GetImageComponentsResponse, error) {
+	registry registryTypes.ImageRegistry, scannerClient scannerclient.Client) (*scannerV1.GetImageComponentsResponse, *scannerV4.IndexReport, error) {
 	// Get the image analysis from the local Scanner.
-	scanResp, err := scannerClient.GetImageAnalysis(ctx, image, registry.Config())
+	scanResp, report, err := scannerClient.GetImageAnalysis(ctx, image, registry.Config())
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	// Return an error indicating a non-successful scan result.
 	if scanResp.GetStatus() != scannerV1.ScanStatus_SUCCEEDED {
-		return nil, fmt.Errorf("scan failed with status %q", scanResp.GetStatus().String())
+		return nil, nil, fmt.Errorf("scan failed with status %q", scanResp.GetStatus().String())
 	}
 
-	return scanResp, nil
+	return scanResp, report, nil
 }
 
 // createNoAuthImageRegistry creates an image registry that has no user/pass.
