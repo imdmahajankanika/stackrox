@@ -167,7 +167,7 @@ func (rg *reportGeneratorImpl) saveReportData(ctx context.Context, configID, rep
 
 	// Augment ctx with write access to Administration for Upsert.
 	ctx = sac.WithGlobalAccessScopeChecker(ctx,
-		sac.AllowFixedScopes(
+		sac.AllowFixedResourceLevelScopes(
 			sac.AccessModeScopeKeys(storage.Access_READ_WRITE_ACCESS),
 			sac.ResourceScopeKeys(resources.Administration)))
 

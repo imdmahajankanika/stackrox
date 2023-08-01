@@ -23,7 +23,7 @@ import (
 func FetchInstallInfo(ctx context.Context, installation installationStore.Store) (*storage.InstallationInfo, error) {
 	installInfo, _, err := installation.Get(
 		sac.WithGlobalAccessScopeChecker(ctx,
-			sac.AllowFixedScopes(
+			sac.AllowFixedResourceLevelScopes(
 				sac.AccessModeScopeKeys(storage.Access_READ_ACCESS),
 				sac.ResourceScopeKeys(resources.InstallationInfo),
 			),
