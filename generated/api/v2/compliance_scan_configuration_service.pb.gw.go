@@ -33,7 +33,7 @@ var _ = utilities.NewDoubleArray
 var _ = descriptor.ForMessage
 var _ = metadata.Join
 
-func request_ComplianceScanScheduleService_ListComplianceScanConfigurations_0(ctx context.Context, marshaler runtime.Marshaler, client ComplianceScanScheduleServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func request_ComplianceScanConfigurationService_ListComplianceScanConfigurations_0(ctx context.Context, marshaler runtime.Marshaler, client ComplianceScanConfigurationServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq Empty
 	var metadata runtime.ServerMetadata
 
@@ -42,7 +42,7 @@ func request_ComplianceScanScheduleService_ListComplianceScanConfigurations_0(ct
 
 }
 
-func local_request_ComplianceScanScheduleService_ListComplianceScanConfigurations_0(ctx context.Context, marshaler runtime.Marshaler, server ComplianceScanScheduleServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func local_request_ComplianceScanConfigurationService_ListComplianceScanConfigurations_0(ctx context.Context, marshaler runtime.Marshaler, server ComplianceScanConfigurationServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq Empty
 	var metadata runtime.ServerMetadata
 
@@ -51,7 +51,7 @@ func local_request_ComplianceScanScheduleService_ListComplianceScanConfiguration
 
 }
 
-func request_ComplianceScanScheduleService_GetComplianceScanConfiguration_0(ctx context.Context, marshaler runtime.Marshaler, client ComplianceScanScheduleServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func request_ComplianceScanConfigurationService_GetComplianceScanConfiguration_0(ctx context.Context, marshaler runtime.Marshaler, client ComplianceScanConfigurationServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq ComplianceScanConfigurationRequest
 	var metadata runtime.ServerMetadata
 
@@ -78,7 +78,7 @@ func request_ComplianceScanScheduleService_GetComplianceScanConfiguration_0(ctx 
 
 }
 
-func local_request_ComplianceScanScheduleService_GetComplianceScanConfiguration_0(ctx context.Context, marshaler runtime.Marshaler, server ComplianceScanScheduleServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func local_request_ComplianceScanConfigurationService_GetComplianceScanConfiguration_0(ctx context.Context, marshaler runtime.Marshaler, server ComplianceScanConfigurationServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq ComplianceScanConfigurationRequest
 	var metadata runtime.ServerMetadata
 
@@ -105,7 +105,7 @@ func local_request_ComplianceScanScheduleService_GetComplianceScanConfiguration_
 
 }
 
-func request_ComplianceScanScheduleService_PostComplianceScanConfiguration_0(ctx context.Context, marshaler runtime.Marshaler, client ComplianceScanScheduleServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func request_ComplianceScanConfigurationService_PostComplianceScanConfiguration_0(ctx context.Context, marshaler runtime.Marshaler, client ComplianceScanConfigurationServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq ComplianceScanConfiguration
 	var metadata runtime.ServerMetadata
 
@@ -122,7 +122,7 @@ func request_ComplianceScanScheduleService_PostComplianceScanConfiguration_0(ctx
 
 }
 
-func local_request_ComplianceScanScheduleService_PostComplianceScanConfiguration_0(ctx context.Context, marshaler runtime.Marshaler, server ComplianceScanScheduleServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func local_request_ComplianceScanConfigurationService_PostComplianceScanConfiguration_0(ctx context.Context, marshaler runtime.Marshaler, server ComplianceScanConfigurationServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq ComplianceScanConfiguration
 	var metadata runtime.ServerMetadata
 
@@ -139,7 +139,7 @@ func local_request_ComplianceScanScheduleService_PostComplianceScanConfiguration
 
 }
 
-func request_ComplianceScanScheduleService_UpdateComplianceScanConfiguration_0(ctx context.Context, marshaler runtime.Marshaler, client ComplianceScanScheduleServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func request_ComplianceScanConfigurationService_UpdateComplianceScanConfiguration_0(ctx context.Context, marshaler runtime.Marshaler, client ComplianceScanConfigurationServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq ComplianceScanConfiguration
 	var metadata runtime.ServerMetadata
 
@@ -174,7 +174,7 @@ func request_ComplianceScanScheduleService_UpdateComplianceScanConfiguration_0(c
 
 }
 
-func local_request_ComplianceScanScheduleService_UpdateComplianceScanConfiguration_0(ctx context.Context, marshaler runtime.Marshaler, server ComplianceScanScheduleServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func local_request_ComplianceScanConfigurationService_UpdateComplianceScanConfiguration_0(ctx context.Context, marshaler runtime.Marshaler, server ComplianceScanConfigurationServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq ComplianceScanConfiguration
 	var metadata runtime.ServerMetadata
 
@@ -209,7 +209,7 @@ func local_request_ComplianceScanScheduleService_UpdateComplianceScanConfigurati
 
 }
 
-func request_ComplianceScanScheduleService_DeleteComplianceScanConfiguration_0(ctx context.Context, marshaler runtime.Marshaler, client ComplianceScanScheduleServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func request_ComplianceScanConfigurationService_DeleteComplianceScanConfiguration_0(ctx context.Context, marshaler runtime.Marshaler, client ComplianceScanConfigurationServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq ComplianceScanConfigurationRequest
 	var metadata runtime.ServerMetadata
 
@@ -236,7 +236,7 @@ func request_ComplianceScanScheduleService_DeleteComplianceScanConfiguration_0(c
 
 }
 
-func local_request_ComplianceScanScheduleService_DeleteComplianceScanConfiguration_0(ctx context.Context, marshaler runtime.Marshaler, server ComplianceScanScheduleServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func local_request_ComplianceScanConfigurationService_DeleteComplianceScanConfiguration_0(ctx context.Context, marshaler runtime.Marshaler, server ComplianceScanConfigurationServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq ComplianceScanConfigurationRequest
 	var metadata runtime.ServerMetadata
 
@@ -263,7 +263,7 @@ func local_request_ComplianceScanScheduleService_DeleteComplianceScanConfigurati
 
 }
 
-func request_ComplianceScanScheduleService_RunComplianceScanConfiguration_0(ctx context.Context, marshaler runtime.Marshaler, client ComplianceScanScheduleServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func request_ComplianceScanConfigurationService_RunComplianceScanConfiguration_0(ctx context.Context, marshaler runtime.Marshaler, client ComplianceScanConfigurationServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq ComplianceScanConfigurationRequest
 	var metadata runtime.ServerMetadata
 
@@ -290,7 +290,7 @@ func request_ComplianceScanScheduleService_RunComplianceScanConfiguration_0(ctx 
 
 }
 
-func local_request_ComplianceScanScheduleService_RunComplianceScanConfiguration_0(ctx context.Context, marshaler runtime.Marshaler, server ComplianceScanScheduleServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func local_request_ComplianceScanConfigurationService_RunComplianceScanConfiguration_0(ctx context.Context, marshaler runtime.Marshaler, server ComplianceScanConfigurationServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq ComplianceScanConfigurationRequest
 	var metadata runtime.ServerMetadata
 
@@ -317,13 +317,13 @@ func local_request_ComplianceScanScheduleService_RunComplianceScanConfiguration_
 
 }
 
-// RegisterComplianceScanScheduleServiceHandlerServer registers the http handlers for service ComplianceScanScheduleService to "mux".
-// UnaryRPC     :call ComplianceScanScheduleServiceServer directly.
+// RegisterComplianceScanConfigurationServiceHandlerServer registers the http handlers for service ComplianceScanConfigurationService to "mux".
+// UnaryRPC     :call ComplianceScanConfigurationServiceServer directly.
 // StreamingRPC :currently unsupported pending https://github.com/grpc/grpc-go/issues/906.
-// Note that using this registration option will cause many gRPC library features to stop working. Consider using RegisterComplianceScanScheduleServiceHandlerFromEndpoint instead.
-func RegisterComplianceScanScheduleServiceHandlerServer(ctx context.Context, mux *runtime.ServeMux, server ComplianceScanScheduleServiceServer) error {
+// Note that using this registration option will cause many gRPC library features to stop working. Consider using RegisterComplianceScanConfigurationServiceHandlerFromEndpoint instead.
+func RegisterComplianceScanConfigurationServiceHandlerServer(ctx context.Context, mux *runtime.ServeMux, server ComplianceScanConfigurationServiceServer) error {
 
-	mux.Handle("GET", pattern_ComplianceScanScheduleService_ListComplianceScanConfigurations_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("GET", pattern_ComplianceScanConfigurationService_ListComplianceScanConfigurations_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
@@ -334,7 +334,7 @@ func RegisterComplianceScanScheduleServiceHandlerServer(ctx context.Context, mux
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_ComplianceScanScheduleService_ListComplianceScanConfigurations_0(rctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_ComplianceScanConfigurationService_ListComplianceScanConfigurations_0(rctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -342,11 +342,11 @@ func RegisterComplianceScanScheduleServiceHandlerServer(ctx context.Context, mux
 			return
 		}
 
-		forward_ComplianceScanScheduleService_ListComplianceScanConfigurations_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_ComplianceScanConfigurationService_ListComplianceScanConfigurations_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("GET", pattern_ComplianceScanScheduleService_GetComplianceScanConfiguration_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("GET", pattern_ComplianceScanConfigurationService_GetComplianceScanConfiguration_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
@@ -357,7 +357,7 @@ func RegisterComplianceScanScheduleServiceHandlerServer(ctx context.Context, mux
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_ComplianceScanScheduleService_GetComplianceScanConfiguration_0(rctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_ComplianceScanConfigurationService_GetComplianceScanConfiguration_0(rctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -365,11 +365,11 @@ func RegisterComplianceScanScheduleServiceHandlerServer(ctx context.Context, mux
 			return
 		}
 
-		forward_ComplianceScanScheduleService_GetComplianceScanConfiguration_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_ComplianceScanConfigurationService_GetComplianceScanConfiguration_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("POST", pattern_ComplianceScanScheduleService_PostComplianceScanConfiguration_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("POST", pattern_ComplianceScanConfigurationService_PostComplianceScanConfiguration_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
@@ -380,7 +380,7 @@ func RegisterComplianceScanScheduleServiceHandlerServer(ctx context.Context, mux
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_ComplianceScanScheduleService_PostComplianceScanConfiguration_0(rctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_ComplianceScanConfigurationService_PostComplianceScanConfiguration_0(rctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -388,11 +388,11 @@ func RegisterComplianceScanScheduleServiceHandlerServer(ctx context.Context, mux
 			return
 		}
 
-		forward_ComplianceScanScheduleService_PostComplianceScanConfiguration_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_ComplianceScanConfigurationService_PostComplianceScanConfiguration_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("PUT", pattern_ComplianceScanScheduleService_UpdateComplianceScanConfiguration_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("PUT", pattern_ComplianceScanConfigurationService_UpdateComplianceScanConfiguration_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
@@ -403,7 +403,7 @@ func RegisterComplianceScanScheduleServiceHandlerServer(ctx context.Context, mux
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_ComplianceScanScheduleService_UpdateComplianceScanConfiguration_0(rctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_ComplianceScanConfigurationService_UpdateComplianceScanConfiguration_0(rctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -411,11 +411,11 @@ func RegisterComplianceScanScheduleServiceHandlerServer(ctx context.Context, mux
 			return
 		}
 
-		forward_ComplianceScanScheduleService_UpdateComplianceScanConfiguration_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_ComplianceScanConfigurationService_UpdateComplianceScanConfiguration_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("DELETE", pattern_ComplianceScanScheduleService_DeleteComplianceScanConfiguration_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("DELETE", pattern_ComplianceScanConfigurationService_DeleteComplianceScanConfiguration_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
@@ -426,7 +426,7 @@ func RegisterComplianceScanScheduleServiceHandlerServer(ctx context.Context, mux
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_ComplianceScanScheduleService_DeleteComplianceScanConfiguration_0(rctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_ComplianceScanConfigurationService_DeleteComplianceScanConfiguration_0(rctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -434,11 +434,11 @@ func RegisterComplianceScanScheduleServiceHandlerServer(ctx context.Context, mux
 			return
 		}
 
-		forward_ComplianceScanScheduleService_DeleteComplianceScanConfiguration_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_ComplianceScanConfigurationService_DeleteComplianceScanConfiguration_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("GET", pattern_ComplianceScanScheduleService_RunComplianceScanConfiguration_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("GET", pattern_ComplianceScanConfigurationService_RunComplianceScanConfiguration_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
@@ -449,7 +449,7 @@ func RegisterComplianceScanScheduleServiceHandlerServer(ctx context.Context, mux
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_ComplianceScanScheduleService_RunComplianceScanConfiguration_0(rctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_ComplianceScanConfigurationService_RunComplianceScanConfiguration_0(rctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -457,16 +457,16 @@ func RegisterComplianceScanScheduleServiceHandlerServer(ctx context.Context, mux
 			return
 		}
 
-		forward_ComplianceScanScheduleService_RunComplianceScanConfiguration_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_ComplianceScanConfigurationService_RunComplianceScanConfiguration_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
 	return nil
 }
 
-// RegisterComplianceScanScheduleServiceHandlerFromEndpoint is same as RegisterComplianceScanScheduleServiceHandler but
+// RegisterComplianceScanConfigurationServiceHandlerFromEndpoint is same as RegisterComplianceScanConfigurationServiceHandler but
 // automatically dials to "endpoint" and closes the connection when "ctx" gets done.
-func RegisterComplianceScanScheduleServiceHandlerFromEndpoint(ctx context.Context, mux *runtime.ServeMux, endpoint string, opts []grpc.DialOption) (err error) {
+func RegisterComplianceScanConfigurationServiceHandlerFromEndpoint(ctx context.Context, mux *runtime.ServeMux, endpoint string, opts []grpc.DialOption) (err error) {
 	conn, err := grpc.Dial(endpoint, opts...)
 	if err != nil {
 		return err
@@ -486,23 +486,23 @@ func RegisterComplianceScanScheduleServiceHandlerFromEndpoint(ctx context.Contex
 		}()
 	}()
 
-	return RegisterComplianceScanScheduleServiceHandler(ctx, mux, conn)
+	return RegisterComplianceScanConfigurationServiceHandler(ctx, mux, conn)
 }
 
-// RegisterComplianceScanScheduleServiceHandler registers the http handlers for service ComplianceScanScheduleService to "mux".
+// RegisterComplianceScanConfigurationServiceHandler registers the http handlers for service ComplianceScanConfigurationService to "mux".
 // The handlers forward requests to the grpc endpoint over "conn".
-func RegisterComplianceScanScheduleServiceHandler(ctx context.Context, mux *runtime.ServeMux, conn *grpc.ClientConn) error {
-	return RegisterComplianceScanScheduleServiceHandlerClient(ctx, mux, NewComplianceScanScheduleServiceClient(conn))
+func RegisterComplianceScanConfigurationServiceHandler(ctx context.Context, mux *runtime.ServeMux, conn *grpc.ClientConn) error {
+	return RegisterComplianceScanConfigurationServiceHandlerClient(ctx, mux, NewComplianceScanConfigurationServiceClient(conn))
 }
 
-// RegisterComplianceScanScheduleServiceHandlerClient registers the http handlers for service ComplianceScanScheduleService
-// to "mux". The handlers forward requests to the grpc endpoint over the given implementation of "ComplianceScanScheduleServiceClient".
-// Note: the gRPC framework executes interceptors within the gRPC handler. If the passed in "ComplianceScanScheduleServiceClient"
+// RegisterComplianceScanConfigurationServiceHandlerClient registers the http handlers for service ComplianceScanConfigurationService
+// to "mux". The handlers forward requests to the grpc endpoint over the given implementation of "ComplianceScanConfigurationServiceClient".
+// Note: the gRPC framework executes interceptors within the gRPC handler. If the passed in "ComplianceScanConfigurationServiceClient"
 // doesn't go through the normal gRPC flow (creating a gRPC client etc.) then it will be up to the passed in
-// "ComplianceScanScheduleServiceClient" to call the correct interceptors.
-func RegisterComplianceScanScheduleServiceHandlerClient(ctx context.Context, mux *runtime.ServeMux, client ComplianceScanScheduleServiceClient) error {
+// "ComplianceScanConfigurationServiceClient" to call the correct interceptors.
+func RegisterComplianceScanConfigurationServiceHandlerClient(ctx context.Context, mux *runtime.ServeMux, client ComplianceScanConfigurationServiceClient) error {
 
-	mux.Handle("GET", pattern_ComplianceScanScheduleService_ListComplianceScanConfigurations_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("GET", pattern_ComplianceScanConfigurationService_ListComplianceScanConfigurations_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
@@ -511,18 +511,18 @@ func RegisterComplianceScanScheduleServiceHandlerClient(ctx context.Context, mux
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_ComplianceScanScheduleService_ListComplianceScanConfigurations_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_ComplianceScanConfigurationService_ListComplianceScanConfigurations_0(rctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_ComplianceScanScheduleService_ListComplianceScanConfigurations_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_ComplianceScanConfigurationService_ListComplianceScanConfigurations_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("GET", pattern_ComplianceScanScheduleService_GetComplianceScanConfiguration_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("GET", pattern_ComplianceScanConfigurationService_GetComplianceScanConfiguration_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
@@ -531,18 +531,18 @@ func RegisterComplianceScanScheduleServiceHandlerClient(ctx context.Context, mux
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_ComplianceScanScheduleService_GetComplianceScanConfiguration_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_ComplianceScanConfigurationService_GetComplianceScanConfiguration_0(rctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_ComplianceScanScheduleService_GetComplianceScanConfiguration_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_ComplianceScanConfigurationService_GetComplianceScanConfiguration_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("POST", pattern_ComplianceScanScheduleService_PostComplianceScanConfiguration_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("POST", pattern_ComplianceScanConfigurationService_PostComplianceScanConfiguration_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
@@ -551,18 +551,18 @@ func RegisterComplianceScanScheduleServiceHandlerClient(ctx context.Context, mux
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_ComplianceScanScheduleService_PostComplianceScanConfiguration_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_ComplianceScanConfigurationService_PostComplianceScanConfiguration_0(rctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_ComplianceScanScheduleService_PostComplianceScanConfiguration_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_ComplianceScanConfigurationService_PostComplianceScanConfiguration_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("PUT", pattern_ComplianceScanScheduleService_UpdateComplianceScanConfiguration_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("PUT", pattern_ComplianceScanConfigurationService_UpdateComplianceScanConfiguration_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
@@ -571,18 +571,18 @@ func RegisterComplianceScanScheduleServiceHandlerClient(ctx context.Context, mux
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_ComplianceScanScheduleService_UpdateComplianceScanConfiguration_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_ComplianceScanConfigurationService_UpdateComplianceScanConfiguration_0(rctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_ComplianceScanScheduleService_UpdateComplianceScanConfiguration_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_ComplianceScanConfigurationService_UpdateComplianceScanConfiguration_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("DELETE", pattern_ComplianceScanScheduleService_DeleteComplianceScanConfiguration_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("DELETE", pattern_ComplianceScanConfigurationService_DeleteComplianceScanConfiguration_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
@@ -591,18 +591,18 @@ func RegisterComplianceScanScheduleServiceHandlerClient(ctx context.Context, mux
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_ComplianceScanScheduleService_DeleteComplianceScanConfiguration_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_ComplianceScanConfigurationService_DeleteComplianceScanConfiguration_0(rctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_ComplianceScanScheduleService_DeleteComplianceScanConfiguration_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_ComplianceScanConfigurationService_DeleteComplianceScanConfiguration_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("GET", pattern_ComplianceScanScheduleService_RunComplianceScanConfiguration_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("GET", pattern_ComplianceScanConfigurationService_RunComplianceScanConfiguration_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
@@ -611,14 +611,14 @@ func RegisterComplianceScanScheduleServiceHandlerClient(ctx context.Context, mux
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_ComplianceScanScheduleService_RunComplianceScanConfiguration_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_ComplianceScanConfigurationService_RunComplianceScanConfiguration_0(rctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_ComplianceScanScheduleService_RunComplianceScanConfiguration_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_ComplianceScanConfigurationService_RunComplianceScanConfiguration_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -626,29 +626,29 @@ func RegisterComplianceScanScheduleServiceHandlerClient(ctx context.Context, mux
 }
 
 var (
-	pattern_ComplianceScanScheduleService_ListComplianceScanConfigurations_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"v2", "compliance", "scan", "schedules"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_ComplianceScanConfigurationService_ListComplianceScanConfigurations_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"v2", "compliance", "scan", "configurations"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_ComplianceScanScheduleService_GetComplianceScanConfiguration_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4}, []string{"v2", "compliance", "scan", "schedules", "scan_name"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_ComplianceScanConfigurationService_GetComplianceScanConfiguration_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4}, []string{"v2", "compliance", "scan", "configurations", "scan_name"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_ComplianceScanScheduleService_PostComplianceScanConfiguration_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"v2", "compliance", "scan", "configurations"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_ComplianceScanConfigurationService_PostComplianceScanConfiguration_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"v2", "compliance", "scan", "configurations"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_ComplianceScanScheduleService_UpdateComplianceScanConfiguration_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4}, []string{"v2", "compliance", "scan", "configurations", "scan_name"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_ComplianceScanConfigurationService_UpdateComplianceScanConfiguration_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4}, []string{"v2", "compliance", "scan", "configurations", "scan_name"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_ComplianceScanScheduleService_DeleteComplianceScanConfiguration_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4}, []string{"v2", "compliance", "scan", "configurations", "scan_name"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_ComplianceScanConfigurationService_DeleteComplianceScanConfiguration_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4}, []string{"v2", "compliance", "scan", "configurations", "scan_name"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_ComplianceScanScheduleService_RunComplianceScanConfiguration_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4, 1, 0, 4, 1, 5, 5}, []string{"v2", "compliance", "scan", "configurations", "execute", "scan_name"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_ComplianceScanConfigurationService_RunComplianceScanConfiguration_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4, 1, 0, 4, 1, 5, 5}, []string{"v2", "compliance", "scan", "configurations", "execute", "scan_name"}, "", runtime.AssumeColonVerbOpt(false)))
 )
 
 var (
-	forward_ComplianceScanScheduleService_ListComplianceScanConfigurations_0 = runtime.ForwardResponseMessage
+	forward_ComplianceScanConfigurationService_ListComplianceScanConfigurations_0 = runtime.ForwardResponseMessage
 
-	forward_ComplianceScanScheduleService_GetComplianceScanConfiguration_0 = runtime.ForwardResponseMessage
+	forward_ComplianceScanConfigurationService_GetComplianceScanConfiguration_0 = runtime.ForwardResponseMessage
 
-	forward_ComplianceScanScheduleService_PostComplianceScanConfiguration_0 = runtime.ForwardResponseMessage
+	forward_ComplianceScanConfigurationService_PostComplianceScanConfiguration_0 = runtime.ForwardResponseMessage
 
-	forward_ComplianceScanScheduleService_UpdateComplianceScanConfiguration_0 = runtime.ForwardResponseMessage
+	forward_ComplianceScanConfigurationService_UpdateComplianceScanConfiguration_0 = runtime.ForwardResponseMessage
 
-	forward_ComplianceScanScheduleService_DeleteComplianceScanConfiguration_0 = runtime.ForwardResponseMessage
+	forward_ComplianceScanConfigurationService_DeleteComplianceScanConfiguration_0 = runtime.ForwardResponseMessage
 
-	forward_ComplianceScanScheduleService_RunComplianceScanConfiguration_0 = runtime.ForwardResponseMessage
+	forward_ComplianceScanConfigurationService_RunComplianceScanConfiguration_0 = runtime.ForwardResponseMessage
 )

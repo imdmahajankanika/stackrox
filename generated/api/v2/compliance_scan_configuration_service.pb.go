@@ -102,28 +102,30 @@ func (m *ClusterScanStatus) Clone() *ClusterScanStatus {
 	return cloned
 }
 
-// Next available tag: 7
-type BaseComplianceScanScheduleSettings struct {
+// Next available tag: 4
+type BaseComplianceScanConfigurationSettings struct {
 	OneTimeScan          bool      `protobuf:"varint,1,opt,name=one_time_scan,json=oneTimeScan,proto3" json:"one_time_scan,omitempty"`
 	Profiles             []string  `protobuf:"bytes,2,rep,name=profiles,proto3" json:"profiles,omitempty"`
-	Schedule             *Schedule `protobuf:"bytes,3,opt,name=schedule,proto3" json:"schedule,omitempty"`
+	ScanSchedule         *Schedule `protobuf:"bytes,3,opt,name=scan_schedule,json=scanSchedule,proto3" json:"scan_schedule,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}  `json:"-"`
 	XXX_unrecognized     []byte    `json:"-"`
 	XXX_sizecache        int32     `json:"-"`
 }
 
-func (m *BaseComplianceScanScheduleSettings) Reset()         { *m = BaseComplianceScanScheduleSettings{} }
-func (m *BaseComplianceScanScheduleSettings) String() string { return proto.CompactTextString(m) }
-func (*BaseComplianceScanScheduleSettings) ProtoMessage()    {}
-func (*BaseComplianceScanScheduleSettings) Descriptor() ([]byte, []int) {
+func (m *BaseComplianceScanConfigurationSettings) Reset() {
+	*m = BaseComplianceScanConfigurationSettings{}
+}
+func (m *BaseComplianceScanConfigurationSettings) String() string { return proto.CompactTextString(m) }
+func (*BaseComplianceScanConfigurationSettings) ProtoMessage()    {}
+func (*BaseComplianceScanConfigurationSettings) Descriptor() ([]byte, []int) {
 	return fileDescriptor_d441c70a62230c3d, []int{1}
 }
-func (m *BaseComplianceScanScheduleSettings) XXX_Unmarshal(b []byte) error {
+func (m *BaseComplianceScanConfigurationSettings) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *BaseComplianceScanScheduleSettings) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *BaseComplianceScanConfigurationSettings) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_BaseComplianceScanScheduleSettings.Marshal(b, m, deterministic)
+		return xxx_messageInfo_BaseComplianceScanConfigurationSettings.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -133,65 +135,65 @@ func (m *BaseComplianceScanScheduleSettings) XXX_Marshal(b []byte, deterministic
 		return b[:n], nil
 	}
 }
-func (m *BaseComplianceScanScheduleSettings) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_BaseComplianceScanScheduleSettings.Merge(m, src)
+func (m *BaseComplianceScanConfigurationSettings) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_BaseComplianceScanConfigurationSettings.Merge(m, src)
 }
-func (m *BaseComplianceScanScheduleSettings) XXX_Size() int {
+func (m *BaseComplianceScanConfigurationSettings) XXX_Size() int {
 	return m.Size()
 }
-func (m *BaseComplianceScanScheduleSettings) XXX_DiscardUnknown() {
-	xxx_messageInfo_BaseComplianceScanScheduleSettings.DiscardUnknown(m)
+func (m *BaseComplianceScanConfigurationSettings) XXX_DiscardUnknown() {
+	xxx_messageInfo_BaseComplianceScanConfigurationSettings.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_BaseComplianceScanScheduleSettings proto.InternalMessageInfo
+var xxx_messageInfo_BaseComplianceScanConfigurationSettings proto.InternalMessageInfo
 
-func (m *BaseComplianceScanScheduleSettings) GetOneTimeScan() bool {
+func (m *BaseComplianceScanConfigurationSettings) GetOneTimeScan() bool {
 	if m != nil {
 		return m.OneTimeScan
 	}
 	return false
 }
 
-func (m *BaseComplianceScanScheduleSettings) GetProfiles() []string {
+func (m *BaseComplianceScanConfigurationSettings) GetProfiles() []string {
 	if m != nil {
 		return m.Profiles
 	}
 	return nil
 }
 
-func (m *BaseComplianceScanScheduleSettings) GetSchedule() *Schedule {
+func (m *BaseComplianceScanConfigurationSettings) GetScanSchedule() *Schedule {
 	if m != nil {
-		return m.Schedule
+		return m.ScanSchedule
 	}
 	return nil
 }
 
-func (m *BaseComplianceScanScheduleSettings) MessageClone() proto.Message {
+func (m *BaseComplianceScanConfigurationSettings) MessageClone() proto.Message {
 	return m.Clone()
 }
-func (m *BaseComplianceScanScheduleSettings) Clone() *BaseComplianceScanScheduleSettings {
+func (m *BaseComplianceScanConfigurationSettings) Clone() *BaseComplianceScanConfigurationSettings {
 	if m == nil {
 		return nil
 	}
-	cloned := new(BaseComplianceScanScheduleSettings)
+	cloned := new(BaseComplianceScanConfigurationSettings)
 	*cloned = *m
 
 	if m.Profiles != nil {
 		cloned.Profiles = make([]string, len(m.Profiles))
 		copy(cloned.Profiles, m.Profiles)
 	}
-	cloned.Schedule = m.Schedule.Clone()
+	cloned.ScanSchedule = m.ScanSchedule.Clone()
 	return cloned
 }
 
 // Next available tag: 4
 type ComplianceScanConfiguration struct {
-	ScanName             string                              `protobuf:"bytes,1,opt,name=scan_name,json=scanName,proto3" json:"scan_name,omitempty"`
-	ScanScheduleConfig   *BaseComplianceScanScheduleSettings `protobuf:"bytes,2,opt,name=scan_schedule_config,json=scanScheduleConfig,proto3" json:"scan_schedule_config,omitempty"`
-	Clusters             []string                            `protobuf:"bytes,3,rep,name=clusters,proto3" json:"clusters,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}                            `json:"-"`
-	XXX_unrecognized     []byte                              `json:"-"`
-	XXX_sizecache        int32                               `json:"-"`
+	ScanName             string                                   `protobuf:"bytes,1,opt,name=scan_name,json=scanName,proto3" json:"scan_name,omitempty"`
+	ScanConfig           *BaseComplianceScanConfigurationSettings `protobuf:"bytes,2,opt,name=scan_config,json=scanConfig,proto3" json:"scan_config,omitempty"`
+	Clusters             []string                                 `protobuf:"bytes,3,rep,name=clusters,proto3" json:"clusters,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}                                 `json:"-"`
+	XXX_unrecognized     []byte                                   `json:"-"`
+	XXX_sizecache        int32                                    `json:"-"`
 }
 
 func (m *ComplianceScanConfiguration) Reset()         { *m = ComplianceScanConfiguration{} }
@@ -234,9 +236,9 @@ func (m *ComplianceScanConfiguration) GetScanName() string {
 	return ""
 }
 
-func (m *ComplianceScanConfiguration) GetScanScheduleConfig() *BaseComplianceScanScheduleSettings {
+func (m *ComplianceScanConfiguration) GetScanConfig() *BaseComplianceScanConfigurationSettings {
 	if m != nil {
-		return m.ScanScheduleConfig
+		return m.ScanConfig
 	}
 	return nil
 }
@@ -258,7 +260,7 @@ func (m *ComplianceScanConfiguration) Clone() *ComplianceScanConfiguration {
 	cloned := new(ComplianceScanConfiguration)
 	*cloned = *m
 
-	cloned.ScanScheduleConfig = m.ScanScheduleConfig.Clone()
+	cloned.ScanConfig = m.ScanConfig.Clone()
 	if m.Clusters != nil {
 		cloned.Clusters = make([]string, len(m.Clusters))
 		copy(cloned.Clusters, m.Clusters)
@@ -268,11 +270,11 @@ func (m *ComplianceScanConfiguration) Clone() *ComplianceScanConfiguration {
 
 // Next available tag: 7
 type ComplianceScanConfigurationStatus struct {
-	ScanName           string                              `protobuf:"bytes,1,opt,name=scan_name,json=scanName,proto3" json:"scan_name,omitempty"`
-	ScanScheduleConfig *BaseComplianceScanScheduleSettings `protobuf:"bytes,2,opt,name=scan_schedule_config,json=scanScheduleConfig,proto3" json:"scan_schedule_config,omitempty"`
-	Clusters           []*ClusterScanStatus                `protobuf:"bytes,3,rep,name=clusters,proto3" json:"clusters,omitempty"`
-	CreatedTime        *types.Timestamp                    `protobuf:"bytes,4,opt,name=created_time,json=createdTime,proto3" json:"created_time,omitempty"`
-	LastUpdatedTime    *types.Timestamp                    `protobuf:"bytes,5,opt,name=last_updated_time,json=lastUpdatedTime,proto3" json:"last_updated_time,omitempty"`
+	ScanName        string                                   `protobuf:"bytes,1,opt,name=scan_name,json=scanName,proto3" json:"scan_name,omitempty"`
+	ScanConfig      *BaseComplianceScanConfigurationSettings `protobuf:"bytes,2,opt,name=scan_config,json=scanConfig,proto3" json:"scan_config,omitempty"`
+	ClusterStatus   []*ClusterScanStatus                     `protobuf:"bytes,3,rep,name=cluster_status,json=clusterStatus,proto3" json:"cluster_status,omitempty"`
+	CreatedTime     *types.Timestamp                         `protobuf:"bytes,4,opt,name=created_time,json=createdTime,proto3" json:"created_time,omitempty"`
+	LastUpdatedTime *types.Timestamp                         `protobuf:"bytes,5,opt,name=last_updated_time,json=lastUpdatedTime,proto3" json:"last_updated_time,omitempty"`
 	// Most recent user to update the scan settings
 	CreatedBy            *SlimUser `protobuf:"bytes,6,opt,name=created_by,json=createdBy,proto3" json:"created_by,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}  `json:"-"`
@@ -320,16 +322,16 @@ func (m *ComplianceScanConfigurationStatus) GetScanName() string {
 	return ""
 }
 
-func (m *ComplianceScanConfigurationStatus) GetScanScheduleConfig() *BaseComplianceScanScheduleSettings {
+func (m *ComplianceScanConfigurationStatus) GetScanConfig() *BaseComplianceScanConfigurationSettings {
 	if m != nil {
-		return m.ScanScheduleConfig
+		return m.ScanConfig
 	}
 	return nil
 }
 
-func (m *ComplianceScanConfigurationStatus) GetClusters() []*ClusterScanStatus {
+func (m *ComplianceScanConfigurationStatus) GetClusterStatus() []*ClusterScanStatus {
 	if m != nil {
-		return m.Clusters
+		return m.ClusterStatus
 	}
 	return nil
 }
@@ -365,11 +367,11 @@ func (m *ComplianceScanConfigurationStatus) Clone() *ComplianceScanConfiguration
 	cloned := new(ComplianceScanConfigurationStatus)
 	*cloned = *m
 
-	cloned.ScanScheduleConfig = m.ScanScheduleConfig.Clone()
-	if m.Clusters != nil {
-		cloned.Clusters = make([]*ClusterScanStatus, len(m.Clusters))
-		for idx, v := range m.Clusters {
-			cloned.Clusters[idx] = v.Clone()
+	cloned.ScanConfig = m.ScanConfig.Clone()
+	if m.ClusterStatus != nil {
+		cloned.ClusterStatus = make([]*ClusterScanStatus, len(m.ClusterStatus))
+		for idx, v := range m.ClusterStatus {
+			cloned.ClusterStatus[idx] = v.Clone()
 		}
 	}
 	cloned.CreatedTime = m.CreatedTime.Clone()
@@ -441,7 +443,7 @@ func (m *ComplianceScanConfigurationRequest) Clone() *ComplianceScanConfiguratio
 
 // Next available tag: 2
 type ListComplianceScanConfigurationResponse struct {
-	Schedules            []*ComplianceScanConfigurationStatus `protobuf:"bytes,1,rep,name=schedules,proto3" json:"schedules,omitempty"`
+	Configuration        []*ComplianceScanConfigurationStatus `protobuf:"bytes,1,rep,name=configuration,proto3" json:"configuration,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}                             `json:"-"`
 	XXX_unrecognized     []byte                               `json:"-"`
 	XXX_sizecache        int32                                `json:"-"`
@@ -482,9 +484,9 @@ func (m *ListComplianceScanConfigurationResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_ListComplianceScanConfigurationResponse proto.InternalMessageInfo
 
-func (m *ListComplianceScanConfigurationResponse) GetSchedules() []*ComplianceScanConfigurationStatus {
+func (m *ListComplianceScanConfigurationResponse) GetConfiguration() []*ComplianceScanConfigurationStatus {
 	if m != nil {
-		return m.Schedules
+		return m.Configuration
 	}
 	return nil
 }
@@ -499,10 +501,10 @@ func (m *ListComplianceScanConfigurationResponse) Clone() *ListComplianceScanCon
 	cloned := new(ListComplianceScanConfigurationResponse)
 	*cloned = *m
 
-	if m.Schedules != nil {
-		cloned.Schedules = make([]*ComplianceScanConfigurationStatus, len(m.Schedules))
-		for idx, v := range m.Schedules {
-			cloned.Schedules[idx] = v.Clone()
+	if m.Configuration != nil {
+		cloned.Configuration = make([]*ComplianceScanConfigurationStatus, len(m.Configuration))
+		for idx, v := range m.Configuration {
+			cloned.Configuration[idx] = v.Clone()
 		}
 	}
 	return cloned
@@ -510,7 +512,7 @@ func (m *ListComplianceScanConfigurationResponse) Clone() *ListComplianceScanCon
 
 func init() {
 	proto.RegisterType((*ClusterScanStatus)(nil), "v2.ClusterScanStatus")
-	proto.RegisterType((*BaseComplianceScanScheduleSettings)(nil), "v2.BaseComplianceScanScheduleSettings")
+	proto.RegisterType((*BaseComplianceScanConfigurationSettings)(nil), "v2.BaseComplianceScanConfigurationSettings")
 	proto.RegisterType((*ComplianceScanConfiguration)(nil), "v2.ComplianceScanConfiguration")
 	proto.RegisterType((*ComplianceScanConfigurationStatus)(nil), "v2.ComplianceScanConfigurationStatus")
 	proto.RegisterType((*ComplianceScanConfigurationRequest)(nil), "v2.ComplianceScanConfigurationRequest")
@@ -522,53 +524,53 @@ func init() {
 }
 
 var fileDescriptor_d441c70a62230c3d = []byte{
-	// 733 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xc4, 0x95, 0x5d, 0x6b, 0xd4, 0x4c,
-	0x14, 0xc7, 0x9f, 0xd9, 0x7d, 0xac, 0xbb, 0xb3, 0x15, 0xe9, 0xf8, 0x42, 0x48, 0xed, 0xee, 0x36,
-	0xd0, 0x76, 0x6d, 0x31, 0x6b, 0x53, 0x28, 0x2a, 0x28, 0xd8, 0xf5, 0x05, 0x45, 0x44, 0xd2, 0x16,
-	0x8a, 0x37, 0xcb, 0x34, 0x7b, 0xba, 0x06, 0x93, 0x99, 0x98, 0x99, 0x2c, 0x2d, 0xe2, 0x45, 0xbd,
-	0xf4, 0xa2, 0xa0, 0xbd, 0xf1, 0xda, 0x4f, 0xe0, 0xc7, 0xf0, 0x52, 0xf0, 0x0b, 0x48, 0xf5, 0x83,
-	0x48, 0x26, 0xd9, 0x97, 0xfa, 0x92, 0xac, 0x28, 0x78, 0x97, 0x39, 0x33, 0xf3, 0x3f, 0xbf, 0x73,
-	0xfe, 0x87, 0x09, 0xb6, 0x68, 0xe0, 0x36, 0x7b, 0x56, 0xd3, 0xe1, 0x7e, 0xe0, 0xb9, 0x94, 0x39,
-	0xd0, 0x16, 0x0e, 0x65, 0x6d, 0x87, 0xb3, 0x1d, 0xb7, 0x1b, 0x85, 0x54, 0xba, 0x9c, 0xb5, 0x05,
-	0x84, 0x3d, 0xd7, 0x01, 0x33, 0x08, 0xb9, 0xe4, 0xa4, 0xd0, 0xb3, 0xf4, 0x5a, 0x97, 0xf3, 0xae,
-	0x07, 0x4d, 0x15, 0xd9, 0x8e, 0x76, 0x9a, 0xd2, 0xf5, 0x41, 0x48, 0xea, 0x07, 0xc9, 0x21, 0xfd,
-	0x42, 0x7a, 0x20, 0xd6, 0xa7, 0x8c, 0x71, 0xa9, 0x94, 0x44, 0xba, 0x7b, 0x66, 0x98, 0xd6, 0xe7,
-	0x2c, 0x0d, 0x4e, 0xa5, 0xc1, 0x48, 0x40, 0x98, 0x84, 0x8c, 0xfb, 0x78, 0xaa, 0xe5, 0x45, 0x42,
-	0x42, 0xb8, 0xee, 0x50, 0xb6, 0x2e, 0xa9, 0x8c, 0x04, 0x99, 0xc1, 0xd8, 0x49, 0x82, 0x6d, 0xb7,
-	0xa3, 0xa1, 0x3a, 0x6a, 0x94, 0xed, 0x72, 0x1a, 0xb9, 0xd7, 0x21, 0xe7, 0xf1, 0x04, 0x84, 0x21,
-	0x0f, 0x85, 0x56, 0xa8, 0x17, 0x1b, 0x65, 0x3b, 0x5d, 0x19, 0x07, 0x08, 0x1b, 0x6b, 0x54, 0x40,
-	0x6b, 0x50, 0xaa, 0xd2, 0x74, 0x9e, 0x40, 0x27, 0xf2, 0x60, 0x1d, 0xa4, 0x74, 0x59, 0x57, 0x10,
-	0x03, 0x9f, 0xe2, 0x0c, 0xda, 0x71, 0x3d, 0xaa, 0x15, 0x2a, 0x41, 0xc9, 0xae, 0x70, 0x06, 0x1b,
-	0xae, 0xaf, 0xee, 0x10, 0x1d, 0x97, 0x82, 0x90, 0xef, 0xb8, 0x1e, 0xf4, 0x93, 0x0c, 0xd6, 0xa4,
-	0x81, 0x4b, 0x22, 0xd5, 0xd4, 0x8a, 0x75, 0xd4, 0xa8, 0x58, 0x93, 0x66, 0xcf, 0x32, 0xfb, 0x79,
-	0xec, 0xc1, 0xae, 0xf1, 0x1e, 0xe1, 0xe9, 0xe3, 0x30, 0xad, 0xd1, 0xae, 0x93, 0x69, 0x5c, 0x56,
-	0x5e, 0x30, 0xea, 0x43, 0x5a, 0x66, 0x29, 0x0e, 0x3c, 0xa4, 0x3e, 0x90, 0x2d, 0x7c, 0x56, 0x6d,
-	0xf6, 0xd5, 0x52, 0xc7, 0xb4, 0x82, 0x4a, 0x39, 0x1f, 0xa7, 0xcc, 0x2f, 0xd6, 0x26, 0x62, 0x24,
-	0x9a, 0x64, 0x8f, 0x8b, 0x4b, 0x9b, 0x29, 0xb4, 0x62, 0x52, 0x5c, 0x7f, 0x6d, 0xec, 0x17, 0xf1,
-	0x6c, 0x06, 0x72, 0x6a, 0xd0, 0x3f, 0x02, 0x5f, 0xfe, 0x0e, 0xbc, 0x62, 0x9d, 0x8b, 0xd5, 0x7e,
-	0x18, 0xa0, 0x61, 0x3d, 0xe4, 0x3a, 0x9e, 0x74, 0x42, 0xa0, 0x12, 0x3a, 0xca, 0x70, 0xed, 0x7f,
-	0x05, 0xa1, 0x9b, 0xc9, 0xf0, 0x9a, 0xfd, 0xe9, 0x36, 0x37, 0xfa, 0xd3, 0x6d, 0x57, 0xd2, 0xf3,
-	0x71, 0x84, 0xdc, 0xc1, 0x53, 0x1e, 0x15, 0xb2, 0x1d, 0x05, 0x9d, 0xa1, 0xc6, 0x89, 0x5c, 0x8d,
-	0xd3, 0xf1, 0xa5, 0xcd, 0xe4, 0x8e, 0xd2, 0x59, 0xc2, 0xb8, 0x8f, 0xb1, 0xbd, 0xa7, 0x4d, 0x8c,
-	0x4c, 0x8d, 0xe7, 0xfa, 0x9b, 0x02, 0x42, 0xbb, 0x9c, 0xee, 0xaf, 0xed, 0x19, 0x37, 0xb1, 0x91,
-	0x61, 0x81, 0x0d, 0xcf, 0x22, 0x10, 0x32, 0xd3, 0x03, 0x83, 0xe1, 0x85, 0x07, 0xae, 0x90, 0x99,
-	0x32, 0x22, 0xe0, 0x4c, 0x00, 0x69, 0xc5, 0x3a, 0x49, 0x9b, 0x85, 0x86, 0x54, 0x57, 0xe7, 0x54,
-	0x57, 0xf3, 0xa6, 0xc0, 0x1e, 0xde, 0xb3, 0x5e, 0x9f, 0xc4, 0x33, 0xbf, 0x32, 0x54, 0xbd, 0x2c,
-	0x64, 0x1f, 0xe1, 0x7a, 0x0e, 0x92, 0x20, 0xe5, 0x38, 0xf1, 0x6d, 0x3f, 0x90, 0x7b, 0xfa, 0x52,
-	0xfc, 0x39, 0x66, 0x0d, 0xc6, 0xdc, 0xcb, 0x4f, 0x5f, 0x0f, 0x0b, 0x35, 0x32, 0x73, 0xfc, 0xa5,
-	0x6b, 0xc6, 0xfd, 0x68, 0x0e, 0x28, 0xc9, 0x3b, 0x84, 0xab, 0x77, 0x21, 0x4b, 0x91, 0xcc, 0xe7,
-	0x94, 0x9e, 0x76, 0x5f, 0x1f, 0xaf, 0x45, 0xc6, 0xb2, 0x02, 0x5b, 0x22, 0x17, 0x33, 0xc1, 0x9a,
-	0xcf, 0x07, 0x4e, 0xbe, 0x20, 0x6f, 0x10, 0xae, 0x3d, 0xe2, 0x99, 0x75, 0x93, 0x5a, 0x4e, 0x76,
-	0x3d, 0xef, 0x80, 0x71, 0x49, 0x81, 0x2d, 0x18, 0xc6, 0xcf, 0xc0, 0x8e, 0xfd, 0x1b, 0xc4, 0x35,
-	0xb4, 0x48, 0x5e, 0x21, 0x3c, 0x9b, 0xcc, 0xf3, 0x1f, 0x61, 0x0d, 0xfd, 0x35, 0xae, 0x2a, 0x80,
-	0x15, 0xdd, 0xcc, 0x07, 0x18, 0x6d, 0x4f, 0x0c, 0x73, 0x80, 0xf0, 0xec, 0x2d, 0xf0, 0x20, 0x1b,
-	0x66, 0x5c, 0x27, 0x47, 0x98, 0x56, 0x15, 0xd3, 0xe5, 0xc5, 0xdf, 0x64, 0x22, 0x87, 0x08, 0x57,
-	0xed, 0x88, 0xfd, 0x65, 0x9a, 0x1b, 0x8a, 0xe6, 0x0a, 0x59, 0x1d, 0x83, 0x06, 0x76, 0xc1, 0x89,
-	0x24, 0x8c, 0x52, 0xad, 0x99, 0x1f, 0x8e, 0xaa, 0xe8, 0xe3, 0x51, 0x15, 0x7d, 0x3e, 0xaa, 0xa2,
-	0xb7, 0x5f, 0xaa, 0xff, 0x61, 0xcd, 0xe5, 0xa6, 0x90, 0xd4, 0x79, 0x1a, 0xf2, 0xdd, 0xe4, 0xd9,
-	0x32, 0x69, 0xe0, 0x9a, 0x3d, 0xeb, 0x71, 0xa1, 0x67, 0x6d, 0xa1, 0xed, 0x09, 0x15, 0x5b, 0xf9,
-	0x16, 0x00, 0x00, 0xff, 0xff, 0x01, 0xe6, 0x45, 0x72, 0x34, 0x08, 0x00, 0x00,
+	// 734 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xbc, 0x94, 0xcf, 0x6b, 0x14, 0x49,
+	0x14, 0xc7, 0xb7, 0x66, 0x76, 0xb3, 0x99, 0x37, 0x99, 0x5d, 0x52, 0xcb, 0x2e, 0x4d, 0x67, 0x77,
+	0x32, 0x69, 0x56, 0x13, 0x12, 0xec, 0xd1, 0x0e, 0x04, 0x15, 0x15, 0x4c, 0xfc, 0x81, 0x1a, 0x44,
+	0x7a, 0x12, 0x10, 0x2f, 0x43, 0xa5, 0xe7, 0x65, 0x6c, 0xec, 0xee, 0x6a, 0xbb, 0xaa, 0x87, 0x04,
+	0x11, 0xc4, 0x83, 0x07, 0x0f, 0x1e, 0xcc, 0xc5, 0x83, 0x07, 0x0f, 0x82, 0xff, 0x8a, 0x47, 0xc1,
+	0x7f, 0x40, 0xa2, 0x7f, 0x88, 0x74, 0x75, 0xcd, 0x64, 0x06, 0xa1, 0x67, 0x82, 0xe2, 0xb1, 0x5e,
+	0xbd, 0xfa, 0xbe, 0xcf, 0xfb, 0xbe, 0x47, 0x81, 0xc3, 0x62, 0xbf, 0xd9, 0x73, 0x9a, 0x1e, 0x0f,
+	0xe3, 0xc0, 0x67, 0x91, 0x87, 0x6d, 0xe1, 0xb1, 0xa8, 0xed, 0xf1, 0x68, 0xd7, 0xef, 0xa6, 0x09,
+	0x93, 0x3e, 0x8f, 0xda, 0x02, 0x93, 0x9e, 0xef, 0xa1, 0x1d, 0x27, 0x5c, 0x72, 0x5a, 0xea, 0x39,
+	0xe6, 0x7c, 0x97, 0xf3, 0x6e, 0x80, 0x4d, 0x15, 0xd9, 0x49, 0x77, 0x9b, 0xd2, 0x0f, 0x51, 0x48,
+	0x16, 0xc6, 0x79, 0x92, 0xf9, 0xaf, 0x4e, 0xc8, 0xf4, 0x59, 0x14, 0x71, 0xa9, 0x94, 0x84, 0xbe,
+	0xfd, 0xeb, 0xa8, 0x6c, 0xc8, 0x23, 0x1d, 0x9c, 0xd5, 0xc1, 0x54, 0x60, 0x92, 0x87, 0xac, 0x9b,
+	0x30, 0xbb, 0x11, 0xa4, 0x42, 0x62, 0xd2, 0xf2, 0x58, 0xd4, 0x92, 0x4c, 0xa6, 0x82, 0xfe, 0x07,
+	0xe0, 0xe5, 0xc1, 0xb6, 0xdf, 0x31, 0x48, 0x83, 0x2c, 0x55, 0xdc, 0x8a, 0x8e, 0xdc, 0xe8, 0xd0,
+	0x7f, 0x60, 0x0a, 0x93, 0x84, 0x27, 0xc2, 0x28, 0x35, 0xca, 0x4b, 0x15, 0x57, 0x9f, 0xac, 0xd7,
+	0x04, 0x16, 0xd7, 0x99, 0xc0, 0x8d, 0x41, 0xab, 0x99, 0xe6, 0xc6, 0x70, 0xa3, 0x2d, 0x94, 0xd2,
+	0x8f, 0xba, 0x82, 0x5a, 0x50, 0xe3, 0x11, 0xb6, 0xb3, 0xa6, 0x94, 0x1f, 0xaa, 0xca, 0xb4, 0x5b,
+	0xe5, 0x11, 0x6e, 0xf9, 0xa1, 0x7a, 0x48, 0x4d, 0x98, 0x8e, 0x13, 0xbe, 0xeb, 0x07, 0xd8, 0xaf,
+	0x34, 0x38, 0xd3, 0x33, 0x50, 0x53, 0x36, 0x0a, 0xef, 0x3e, 0x76, 0xd2, 0x00, 0x8d, 0x72, 0x83,
+	0x2c, 0x55, 0x9d, 0x19, 0xbb, 0xe7, 0xd8, 0x2d, 0x1d, 0x73, 0x67, 0xb2, 0x94, 0xfe, 0xc9, 0x7a,
+	0x4b, 0x60, 0xae, 0x00, 0x8d, 0xce, 0x41, 0x45, 0x49, 0x46, 0x2c, 0x44, 0xdd, 0xf4, 0x74, 0x16,
+	0xb8, 0xcd, 0x42, 0xa4, 0x9b, 0x50, 0x1d, 0x1a, 0x9b, 0x51, 0x52, 0xd5, 0x56, 0xb2, 0x6a, 0x13,
+	0x76, 0xec, 0x82, 0x18, 0x5c, 0x65, 0x9d, 0x69, 0x3b, 0x85, 0x51, 0xce, 0x3b, 0xeb, 0x9f, 0xad,
+	0x27, 0x65, 0x58, 0x28, 0xd2, 0xcb, 0x47, 0xf4, 0x13, 0x61, 0x2f, 0xc0, 0x1f, 0xfd, 0x6d, 0x10,
+	0xaa, 0xb8, 0x42, 0xae, 0x3a, 0x7f, 0x67, 0x82, 0xdf, 0x2c, 0x8f, 0x5b, 0xd3, 0xc9, 0x1a, 0xf4,
+	0x22, 0xcc, 0x78, 0x09, 0x32, 0x89, 0x1d, 0x35, 0x6c, 0xe3, 0x57, 0x05, 0x63, 0xda, 0xf9, 0xf6,
+	0xda, 0xfd, 0xf5, 0xb6, 0xb7, 0xfa, 0xeb, 0xed, 0x56, 0x75, 0x7e, 0x16, 0xa1, 0xd7, 0x60, 0x36,
+	0x60, 0x42, 0xb6, 0xd3, 0xb8, 0x73, 0xa4, 0xf1, 0xdb, 0x58, 0x8d, 0x3f, 0xb3, 0x47, 0xdb, 0xf9,
+	0x1b, 0xa5, 0xb3, 0x02, 0xd0, 0xc7, 0xd8, 0xd9, 0x37, 0xa6, 0x86, 0x96, 0x25, 0xf0, 0xc3, 0x6d,
+	0x81, 0x89, 0x5b, 0xd1, 0xf7, 0xeb, 0xfb, 0xd6, 0x65, 0xb0, 0x0a, 0x4c, 0x72, 0xf1, 0x61, 0x8a,
+	0x42, 0x16, 0x8e, 0xc0, 0xea, 0xc1, 0xe2, 0xa6, 0x2f, 0x64, 0xa1, 0x8c, 0x88, 0x79, 0x24, 0x90,
+	0xde, 0x82, 0xda, 0xc8, 0x67, 0x60, 0x10, 0x65, 0xef, 0x09, 0x65, 0xef, 0xb8, 0x45, 0x70, 0x47,
+	0xdf, 0x3a, 0x6f, 0x7e, 0x2f, 0x64, 0x6f, 0xe5, 0xff, 0x0c, 0x7d, 0x46, 0xa0, 0x31, 0x86, 0x4f,
+	0xd0, 0x4a, 0x46, 0x70, 0x35, 0x8c, 0xe5, 0xbe, 0xa9, 0x96, 0x67, 0xc2, 0x86, 0xac, 0xe5, 0xa7,
+	0x1f, 0xbf, 0x1c, 0x94, 0xfe, 0xa7, 0xd6, 0xe8, 0xbf, 0xd7, 0xcc, 0xcc, 0x69, 0x7a, 0xa3, 0x35,
+	0xde, 0x11, 0xa8, 0x5f, 0xc7, 0x22, 0x59, 0x7a, 0x72, 0x8c, 0x11, 0x7a, 0x1e, 0xe6, 0x64, 0x86,
+	0x59, 0x6b, 0x8a, 0xee, 0x34, 0xb5, 0xc7, 0xd3, 0x35, 0x1f, 0x0d, 0x06, 0xfc, 0x98, 0xbe, 0x24,
+	0x30, 0x7f, 0x87, 0x17, 0x3a, 0x40, 0xe7, 0xc7, 0x20, 0x98, 0xe3, 0x12, 0xac, 0x53, 0x8a, 0x6e,
+	0xd1, 0x9a, 0xc0, 0xbb, 0xf3, 0x64, 0x99, 0x3e, 0x27, 0xb0, 0x90, 0xaf, 0xf9, 0x77, 0x61, 0x1d,
+	0x4d, 0xda, 0x3a, 0xa7, 0x00, 0x56, 0xcd, 0x63, 0xda, 0x93, 0xc1, 0xbc, 0x20, 0xb0, 0x70, 0x05,
+	0x03, 0x2c, 0x86, 0x99, 0x74, 0x9c, 0x43, 0x4c, 0x7a, 0x64, 0xcb, 0xc7, 0x1d, 0xd9, 0x01, 0x81,
+	0xba, 0x9b, 0x46, 0x3f, 0x98, 0xe6, 0x92, 0xa2, 0x39, 0x4b, 0xd7, 0x26, 0xa0, 0xc1, 0x3d, 0xf4,
+	0x52, 0x89, 0xc3, 0x54, 0xeb, 0xf6, 0xfb, 0xc3, 0x3a, 0xf9, 0x70, 0x58, 0x27, 0x9f, 0x0e, 0xeb,
+	0xe4, 0xd5, 0xe7, 0xfa, 0x2f, 0x60, 0xf8, 0xdc, 0x16, 0x92, 0x79, 0x0f, 0x12, 0xbe, 0x97, 0xff,
+	0x66, 0x36, 0x8b, 0x7d, 0xbb, 0xe7, 0xdc, 0x2b, 0xf5, 0x9c, 0xbb, 0x64, 0x67, 0x4a, 0xc5, 0x56,
+	0xbf, 0x06, 0x00, 0x00, 0xff, 0xff, 0x2e, 0x3e, 0xa6, 0x75, 0x4c, 0x08, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -579,10 +581,10 @@ var _ grpc.ClientConnInterface
 // is compatible with the grpc package it is being compiled against.
 const _ = grpc.SupportPackageIsVersion6
 
-// ComplianceScanScheduleServiceClient is the client API for ComplianceScanScheduleService service.
+// ComplianceScanConfigurationServiceClient is the client API for ComplianceScanConfigurationService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConnInterface.NewStream.
-type ComplianceScanScheduleServiceClient interface {
+type ComplianceScanConfigurationServiceClient interface {
 	// ListComplianceScanConfigurations lists all the compliance operator scan configurations for the secured clusters
 	ListComplianceScanConfigurations(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*ListComplianceScanConfigurationResponse, error)
 	// GetComplianceScanConfiguration retrieves the specified compliance scan configurations
@@ -597,70 +599,70 @@ type ComplianceScanScheduleServiceClient interface {
 	RunComplianceScanConfiguration(ctx context.Context, in *ComplianceScanConfigurationRequest, opts ...grpc.CallOption) (*Empty, error)
 }
 
-type complianceScanScheduleServiceClient struct {
+type complianceScanConfigurationServiceClient struct {
 	cc grpc.ClientConnInterface
 }
 
-func NewComplianceScanScheduleServiceClient(cc grpc.ClientConnInterface) ComplianceScanScheduleServiceClient {
-	return &complianceScanScheduleServiceClient{cc}
+func NewComplianceScanConfigurationServiceClient(cc grpc.ClientConnInterface) ComplianceScanConfigurationServiceClient {
+	return &complianceScanConfigurationServiceClient{cc}
 }
 
-func (c *complianceScanScheduleServiceClient) ListComplianceScanConfigurations(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*ListComplianceScanConfigurationResponse, error) {
+func (c *complianceScanConfigurationServiceClient) ListComplianceScanConfigurations(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*ListComplianceScanConfigurationResponse, error) {
 	out := new(ListComplianceScanConfigurationResponse)
-	err := c.cc.Invoke(ctx, "/v2.ComplianceScanScheduleService/ListComplianceScanConfigurations", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/v2.ComplianceScanConfigurationService/ListComplianceScanConfigurations", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *complianceScanScheduleServiceClient) GetComplianceScanConfiguration(ctx context.Context, in *ComplianceScanConfigurationRequest, opts ...grpc.CallOption) (*ComplianceScanConfigurationStatus, error) {
+func (c *complianceScanConfigurationServiceClient) GetComplianceScanConfiguration(ctx context.Context, in *ComplianceScanConfigurationRequest, opts ...grpc.CallOption) (*ComplianceScanConfigurationStatus, error) {
 	out := new(ComplianceScanConfigurationStatus)
-	err := c.cc.Invoke(ctx, "/v2.ComplianceScanScheduleService/GetComplianceScanConfiguration", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/v2.ComplianceScanConfigurationService/GetComplianceScanConfiguration", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *complianceScanScheduleServiceClient) PostComplianceScanConfiguration(ctx context.Context, in *ComplianceScanConfiguration, opts ...grpc.CallOption) (*ComplianceScanConfiguration, error) {
+func (c *complianceScanConfigurationServiceClient) PostComplianceScanConfiguration(ctx context.Context, in *ComplianceScanConfiguration, opts ...grpc.CallOption) (*ComplianceScanConfiguration, error) {
 	out := new(ComplianceScanConfiguration)
-	err := c.cc.Invoke(ctx, "/v2.ComplianceScanScheduleService/PostComplianceScanConfiguration", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/v2.ComplianceScanConfigurationService/PostComplianceScanConfiguration", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *complianceScanScheduleServiceClient) UpdateComplianceScanConfiguration(ctx context.Context, in *ComplianceScanConfiguration, opts ...grpc.CallOption) (*Empty, error) {
+func (c *complianceScanConfigurationServiceClient) UpdateComplianceScanConfiguration(ctx context.Context, in *ComplianceScanConfiguration, opts ...grpc.CallOption) (*Empty, error) {
 	out := new(Empty)
-	err := c.cc.Invoke(ctx, "/v2.ComplianceScanScheduleService/UpdateComplianceScanConfiguration", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/v2.ComplianceScanConfigurationService/UpdateComplianceScanConfiguration", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *complianceScanScheduleServiceClient) DeleteComplianceScanConfiguration(ctx context.Context, in *ComplianceScanConfigurationRequest, opts ...grpc.CallOption) (*Empty, error) {
+func (c *complianceScanConfigurationServiceClient) DeleteComplianceScanConfiguration(ctx context.Context, in *ComplianceScanConfigurationRequest, opts ...grpc.CallOption) (*Empty, error) {
 	out := new(Empty)
-	err := c.cc.Invoke(ctx, "/v2.ComplianceScanScheduleService/DeleteComplianceScanConfiguration", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/v2.ComplianceScanConfigurationService/DeleteComplianceScanConfiguration", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *complianceScanScheduleServiceClient) RunComplianceScanConfiguration(ctx context.Context, in *ComplianceScanConfigurationRequest, opts ...grpc.CallOption) (*Empty, error) {
+func (c *complianceScanConfigurationServiceClient) RunComplianceScanConfiguration(ctx context.Context, in *ComplianceScanConfigurationRequest, opts ...grpc.CallOption) (*Empty, error) {
 	out := new(Empty)
-	err := c.cc.Invoke(ctx, "/v2.ComplianceScanScheduleService/RunComplianceScanConfiguration", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/v2.ComplianceScanConfigurationService/RunComplianceScanConfiguration", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-// ComplianceScanScheduleServiceServer is the server API for ComplianceScanScheduleService service.
-type ComplianceScanScheduleServiceServer interface {
+// ComplianceScanConfigurationServiceServer is the server API for ComplianceScanConfigurationService service.
+type ComplianceScanConfigurationServiceServer interface {
 	// ListComplianceScanConfigurations lists all the compliance operator scan configurations for the secured clusters
 	ListComplianceScanConfigurations(context.Context, *Empty) (*ListComplianceScanConfigurationResponse, error)
 	// GetComplianceScanConfiguration retrieves the specified compliance scan configurations
@@ -675,168 +677,168 @@ type ComplianceScanScheduleServiceServer interface {
 	RunComplianceScanConfiguration(context.Context, *ComplianceScanConfigurationRequest) (*Empty, error)
 }
 
-// UnimplementedComplianceScanScheduleServiceServer can be embedded to have forward compatible implementations.
-type UnimplementedComplianceScanScheduleServiceServer struct {
+// UnimplementedComplianceScanConfigurationServiceServer can be embedded to have forward compatible implementations.
+type UnimplementedComplianceScanConfigurationServiceServer struct {
 }
 
-func (*UnimplementedComplianceScanScheduleServiceServer) ListComplianceScanConfigurations(ctx context.Context, req *Empty) (*ListComplianceScanConfigurationResponse, error) {
+func (*UnimplementedComplianceScanConfigurationServiceServer) ListComplianceScanConfigurations(ctx context.Context, req *Empty) (*ListComplianceScanConfigurationResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListComplianceScanConfigurations not implemented")
 }
-func (*UnimplementedComplianceScanScheduleServiceServer) GetComplianceScanConfiguration(ctx context.Context, req *ComplianceScanConfigurationRequest) (*ComplianceScanConfigurationStatus, error) {
+func (*UnimplementedComplianceScanConfigurationServiceServer) GetComplianceScanConfiguration(ctx context.Context, req *ComplianceScanConfigurationRequest) (*ComplianceScanConfigurationStatus, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetComplianceScanConfiguration not implemented")
 }
-func (*UnimplementedComplianceScanScheduleServiceServer) PostComplianceScanConfiguration(ctx context.Context, req *ComplianceScanConfiguration) (*ComplianceScanConfiguration, error) {
+func (*UnimplementedComplianceScanConfigurationServiceServer) PostComplianceScanConfiguration(ctx context.Context, req *ComplianceScanConfiguration) (*ComplianceScanConfiguration, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method PostComplianceScanConfiguration not implemented")
 }
-func (*UnimplementedComplianceScanScheduleServiceServer) UpdateComplianceScanConfiguration(ctx context.Context, req *ComplianceScanConfiguration) (*Empty, error) {
+func (*UnimplementedComplianceScanConfigurationServiceServer) UpdateComplianceScanConfiguration(ctx context.Context, req *ComplianceScanConfiguration) (*Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateComplianceScanConfiguration not implemented")
 }
-func (*UnimplementedComplianceScanScheduleServiceServer) DeleteComplianceScanConfiguration(ctx context.Context, req *ComplianceScanConfigurationRequest) (*Empty, error) {
+func (*UnimplementedComplianceScanConfigurationServiceServer) DeleteComplianceScanConfiguration(ctx context.Context, req *ComplianceScanConfigurationRequest) (*Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteComplianceScanConfiguration not implemented")
 }
-func (*UnimplementedComplianceScanScheduleServiceServer) RunComplianceScanConfiguration(ctx context.Context, req *ComplianceScanConfigurationRequest) (*Empty, error) {
+func (*UnimplementedComplianceScanConfigurationServiceServer) RunComplianceScanConfiguration(ctx context.Context, req *ComplianceScanConfigurationRequest) (*Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RunComplianceScanConfiguration not implemented")
 }
 
-func RegisterComplianceScanScheduleServiceServer(s *grpc.Server, srv ComplianceScanScheduleServiceServer) {
-	s.RegisterService(&_ComplianceScanScheduleService_serviceDesc, srv)
+func RegisterComplianceScanConfigurationServiceServer(s *grpc.Server, srv ComplianceScanConfigurationServiceServer) {
+	s.RegisterService(&_ComplianceScanConfigurationService_serviceDesc, srv)
 }
 
-func _ComplianceScanScheduleService_ListComplianceScanConfigurations_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _ComplianceScanConfigurationService_ListComplianceScanConfigurations_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(Empty)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ComplianceScanScheduleServiceServer).ListComplianceScanConfigurations(ctx, in)
+		return srv.(ComplianceScanConfigurationServiceServer).ListComplianceScanConfigurations(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/v2.ComplianceScanScheduleService/ListComplianceScanConfigurations",
+		FullMethod: "/v2.ComplianceScanConfigurationService/ListComplianceScanConfigurations",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ComplianceScanScheduleServiceServer).ListComplianceScanConfigurations(ctx, req.(*Empty))
+		return srv.(ComplianceScanConfigurationServiceServer).ListComplianceScanConfigurations(ctx, req.(*Empty))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _ComplianceScanScheduleService_GetComplianceScanConfiguration_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _ComplianceScanConfigurationService_GetComplianceScanConfiguration_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ComplianceScanConfigurationRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ComplianceScanScheduleServiceServer).GetComplianceScanConfiguration(ctx, in)
+		return srv.(ComplianceScanConfigurationServiceServer).GetComplianceScanConfiguration(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/v2.ComplianceScanScheduleService/GetComplianceScanConfiguration",
+		FullMethod: "/v2.ComplianceScanConfigurationService/GetComplianceScanConfiguration",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ComplianceScanScheduleServiceServer).GetComplianceScanConfiguration(ctx, req.(*ComplianceScanConfigurationRequest))
+		return srv.(ComplianceScanConfigurationServiceServer).GetComplianceScanConfiguration(ctx, req.(*ComplianceScanConfigurationRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _ComplianceScanScheduleService_PostComplianceScanConfiguration_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _ComplianceScanConfigurationService_PostComplianceScanConfiguration_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ComplianceScanConfiguration)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ComplianceScanScheduleServiceServer).PostComplianceScanConfiguration(ctx, in)
+		return srv.(ComplianceScanConfigurationServiceServer).PostComplianceScanConfiguration(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/v2.ComplianceScanScheduleService/PostComplianceScanConfiguration",
+		FullMethod: "/v2.ComplianceScanConfigurationService/PostComplianceScanConfiguration",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ComplianceScanScheduleServiceServer).PostComplianceScanConfiguration(ctx, req.(*ComplianceScanConfiguration))
+		return srv.(ComplianceScanConfigurationServiceServer).PostComplianceScanConfiguration(ctx, req.(*ComplianceScanConfiguration))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _ComplianceScanScheduleService_UpdateComplianceScanConfiguration_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _ComplianceScanConfigurationService_UpdateComplianceScanConfiguration_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ComplianceScanConfiguration)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ComplianceScanScheduleServiceServer).UpdateComplianceScanConfiguration(ctx, in)
+		return srv.(ComplianceScanConfigurationServiceServer).UpdateComplianceScanConfiguration(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/v2.ComplianceScanScheduleService/UpdateComplianceScanConfiguration",
+		FullMethod: "/v2.ComplianceScanConfigurationService/UpdateComplianceScanConfiguration",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ComplianceScanScheduleServiceServer).UpdateComplianceScanConfiguration(ctx, req.(*ComplianceScanConfiguration))
+		return srv.(ComplianceScanConfigurationServiceServer).UpdateComplianceScanConfiguration(ctx, req.(*ComplianceScanConfiguration))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _ComplianceScanScheduleService_DeleteComplianceScanConfiguration_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _ComplianceScanConfigurationService_DeleteComplianceScanConfiguration_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ComplianceScanConfigurationRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ComplianceScanScheduleServiceServer).DeleteComplianceScanConfiguration(ctx, in)
+		return srv.(ComplianceScanConfigurationServiceServer).DeleteComplianceScanConfiguration(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/v2.ComplianceScanScheduleService/DeleteComplianceScanConfiguration",
+		FullMethod: "/v2.ComplianceScanConfigurationService/DeleteComplianceScanConfiguration",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ComplianceScanScheduleServiceServer).DeleteComplianceScanConfiguration(ctx, req.(*ComplianceScanConfigurationRequest))
+		return srv.(ComplianceScanConfigurationServiceServer).DeleteComplianceScanConfiguration(ctx, req.(*ComplianceScanConfigurationRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _ComplianceScanScheduleService_RunComplianceScanConfiguration_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _ComplianceScanConfigurationService_RunComplianceScanConfiguration_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ComplianceScanConfigurationRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ComplianceScanScheduleServiceServer).RunComplianceScanConfiguration(ctx, in)
+		return srv.(ComplianceScanConfigurationServiceServer).RunComplianceScanConfiguration(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/v2.ComplianceScanScheduleService/RunComplianceScanConfiguration",
+		FullMethod: "/v2.ComplianceScanConfigurationService/RunComplianceScanConfiguration",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ComplianceScanScheduleServiceServer).RunComplianceScanConfiguration(ctx, req.(*ComplianceScanConfigurationRequest))
+		return srv.(ComplianceScanConfigurationServiceServer).RunComplianceScanConfiguration(ctx, req.(*ComplianceScanConfigurationRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-var _ComplianceScanScheduleService_serviceDesc = grpc.ServiceDesc{
-	ServiceName: "v2.ComplianceScanScheduleService",
-	HandlerType: (*ComplianceScanScheduleServiceServer)(nil),
+var _ComplianceScanConfigurationService_serviceDesc = grpc.ServiceDesc{
+	ServiceName: "v2.ComplianceScanConfigurationService",
+	HandlerType: (*ComplianceScanConfigurationServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
 			MethodName: "ListComplianceScanConfigurations",
-			Handler:    _ComplianceScanScheduleService_ListComplianceScanConfigurations_Handler,
+			Handler:    _ComplianceScanConfigurationService_ListComplianceScanConfigurations_Handler,
 		},
 		{
 			MethodName: "GetComplianceScanConfiguration",
-			Handler:    _ComplianceScanScheduleService_GetComplianceScanConfiguration_Handler,
+			Handler:    _ComplianceScanConfigurationService_GetComplianceScanConfiguration_Handler,
 		},
 		{
 			MethodName: "PostComplianceScanConfiguration",
-			Handler:    _ComplianceScanScheduleService_PostComplianceScanConfiguration_Handler,
+			Handler:    _ComplianceScanConfigurationService_PostComplianceScanConfiguration_Handler,
 		},
 		{
 			MethodName: "UpdateComplianceScanConfiguration",
-			Handler:    _ComplianceScanScheduleService_UpdateComplianceScanConfiguration_Handler,
+			Handler:    _ComplianceScanConfigurationService_UpdateComplianceScanConfiguration_Handler,
 		},
 		{
 			MethodName: "DeleteComplianceScanConfiguration",
-			Handler:    _ComplianceScanScheduleService_DeleteComplianceScanConfiguration_Handler,
+			Handler:    _ComplianceScanConfigurationService_DeleteComplianceScanConfiguration_Handler,
 		},
 		{
 			MethodName: "RunComplianceScanConfiguration",
-			Handler:    _ComplianceScanScheduleService_RunComplianceScanConfiguration_Handler,
+			Handler:    _ComplianceScanConfigurationService_RunComplianceScanConfiguration_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
@@ -886,7 +888,7 @@ func (m *ClusterScanStatus) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
-func (m *BaseComplianceScanScheduleSettings) Marshal() (dAtA []byte, err error) {
+func (m *BaseComplianceScanConfigurationSettings) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -896,12 +898,12 @@ func (m *BaseComplianceScanScheduleSettings) Marshal() (dAtA []byte, err error) 
 	return dAtA[:n], nil
 }
 
-func (m *BaseComplianceScanScheduleSettings) MarshalTo(dAtA []byte) (int, error) {
+func (m *BaseComplianceScanConfigurationSettings) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *BaseComplianceScanScheduleSettings) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *BaseComplianceScanConfigurationSettings) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -910,9 +912,9 @@ func (m *BaseComplianceScanScheduleSettings) MarshalToSizedBuffer(dAtA []byte) (
 		i -= len(m.XXX_unrecognized)
 		copy(dAtA[i:], m.XXX_unrecognized)
 	}
-	if m.Schedule != nil {
+	if m.ScanSchedule != nil {
 		{
-			size, err := m.Schedule.MarshalToSizedBuffer(dAtA[:i])
+			size, err := m.ScanSchedule.MarshalToSizedBuffer(dAtA[:i])
 			if err != nil {
 				return 0, err
 			}
@@ -977,9 +979,9 @@ func (m *ComplianceScanConfiguration) MarshalToSizedBuffer(dAtA []byte) (int, er
 			dAtA[i] = 0x1a
 		}
 	}
-	if m.ScanScheduleConfig != nil {
+	if m.ScanConfig != nil {
 		{
-			size, err := m.ScanScheduleConfig.MarshalToSizedBuffer(dAtA[:i])
+			size, err := m.ScanConfig.MarshalToSizedBuffer(dAtA[:i])
 			if err != nil {
 				return 0, err
 			}
@@ -1059,10 +1061,10 @@ func (m *ComplianceScanConfigurationStatus) MarshalToSizedBuffer(dAtA []byte) (i
 		i--
 		dAtA[i] = 0x22
 	}
-	if len(m.Clusters) > 0 {
-		for iNdEx := len(m.Clusters) - 1; iNdEx >= 0; iNdEx-- {
+	if len(m.ClusterStatus) > 0 {
+		for iNdEx := len(m.ClusterStatus) - 1; iNdEx >= 0; iNdEx-- {
 			{
-				size, err := m.Clusters[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				size, err := m.ClusterStatus[iNdEx].MarshalToSizedBuffer(dAtA[:i])
 				if err != nil {
 					return 0, err
 				}
@@ -1073,9 +1075,9 @@ func (m *ComplianceScanConfigurationStatus) MarshalToSizedBuffer(dAtA []byte) (i
 			dAtA[i] = 0x1a
 		}
 	}
-	if m.ScanScheduleConfig != nil {
+	if m.ScanConfig != nil {
 		{
-			size, err := m.ScanScheduleConfig.MarshalToSizedBuffer(dAtA[:i])
+			size, err := m.ScanConfig.MarshalToSizedBuffer(dAtA[:i])
 			if err != nil {
 				return 0, err
 			}
@@ -1153,10 +1155,10 @@ func (m *ListComplianceScanConfigurationResponse) MarshalToSizedBuffer(dAtA []by
 		i -= len(m.XXX_unrecognized)
 		copy(dAtA[i:], m.XXX_unrecognized)
 	}
-	if len(m.Schedules) > 0 {
-		for iNdEx := len(m.Schedules) - 1; iNdEx >= 0; iNdEx-- {
+	if len(m.Configuration) > 0 {
+		for iNdEx := len(m.Configuration) - 1; iNdEx >= 0; iNdEx-- {
 			{
-				size, err := m.Schedules[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				size, err := m.Configuration[iNdEx].MarshalToSizedBuffer(dAtA[:i])
 				if err != nil {
 					return 0, err
 				}
@@ -1203,7 +1205,7 @@ func (m *ClusterScanStatus) Size() (n int) {
 	return n
 }
 
-func (m *BaseComplianceScanScheduleSettings) Size() (n int) {
+func (m *BaseComplianceScanConfigurationSettings) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -1218,8 +1220,8 @@ func (m *BaseComplianceScanScheduleSettings) Size() (n int) {
 			n += 1 + l + sovComplianceScanConfigurationService(uint64(l))
 		}
 	}
-	if m.Schedule != nil {
-		l = m.Schedule.Size()
+	if m.ScanSchedule != nil {
+		l = m.ScanSchedule.Size()
 		n += 1 + l + sovComplianceScanConfigurationService(uint64(l))
 	}
 	if m.XXX_unrecognized != nil {
@@ -1238,8 +1240,8 @@ func (m *ComplianceScanConfiguration) Size() (n int) {
 	if l > 0 {
 		n += 1 + l + sovComplianceScanConfigurationService(uint64(l))
 	}
-	if m.ScanScheduleConfig != nil {
-		l = m.ScanScheduleConfig.Size()
+	if m.ScanConfig != nil {
+		l = m.ScanConfig.Size()
 		n += 1 + l + sovComplianceScanConfigurationService(uint64(l))
 	}
 	if len(m.Clusters) > 0 {
@@ -1264,12 +1266,12 @@ func (m *ComplianceScanConfigurationStatus) Size() (n int) {
 	if l > 0 {
 		n += 1 + l + sovComplianceScanConfigurationService(uint64(l))
 	}
-	if m.ScanScheduleConfig != nil {
-		l = m.ScanScheduleConfig.Size()
+	if m.ScanConfig != nil {
+		l = m.ScanConfig.Size()
 		n += 1 + l + sovComplianceScanConfigurationService(uint64(l))
 	}
-	if len(m.Clusters) > 0 {
-		for _, e := range m.Clusters {
+	if len(m.ClusterStatus) > 0 {
+		for _, e := range m.ClusterStatus {
 			l = e.Size()
 			n += 1 + l + sovComplianceScanConfigurationService(uint64(l))
 		}
@@ -1314,8 +1316,8 @@ func (m *ListComplianceScanConfigurationResponse) Size() (n int) {
 	}
 	var l int
 	_ = l
-	if len(m.Schedules) > 0 {
-		for _, e := range m.Schedules {
+	if len(m.Configuration) > 0 {
+		for _, e := range m.Configuration {
 			l = e.Size()
 			n += 1 + l + sovComplianceScanConfigurationService(uint64(l))
 		}
@@ -1447,7 +1449,7 @@ func (m *ClusterScanStatus) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *BaseComplianceScanScheduleSettings) Unmarshal(dAtA []byte) error {
+func (m *BaseComplianceScanConfigurationSettings) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -1470,10 +1472,10 @@ func (m *BaseComplianceScanScheduleSettings) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: BaseComplianceScanScheduleSettings: wiretype end group for non-group")
+			return fmt.Errorf("proto: BaseComplianceScanConfigurationSettings: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: BaseComplianceScanScheduleSettings: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: BaseComplianceScanConfigurationSettings: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -1530,7 +1532,7 @@ func (m *BaseComplianceScanScheduleSettings) Unmarshal(dAtA []byte) error {
 			iNdEx = postIndex
 		case 3:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Schedule", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field ScanSchedule", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -1557,10 +1559,10 @@ func (m *BaseComplianceScanScheduleSettings) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if m.Schedule == nil {
-				m.Schedule = &Schedule{}
+			if m.ScanSchedule == nil {
+				m.ScanSchedule = &Schedule{}
 			}
-			if err := m.Schedule.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+			if err := m.ScanSchedule.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
@@ -1649,7 +1651,7 @@ func (m *ComplianceScanConfiguration) Unmarshal(dAtA []byte) error {
 			iNdEx = postIndex
 		case 2:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ScanScheduleConfig", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field ScanConfig", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -1676,10 +1678,10 @@ func (m *ComplianceScanConfiguration) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if m.ScanScheduleConfig == nil {
-				m.ScanScheduleConfig = &BaseComplianceScanScheduleSettings{}
+			if m.ScanConfig == nil {
+				m.ScanConfig = &BaseComplianceScanConfigurationSettings{}
 			}
-			if err := m.ScanScheduleConfig.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+			if err := m.ScanConfig.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
@@ -1800,7 +1802,7 @@ func (m *ComplianceScanConfigurationStatus) Unmarshal(dAtA []byte) error {
 			iNdEx = postIndex
 		case 2:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ScanScheduleConfig", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field ScanConfig", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -1827,16 +1829,16 @@ func (m *ComplianceScanConfigurationStatus) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if m.ScanScheduleConfig == nil {
-				m.ScanScheduleConfig = &BaseComplianceScanScheduleSettings{}
+			if m.ScanConfig == nil {
+				m.ScanConfig = &BaseComplianceScanConfigurationSettings{}
 			}
-			if err := m.ScanScheduleConfig.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+			if err := m.ScanConfig.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
 		case 3:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Clusters", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field ClusterStatus", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -1863,8 +1865,8 @@ func (m *ComplianceScanConfigurationStatus) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Clusters = append(m.Clusters, &ClusterScanStatus{})
-			if err := m.Clusters[len(m.Clusters)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+			m.ClusterStatus = append(m.ClusterStatus, &ClusterScanStatus{})
+			if err := m.ClusterStatus[len(m.ClusterStatus)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
@@ -2112,7 +2114,7 @@ func (m *ListComplianceScanConfigurationResponse) Unmarshal(dAtA []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Schedules", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Configuration", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -2139,8 +2141,8 @@ func (m *ListComplianceScanConfigurationResponse) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Schedules = append(m.Schedules, &ComplianceScanConfigurationStatus{})
-			if err := m.Schedules[len(m.Schedules)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+			m.Configuration = append(m.Configuration, &ComplianceScanConfigurationStatus{})
+			if err := m.Configuration[len(m.Configuration)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex

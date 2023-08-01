@@ -18,29 +18,29 @@ message ClusterScanStatus {
     repeated string           errors     = 2;
 }
 
-// Next available tag: 7
-message BaseComplianceScanScheduleSettings {
+// Next available tag: 4
+message BaseComplianceScanConfigurationSettings {
     bool                  one_time_scan            = 1;
     repeated string       profiles                 = 2;
-    Schedule              schedule                 = 3;
+    Schedule              scan_schedule            = 3;
 }
 
 // Next available tag: 4
 message ComplianceScanConfiguration {
-    string                                scan_name            = 1;
-    BaseComplianceScanScheduleSettings    scan_schedule_config = 2;
-    repeated string                       clusters             = 3;
+    string                                     scan_name   = 1;
+    BaseComplianceScanConfigurationSettings    scan_config = 2;
+    repeated string                            clusters    = 3;
 }
 
 // Next available tag: 7
 message ComplianceScanConfigurationStatus {
-    string                                scan_name            = 1;
-    BaseComplianceScanScheduleSettings    scan_schedule_config = 2;
-    repeated ClusterScanStatus            clusters             = 3;
-    google.protobuf.Timestamp             created_time         = 4;
-    google.protobuf.Timestamp             last_updated_time    = 5;
+    string                                     scan_name            = 1;
+    BaseComplianceScanConfigurationSettings    scan_config          = 2;
+    repeated ClusterScanStatus                 cluster_status       = 3;
+    google.protobuf.Timestamp                  created_time         = 4;
+    google.protobuf.Timestamp                  last_updated_time    = 5;
     // Most recent user to update the scan settings
-    SlimUser                              created_by           = 6;
+    SlimUser                                   created_by           = 6;
 }
 
 // Next available tag: 2
@@ -50,21 +50,21 @@ message ComplianceScanConfigurationRequest {
 
 // Next available tag: 2
 message ListComplianceScanConfigurationResponse {
-    repeated ComplianceScanConfigurationStatus schedules = 1;
+    repeated ComplianceScanConfigurationStatus configuration = 1;
 }
 
-service ComplianceScanScheduleService {
+service ComplianceScanConfigurationService {
     // ListComplianceScanConfigurations lists all the compliance operator scan configurations for the secured clusters
     rpc ListComplianceScanConfigurations (Empty) returns (ListComplianceScanConfigurationResponse) {
         option (google.api.http) = {
-            get: "/v2/compliance/scan/schedules"
+            get: "/v2/compliance/scan/configurations"
         };
     }
 
     // GetComplianceScanConfiguration retrieves the specified compliance scan configurations
     rpc GetComplianceScanConfiguration (ComplianceScanConfigurationRequest) returns (ComplianceScanConfigurationStatus) {
         option (google.api.http) = {
-            get: "/v2/compliance/scan/schedules/{scan_name}"
+            get: "/v2/compliance/scan/configurations/{scan_name}"
         };
     }
 
