@@ -24,7 +24,7 @@ import {
 } from '@patternfly/react-core';
 import { ActionsColumn, TableComposable, Tbody, Td, Th, Thead, Tr } from '@patternfly/react-table';
 import { Link, generatePath, useHistory } from 'react-router-dom';
-import { ExclamationCircleIcon, FileIcon, SearchIcon } from '@patternfly/react-icons';
+import { ExclamationCircleIcon, FileIcon, SearchIcon, SyncAltIcon } from '@patternfly/react-icons';
 import isEmpty from 'lodash/isEmpty';
 
 import { vulnerabilityReportsPath } from 'routePaths';
@@ -41,7 +41,7 @@ import useURLSearch from 'hooks/useURLSearch';
 import HelpIconTh from './HelpIconTh';
 import LastRunStatusState from './LastRunStatusState';
 import LastRunState from './LastRunState';
-import DeleteReportModal from '../components/DeleteReportModal';
+import DeleteModal from '../components/DeleteModal';
 
 const CreateReportsButton = () => {
     return (
@@ -112,7 +112,20 @@ function VulnReportsPage() {
                     <FlexItem flex={{ default: 'flex_1' }}>
                         <Flex direction={{ default: 'column' }}>
                             <FlexItem>
-                                <Title headingLevel="h1">Vulnerability reporting</Title>
+                                <Flex spaceItems={{ default: 'spaceItemsSm' }}>
+                                    <FlexItem>
+                                        <Title headingLevel="h1">Vulnerability reporting</Title>
+                                    </FlexItem>
+                                    <FlexItem>
+                                        <Button
+                                            variant="plain"
+                                            aria-label="Refetch reports"
+                                            onClick={fetchReports}
+                                        >
+                                            <SyncAltIcon />
+                                        </Button>
+                                    </FlexItem>
+                                </Flex>
                             </FlexItem>
                             <FlexItem>
                                 Configure reports, define report scopes, and assign delivery
@@ -380,13 +393,17 @@ function VulnReportsPage() {
                     </Card>
                 </PageSection>
             </PageSection>
-            <DeleteReportModal
+            <DeleteModal
+                title="Permanently delete report?"
                 isOpen={isDeleteModalOpen}
                 onClose={closeDeleteModal}
                 isDeleting={isDeleting}
                 onDelete={onDelete}
                 error={deleteError}
-            />
+            >
+                This report and any attached downloadable reports will be permanently deleted. The
+                action cannot be undone.
+            </DeleteModal>
         </>
     );
 }

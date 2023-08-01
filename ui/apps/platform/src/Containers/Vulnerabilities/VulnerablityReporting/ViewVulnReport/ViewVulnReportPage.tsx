@@ -19,9 +19,10 @@ import {
     TabTitleText,
     TabTitleIcon,
 } from '@patternfly/react-core';
-import { CaretDownIcon, DownloadIcon, HistoryIcon, HomeIcon } from '@patternfly/react-icons';
+import { CaretDownIcon, HistoryIcon, HomeIcon } from '@patternfly/react-icons';
 
 import { vulnerabilityReportsPath } from 'routePaths';
+import { vulnerabilityReportPath } from 'Containers/Vulnerabilities/VulnerablityReporting/pathsForVulnerabilityReporting';
 import { getReportFormValuesFromConfiguration } from 'Containers/Vulnerabilities/VulnerablityReporting/utils';
 import useFetchReport from 'Containers/Vulnerabilities/VulnerablityReporting/api/useFetchReport';
 import useDeleteModal from 'Containers/Vulnerabilities/VulnerablityReporting/hooks/useDeleteModal';
@@ -29,9 +30,7 @@ import useDeleteModal from 'Containers/Vulnerabilities/VulnerablityReporting/hoo
 import PageTitle from 'Components/PageTitle';
 import BreadcrumbItemLink from 'Components/BreadcrumbItemLink';
 import NotFoundMessage from 'Components/NotFoundMessage/NotFoundMessage';
-
-import { vulnerabilityReportPath } from '../pathsForVulnerabilityReporting';
-import DeleteReportModal from '../components/DeleteReportModal';
+import DeleteModal from '../components/DeleteModal';
 import ReportParametersDetails from '../components/ReportParametersDetails';
 import DeliveryDestinationsDetails from '../components/DeliveryDestinationsDetails';
 import ScheduleDetails from '../components/ScheduleDetails';
@@ -228,22 +227,19 @@ function ViewVulnReportPage() {
                             <RunHistory reportId={reportId} />
                         </PageSection>
                     </Tab>
-                    <Tab
-                        eventKey={2}
-                        title={<TabTitle icon={<DownloadIcon />}>Downloadable report</TabTitle>}
-                        aria-label="Downloadable report tab"
-                    >
-                        <div />
-                    </Tab>
                 </Tabs>
             </PageSection>
-            <DeleteReportModal
+            <DeleteModal
+                title="Permanently delete report?"
                 isOpen={isDeleteModalOpen}
                 onClose={closeDeleteModal}
                 isDeleting={isDeleting}
                 onDelete={onDelete}
                 error={deleteError}
-            />
+            >
+                This report and any attached downloadable reports will be permanently deleted. The
+                action cannot be undone.
+            </DeleteModal>
         </>
     );
 }
