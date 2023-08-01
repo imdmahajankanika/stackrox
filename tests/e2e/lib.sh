@@ -48,7 +48,7 @@ deploy_stackrox_with_custom_central_and_sensor_versions() {
         die "expected central chart version and sensor chart version as parameters in deploy_stackrox_with_custom_central_and_sensor_versions: deploy_stackrox_with_custom_central_and_sensor_versions <central chart version> <sensor chart version>"
     fi
     ci_export CENTRAL_CHART_VERSION_OVERRIDE "$1"
-    local sensor_chart_version_override="$2"
+    ci_export SENSOR_CHART_VERSION_OVERRIDE="$2"
     ci_export DEPLOY_STACKROX_VIA_OPERATOR "false"
     ci_export OUTPUT_FORMAT "helm"
     ci_export DISABLE_RHACS_IMAGE_REPOSITORY_PARAMS "true"
@@ -61,7 +61,7 @@ deploy_stackrox_with_custom_central_and_sensor_versions() {
 
     helm_charts=$(helm search repo stackrox-oss -l)
     central_regex="stackrox-oss/stackrox-central-services[ \t]*.${CENTRAL_CHART_VERSION_OVERRIDE}[ \t]*.([0-9]+\.[0-9]+\.[0-9]+)"
-    sensor_regex="stackrox-oss/stackrox-secured-cluster-services[ \t]*.${sensor_chart_version_override}[ \t]*.([0-9]+\.[0-9]+\.[0-9]+)"
+    sensor_regex="stackrox-oss/stackrox-secured-cluster-services[ \t]*.${SENSOR_CHART_VERSION_OVERRIDE}[ \t]*.([0-9]+\.[0-9]+\.[0-9]+)"
 
     if  [[ $helm_charts =~ $central_regex ]]; then
         ci_export CENTRAL_CHART_DIR_OVERRIDE "stackrox-oss/stackrox-central-services"
@@ -72,17 +72,17 @@ deploy_stackrox_with_custom_central_and_sensor_versions() {
 
     if [[ $helm_charts =~ $sensor_regex ]]; then
         sensor_chart_dir_override="stackrox-oss/stackrox-secured-cluster-services"
-    elif [[ "$latest_tag" == "$sensor_chart_version_override" ]]; then
+    elif [[ "$latest_tag" == "$SENSOR_CHART_VERSION_OVERRIDE" ]]; then
         sensor_chart_dir_override="latest-secured-cluster-services"
         roxctl helm output secured-cluster-services --image-defaults=development_build --output-dir "${sensor_chart_dir_override}" --remove --debug
-        echo "Downloaded stackrox-secured-cluster-services helm chart for version ${sensor_chart_version_override} to ${sensor_chart_dir_override}"
-        unset sensor_chart_version_override
+        echo "Downloaded stackrox-secured-cluster-services helm chart for version ${SENSOR_CHART_VERSION_OVERRIDE} to ${sensor_chart_dir_override}"
+        unset SENSOR_CHART_VERSION_OVERRIDE
     else
-        echo >&2 "stackrox-secured-cluster-services helm chart for version ${sensor_chart_version_override} not found in stackrox-oss repo nor is it the latest tag."
+        echo >&2 "stackrox-secured-cluster-services helm chart for version ${SENSOR_CHART_VERSION_OVERRIDE} not found in stackrox-oss repo nor is it the latest tag."
         exit 1
     fi
 
-    deploy_stackrox "" "${sensor_chart_version_override:-}" "${sensor_chart_dir_override:-}"
+    deploy_stackrox "" "${SENSOR_CHART_VERSION_OVERRIDE:-}" "${sensor_chart_dir_override:-}"
 
     ci_export CENTRAL_CHART_DIR_OVERRIDE ""
 }
