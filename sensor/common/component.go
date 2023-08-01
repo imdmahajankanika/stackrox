@@ -5,6 +5,7 @@ import (
 	"github.com/stackrox/rox/generated/internalapi/sensor"
 	"github.com/stackrox/rox/pkg/centralsensor"
 	"github.com/stackrox/rox/pkg/concurrency"
+	"github.com/stackrox/rox/sensor/common/message"
 	"google.golang.org/grpc"
 )
 
@@ -19,16 +20,21 @@ const (
 	SensorComponentEventOfflineMode SensorComponentEvent = "offline-mode"
 )
 
+// Notifiable is the interface used by Sensor to notify components of state changes in Central<->Sensor connectivity.
+type Notifiable interface {
+	Notify(e SensorComponentEvent)
+}
+
 // SensorComponent is one of the components that constitute sensor. It supports for receiving messages from central,
 // as well as sending messages back to central.
 type SensorComponent interface {
+	Notifiable
 	Start() error
 	Stop(err error) // TODO: get rid of err argument as it always seems to be effectively nil.
-	Notify(e SensorComponentEvent)
 	Capabilities() []centralsensor.SensorCapability
 
 	ProcessMessage(msg *central.MsgToSensor) error
-	ResponsesC() <-chan *central.MsgFromSensor
+	ResponsesC() <-chan *message.ExpiringMessage
 }
 
 // MessageToComplianceWithAddress adds the Hostname to sensor.MsgToCompliance so we know where to send it to.

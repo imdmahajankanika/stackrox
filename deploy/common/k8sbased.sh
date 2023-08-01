@@ -215,6 +215,10 @@ function launch_central {
       add_args "--enable-telemetry=false"
     fi
 
+    if [[ -n "${ROX_OPENSHIFT_VERSION}" ]]; then
+      add_args "--openshift-version=${ROX_OPENSHIFT_VERSION}"
+    fi
+
     local unzip_dir="${k8s_dir}/central-deploy/"
     rm -rf "${unzip_dir}"
     if ! (( use_docker )); then
@@ -327,7 +331,13 @@ function launch_central {
           --set env.managedServices=true
         )
       fi
-
+      
+      if [[ -n "$ROX_OPENSHIFT_VERSION" ]]; then
+        helm_args+=(
+          --set-string env.openshift="${ROX_OPENSHIFT_VERSION}"
+        )
+      fi
+      
       local helm_chart="$unzip_dir/chart"
 
       if [[ -n "$CI" ]]; then

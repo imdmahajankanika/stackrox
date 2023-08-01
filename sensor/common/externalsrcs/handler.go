@@ -15,6 +15,7 @@ import (
 	pkgNet "github.com/stackrox/rox/pkg/net"
 	"github.com/stackrox/rox/pkg/sync"
 	"github.com/stackrox/rox/sensor/common"
+	"github.com/stackrox/rox/sensor/common/message"
 )
 
 var (
@@ -22,6 +23,8 @@ var (
 )
 
 // Store is a store for network graph external sources.
+//
+//go:generate mockgen-wrapper
 type Store interface {
 	ExternalSrcsValueStream() concurrency.ReadOnlyValueStream[*sensor.IPNetworkList]
 	LookupByNetwork(ipNet pkgNet.IPNetwork) *storage.NetworkEntityInfo
@@ -90,7 +93,7 @@ func (h *handlerImpl) ProcessMessage(msg *central.MsgToSensor) error {
 	}
 }
 
-func (h *handlerImpl) ResponsesC() <-chan *central.MsgFromSensor {
+func (h *handlerImpl) ResponsesC() <-chan *message.ExpiringMessage {
 	return nil
 }
 

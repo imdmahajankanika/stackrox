@@ -1,6 +1,10 @@
 package component
 
-import "github.com/stackrox/rox/generated/internalapi/central"
+import (
+	"context"
+
+	"github.com/stackrox/rox/sensor/common/message"
+)
 
 // PipelineComponent components that constitute the eventPipeline
 type PipelineComponent interface {
@@ -22,5 +26,11 @@ type Resolver interface {
 type OutputQueue interface {
 	PipelineComponent
 	Send(event *ResourceEvent)
-	ResponsesC() <-chan *central.MsgFromSensor
+	ResponsesC() <-chan *message.ExpiringMessage
+}
+
+// ContextListener is a component that listens but has a context in the messages
+type ContextListener interface {
+	PipelineComponent
+	StartWithContext(context.Context) error
 }

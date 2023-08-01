@@ -5,12 +5,14 @@
 package mocks
 
 import (
+	context "context"
 	reflect "reflect"
 
 	central "github.com/stackrox/rox/generated/internalapi/central"
 	storage "github.com/stackrox/rox/generated/storage"
 	centralsensor "github.com/stackrox/rox/pkg/centralsensor"
 	common "github.com/stackrox/rox/sensor/common"
+	message "github.com/stackrox/rox/sensor/common/message"
 	gomock "go.uber.org/mock/gomock"
 	grpc "google.golang.org/grpc"
 )
@@ -103,15 +105,15 @@ func (mr *MockDetectorMockRecorder) ProcessMessage(msg interface{}) *gomock.Call
 }
 
 // ProcessNetworkFlow mocks base method.
-func (m *MockDetector) ProcessNetworkFlow(flow *storage.NetworkFlow) {
+func (m *MockDetector) ProcessNetworkFlow(ctx context.Context, flow *storage.NetworkFlow) {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "ProcessNetworkFlow", flow)
+	m.ctrl.Call(m, "ProcessNetworkFlow", ctx, flow)
 }
 
 // ProcessNetworkFlow indicates an expected call of ProcessNetworkFlow.
-func (mr *MockDetectorMockRecorder) ProcessNetworkFlow(flow interface{}) *gomock.Call {
+func (mr *MockDetectorMockRecorder) ProcessNetworkFlow(ctx, flow interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProcessNetworkFlow", reflect.TypeOf((*MockDetector)(nil).ProcessNetworkFlow), flow)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProcessNetworkFlow", reflect.TypeOf((*MockDetector)(nil).ProcessNetworkFlow), ctx, flow)
 }
 
 // ProcessPolicySync mocks base method.
@@ -187,10 +189,10 @@ func (mr *MockDetectorMockRecorder) ReprocessDeployments(deploymentIDs ...interf
 }
 
 // ResponsesC mocks base method.
-func (m *MockDetector) ResponsesC() <-chan *central.MsgFromSensor {
+func (m *MockDetector) ResponsesC() <-chan *message.ExpiringMessage {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ResponsesC")
-	ret0, _ := ret[0].(<-chan *central.MsgFromSensor)
+	ret0, _ := ret[0].(<-chan *message.ExpiringMessage)
 	return ret0
 }
 

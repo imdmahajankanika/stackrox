@@ -1,6 +1,7 @@
 package detector
 
 import (
+	"context"
 	"sort"
 
 	"github.com/gogo/protobuf/types"
@@ -29,6 +30,7 @@ import (
 	"github.com/stackrox/rox/sensor/common/enforcer"
 	"github.com/stackrox/rox/sensor/common/externalsrcs"
 	"github.com/stackrox/rox/sensor/common/imagecacheutils"
+	"github.com/stackrox/rox/sensor/common/message"
 	"github.com/stackrox/rox/sensor/common/registry"
 	"github.com/stackrox/rox/sensor/common/scan"
 	"github.com/stackrox/rox/sensor/common/store"
@@ -51,7 +53,7 @@ type Detector interface {
 	ProcessDeployment(deployment *storage.Deployment, action central.ResourceAction)
 	ReprocessDeployments(deploymentIDs ...string)
 	ProcessIndicator(indicator *storage.ProcessIndicator)
-	ProcessNetworkFlow(flow *storage.NetworkFlow)
+	ProcessNetworkFlow(ctx context.Context, flow *storage.NetworkFlow)
 	ProcessPolicySync(sync *central.PolicySync) error
 	ProcessReassessPolicies() error
 	ProcessReprocessDeployments() error
@@ -65,7 +67,7 @@ func New(enforcer enforcer.Enforcer, admCtrlSettingsMgr admissioncontroller.Sett
 	return &detectorImpl{
 		unifiedDetector: unified.NewDetector(),
 
-		output:                    make(chan *central.MsgFromSensor),
+		output:                    make(chan *message.ExpiringMessage),
 		auditEventsChan:           auditLogEvents,
 		deploymentAlertOutputChan: make(chan outputResult),
 		deploymentProcessingMap:   make(map[string]int64),
@@ -94,7 +96,7 @@ func New(enforcer enforcer.Enforcer, admCtrlSettingsMgr admissioncontroller.Sett
 type detectorImpl struct {
 	unifiedDetector unified.Detector
 
-	output                    chan *central.MsgFromSensor
+	output                    chan *message.ExpiringMessage
 	auditEventsChan           chan *sensor.AuditEvents
 	deploymentAlertOutputChan chan outputResult
 
@@ -192,7 +194,8 @@ func (d *detectorImpl) serializeDeployTimeOutput() {
 			select {
 			case <-d.serializerStopper.Flow().StopRequested():
 				return
-			case d.output <- createAlertResultsMsg(result.action, alertResults):
+				// TODO(ROX-17326): Add context to detector messages
+			case d.output <- createAlertResultsMsg(context.TODO(), result.action, alertResults):
 			}
 		}
 	}
@@ -306,7 +309,7 @@ func (d *detectorImpl) ProcessMessage(msg *central.MsgToSensor) error {
 	return nil
 }
 
-func (d *detectorImpl) ResponsesC() <-chan *central.MsgFromSensor {
+func (d *detectorImpl) ResponsesC() <-chan *message.ExpiringMessage {
 	return d.output
 }
 
@@ -369,12 +372,8 @@ func (d *detectorImpl) runAuditLogEventDetector() {
 			sort.Slice(alerts, func(i, j int) bool {
 				return alerts[i].GetPolicy().GetId() < alerts[j].GetPolicy().GetId()
 			})
-			select {
-			case <-d.auditStopper.Flow().StopRequested():
-				return
-			case <-d.serializerStopper.Flow().StopRequested():
-				return
-			case d.output <- &central.MsgFromSensor{
+
+			msg := &central.MsgFromSensor{
 				Msg: &central.MsgFromSensor_Event{
 					Event: &central.SensorEvent{
 						Action: central.ResourceAction_CREATE_RESOURCE,
@@ -387,7 +386,17 @@ func (d *detectorImpl) runAuditLogEventDetector() {
 						},
 					},
 				},
-			}:
+			}
+
+			// TODO(ROX-17326): Add context to detector message
+			expiringMessage := message.NewExpiring(context.TODO(), msg)
+
+			select {
+			case <-d.auditStopper.Flow().StopRequested():
+				return
+			case <-d.serializerStopper.Flow().StopRequested():
+				return
+			case d.output <- expiringMessage:
 			}
 		}
 	}
@@ -464,8 +473,8 @@ func (d *detectorImpl) ProcessIndicator(pi *storage.ProcessIndicator) {
 	go d.processIndicator(pi)
 }
 
-func createAlertResultsMsg(action central.ResourceAction, alertResults *central.AlertResults) *central.MsgFromSensor {
-	return &central.MsgFromSensor{
+func createAlertResultsMsg(ctx context.Context, action central.ResourceAction, alertResults *central.AlertResults) *message.ExpiringMessage {
+	msgFromSensor := &central.MsgFromSensor{
 		Msg: &central.MsgFromSensor_Event{
 			Event: &central.SensorEvent{
 				Id:     alertResults.GetDeploymentId(),
@@ -480,6 +489,8 @@ func createAlertResultsMsg(action central.ResourceAction, alertResults *central.
 			},
 		},
 	}
+
+	return message.NewExpiring(ctx, msgFromSensor)
 }
 
 func (d *detectorImpl) processIndicator(pi *storage.ProcessIndicator) {
@@ -511,12 +522,13 @@ func (d *detectorImpl) processIndicator(pi *storage.ProcessIndicator) {
 	select {
 	case <-d.alertStopSig.Done():
 		return
-	case d.output <- createAlertResultsMsg(central.ResourceAction_CREATE_RESOURCE, alertResults):
+		// TODO(ROX-17326): Add context to detector messages
+	case d.output <- createAlertResultsMsg(context.TODO(), central.ResourceAction_CREATE_RESOURCE, alertResults):
 	}
 }
 
-func (d *detectorImpl) ProcessNetworkFlow(flow *storage.NetworkFlow) {
-	go d.processNetworkFlow(flow)
+func (d *detectorImpl) ProcessNetworkFlow(ctx context.Context, flow *storage.NetworkFlow) {
+	go d.processNetworkFlow(ctx, flow)
 }
 
 type networkEntityDetails struct {
@@ -556,6 +568,7 @@ func (d *detectorImpl) getNetworkFlowEntityDetails(info *storage.NetworkEntityIn
 }
 
 func (d *detectorImpl) processAlertsForFlowOnEntity(
+	ctx context.Context,
 	entity *storage.NetworkEntityInfo,
 	flowDetails *augmentedobjs.NetworkFlowDetails,
 ) {
@@ -589,11 +602,11 @@ func (d *detectorImpl) processAlertsForFlowOnEntity(
 	select {
 	case <-d.alertStopSig.Done():
 		return
-	case d.output <- createAlertResultsMsg(central.ResourceAction_CREATE_RESOURCE, alertResults):
+	case d.output <- createAlertResultsMsg(ctx, central.ResourceAction_CREATE_RESOURCE, alertResults):
 	}
 }
 
-func (d *detectorImpl) processNetworkFlow(flow *storage.NetworkFlow) {
+func (d *detectorImpl) processNetworkFlow(ctx context.Context, flow *storage.NetworkFlow) {
 	// Only run the flows through policies if the entity types are supported
 	_, srcTypeSupported := networkbaseline.ValidBaselinePeerEntityTypes[flow.GetProps().GetSrcEntity().GetType()]
 	_, dstTypeSupported := networkbaseline.ValidBaselinePeerEntityTypes[flow.GetProps().GetDstEntity().GetType()]
@@ -629,8 +642,8 @@ func (d *detectorImpl) processNetworkFlow(flow *storage.NetworkFlow) {
 		DstDeploymentType:      dstDetails.deploymentType,
 	}
 
-	d.processAlertsForFlowOnEntity(flow.GetProps().GetSrcEntity(), flowDetails)
-	d.processAlertsForFlowOnEntity(flow.GetProps().GetDstEntity(), flowDetails)
+	d.processAlertsForFlowOnEntity(ctx, flow.GetProps().GetSrcEntity(), flowDetails)
+	d.processAlertsForFlowOnEntity(ctx, flow.GetProps().GetDstEntity(), flowDetails)
 }
 
 func extractTimestamp(flow *storage.NetworkFlow) *types.Timestamp {
