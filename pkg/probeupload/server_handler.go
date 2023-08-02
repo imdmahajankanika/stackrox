@@ -11,6 +11,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/stackrox/rox/pkg/concurrency"
+	"github.com/stackrox/rox/pkg/features"
 	"github.com/stackrox/rox/pkg/logging"
 	"github.com/stackrox/rox/pkg/utils"
 )
@@ -120,7 +121,7 @@ func (h *probeServerHandler) ServeHTTP(w http.ResponseWriter, req *http.Request)
 	}
 	defer utils.IgnoreError(data.Close)
 
-	if !h.centralReady.IsDone() {
+	if features.PreventSensorRestartOnDisconnect.Enabled() && !h.centralReady.IsDone() {
 		log.Error("sensor is running in offline mode")
 		http.Error(w, "sensor running in offline mode", http.StatusServiceUnavailable)
 		return
