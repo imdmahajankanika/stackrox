@@ -74,6 +74,8 @@ jobs:
 
     - name: Ensure no trailing whitespaces 
       run: |
+       git config --global user.email "you@example.com"
+       git config --global user.name "Your Name"
        # Since git apply will fix all the flags raised by the whitespace
        # errors and this will not raise any warinig or error
        git commit --allow-empty -m "empty commit"
