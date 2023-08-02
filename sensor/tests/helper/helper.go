@@ -625,7 +625,6 @@ func (c *TestContext) LastViolationStateWithTimeout(t *testing.T, name string, a
 			}
 		}
 	}
-
 }
 
 // LastViolationStateByID checks the violation state by deployment ID
