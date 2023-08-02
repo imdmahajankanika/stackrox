@@ -65,8 +65,12 @@ func (v V4GRPCClient) Dial(endpoint string) (Client, error) {
 
 func (v V4GRPCClient) GetImageAnalysis(ctx context.Context, image *storage.Image, cfg *types.Config) (*scannerV1.GetImageComponentsResponse, *scannerV4.IndexReport, error) {
 	name := image.GetName().GetFullName()
+	var hid string
+	if hid = image.Metadata.V2.Digest; len(hid) == 0 {
+		hid = image.Metadata.V1.Digest
+	}
 	indexReport, err := v.indexerClient.CreateIndexReport(ctx, &scannerV4.CreateIndexReportRequest{
-		HashId:               "",
+		HashId:               hid,
 		ResourceLocator:      nil,
 		XXX_NoUnkeyedLiteral: struct{}{},
 		XXX_unrecognized:     nil,
