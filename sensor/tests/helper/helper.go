@@ -591,20 +591,27 @@ func GetLastMessageMatching(messages []*central.MsgFromSensor, matchFn MatchReso
 type AlertAssertFunc func(alertResults *central.AlertResults) error
 
 // LastViolationState checks the violation state similarly to `LastViolationStateWithTimeout` with a default 3 seconds timeout.
+// Deprecated in favour of LastViolationStateT - reason: Calling c.t.FailNow will fail the parent test routine and result in error:
+// "test executed panic(nil) or runtime.Goexit: subtest may have called FailNow on a parent test"
 func (c *TestContext) LastViolationState(name string, assertion AlertAssertFunc, message string) {
-	c.LastViolationStateWithTimeout(name, assertion, message, defaultWaitTimeout)
+	c.LastViolationStateWithTimeout(c.t, name, assertion, message, defaultWaitTimeout)
+}
+
+// LastViolationStateT checks the violation state similarly to `LastViolationStateWithTimeout` with a default 3 seconds timeout.
+func (c *TestContext) LastViolationStateT(t *testing.T, name string, assertion AlertAssertFunc, message string) {
+	c.LastViolationStateWithTimeout(t, name, assertion, message, defaultWaitTimeout)
 }
 
 // LastViolationStateWithTimeout checks that a violation state for a deployment must match `assertion`. If violation state does not match
 // until `timeout` the test fails.
-func (c *TestContext) LastViolationStateWithTimeout(name string, assertion AlertAssertFunc, message string, timeout time.Duration) {
+func (c *TestContext) LastViolationStateWithTimeout(t *testing.T, name string, assertion AlertAssertFunc, message string, timeout time.Duration) {
 	timer := time.NewTimer(timeout)
 	ticker := time.NewTicker(defaultTicker)
 	var lastErr error
 	for {
 		select {
 		case <-timer.C:
-			c.t.Fatalf("timeout reached waiting for violation state (%s): %s", message, lastErr)
+			t.Fatalf("timeout reached waiting for violation state (%s): %s", message, lastErr)
 		case <-ticker.C:
 			messages := c.GetFakeCentral().GetAllMessages()
 			alerts := GetAllAlertsForDeploymentName(messages, name)
