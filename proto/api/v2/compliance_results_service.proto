@@ -1,0 +1,72 @@
+syntax = "proto3";
+
+option go_package = "v2";
+option java_package = "io.stackrox.proto.api.v2";
+
+import "google/protobuf/timestamp.proto";
+import weak "google/api/annotations.proto";
+import "api/v2/common.proto";
+
+package v2;
+
+message ComplianceScanResult {
+    enum CheckStatus {
+        UNSET = 0;
+        PASS = 1;
+        FAIL = 2;
+        ERROR = 3;
+        INFO = 4;
+        MANUAL = 5;
+        NOT_APPLICABLE = 6;
+        INCONSISTENT = 7;
+    }
+    string              id = 1;
+    string              check_id = 2;
+    string              check_name = 3;
+    string              cluster_id = 4;
+    CheckStatus         status = 5;
+    string              severity     = 6;
+    string              description = 7;
+    string              instructions = 8;
+    map<string, string> labels = 9;
+    map<string, string> annotations = 10;
+    google.protobuf.Timestamp     created_time = 11;
+    string standard = 12;
+    string control = 13;
+    string scan_name = 14;
+}
+
+message ComplianceScanResultsRequest {
+    string scan_name = 1;
+}
+
+message ComplianceClusterScanResultsRequest {
+    string cluster_id = 1;
+}
+
+message ListComplianceScanResultsResponse {
+    repeated ComplianceScanResult scan_results = 1;
+}
+
+service ComplianceResultsService {
+    // ListComplianceScanResults lists all current scan results
+    rpc ListComplianceScanResults (Empty) returns (ListComplianceScanResultsResponse) {
+        option (google.api.http) = {
+            get: "/v2/compliance/scan/results"
+        };
+    }
+
+    // GetComplianceClusterScanResults retrieves the compliance operator scan results for the specified cluster
+    rpc GetComplianceClusterScanResults (ComplianceClusterScanResultsRequest) returns (ListComplianceScanResultsResponse) {
+        option (google.api.http) = {
+            get: "/v2/compliance/scan/results/cluster/{cluster_id}"
+        };
+    }
+
+    // GetComplianceClusterResults retrieves the compliance operator scan results for the specified scan setting
+    rpc GetComplianceScanResults (ComplianceScanResultsRequest) returns (ListComplianceScanResultsResponse) {
+        option (google.api.http) = {
+            get: "/v2/compliance/scan/results/{scan_name}"
+        };
+    }
+}
