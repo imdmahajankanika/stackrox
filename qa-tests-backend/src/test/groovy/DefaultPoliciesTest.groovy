@@ -186,7 +186,7 @@ class DefaultPoliciesTest extends BaseSpecification {
                 .filter { f -> f.getName() == policyName }
                 .collect(Collectors.toList())
 
-        assert policies.size() == 1
+        assert policies.size() == 1000
 
         and:
         "Policy is temporarily enabled"
