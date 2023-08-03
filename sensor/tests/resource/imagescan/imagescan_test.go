@@ -128,7 +128,7 @@ func (s *ImageScanSuite) Test_AlertsUpdatedOnImageUpdate() {
 			})
 
 			// Violation should eventually happen for myapp, since the image scanned has rpm installed
-			tc.LastViolationStateWithTimeout("myapp", func(result *central.AlertResults) error {
+			tc.LastViolationStateWithTimeout(t, "myapp", func(result *central.AlertResults) error {
 				if !checkIfAlertsHaveViolation(result, Policies[0].GetName()) {
 					return errors.New("violation not found for deployment")
 				}
