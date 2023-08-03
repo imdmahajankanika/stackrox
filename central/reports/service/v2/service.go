@@ -7,7 +7,6 @@ import (
 	schedulerV2 "github.com/stackrox/rox/central/reports/scheduler/v2"
 	snapshotDS "github.com/stackrox/rox/central/reports/snapshot/datastore"
 	apiV2 "github.com/stackrox/rox/generated/api/v2"
-	"github.com/stackrox/rox/pkg/features"
 	"github.com/stackrox/rox/pkg/grpc"
 )
 
@@ -21,7 +20,7 @@ type Service interface {
 
 // New returns a new instance of the service.
 func New(metadataDatastore metadataDS.DataStore, snapshotDatastore snapshotDS.DataStore, scheduler schedulerV2.Scheduler) Service {
-	if !features.VulnMgmtReportingEnhancements.Enabled() {
+	if !env.VulnReportingEnhancements.BooleanSetting() {
 		return nil
 	}
 	return &serviceImpl{

@@ -4,7 +4,6 @@ import (
 	"github.com/stackrox/rox/central/globaldb"
 	"github.com/stackrox/rox/central/reports/metadata/datastore/search"
 	pgStore "github.com/stackrox/rox/central/reports/metadata/datastore/store/postgres"
-	"github.com/stackrox/rox/pkg/features"
 	"github.com/stackrox/rox/pkg/sync"
 	"github.com/stackrox/rox/pkg/utils"
 )
@@ -24,7 +23,7 @@ func initialize() {
 
 // Singleton returns a singleton instance of ReportMetadata datastore
 func Singleton() DataStore {
-	if !features.VulnMgmtReportingEnhancements.Enabled() {
+	if !env.VulnReportingEnhancements.BooleanSetting() {
 		return nil
 	}
 	once.Do(initialize)

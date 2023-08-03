@@ -9,7 +9,6 @@ import (
 	collectionDataStore "github.com/stackrox/rox/central/resourcecollection/datastore"
 	v1 "github.com/stackrox/rox/generated/api/v1"
 	"github.com/stackrox/rox/generated/storage"
-	"github.com/stackrox/rox/pkg/features"
 	"github.com/stackrox/rox/pkg/search"
 )
 
@@ -86,7 +85,7 @@ func (q *queryBuilder) buildCVEAttributesQuery() (string, error) {
 }
 
 func filterVulnsByFirstOccurrenceTime(vulnReportFilters *storage.VulnerabilityReportFilters) bool {
-	if !features.VulnMgmtReportingEnhancements.Enabled() {
+	if !env.VulnReportingEnhancements.BooleanSetting() {
 		return vulnReportFilters.SinceLastReport
 	}
 	return vulnReportFilters.GetSinceLastSentScheduledReport() || vulnReportFilters.GetSinceStartDate() != nil

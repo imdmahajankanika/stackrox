@@ -8,7 +8,6 @@ import (
 	reportSnapshotDSMocks "github.com/stackrox/rox/central/reports/snapshot/datastore/mocks"
 	apiV2 "github.com/stackrox/rox/generated/api/v2"
 	"github.com/stackrox/rox/generated/storage"
-	"github.com/stackrox/rox/pkg/features"
 	"github.com/stackrox/rox/pkg/grpc/testutils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
@@ -36,8 +35,8 @@ func (suite *ReportServiceTestSuite) SetupSuite() {
 }
 func (suite *ReportServiceTestSuite) TestGetReportStatus() {
 
-	suite.T().Setenv(features.VulnMgmtReportingEnhancements.EnvVar(), "true")
-	if !features.VulnMgmtReportingEnhancements.Enabled() {
+	suite.T().Setenv(env.VulnReportingEnhancements.EnvVar(), "true")
+	if !env.VulnReportingEnhancements.BooleanSetting() {
 		suite.T().Skip("Skip test when reporting enhancements are disabled")
 		suite.T().SkipNow()
 	}
@@ -64,8 +63,8 @@ func (suite *ReportServiceTestSuite) TestGetReportStatus() {
 }
 
 func (suite *ReportServiceTestSuite) TestGetReportHistory() {
-	suite.T().Setenv(features.VulnMgmtReportingEnhancements.EnvVar(), "true")
-	if !features.VulnMgmtReportingEnhancements.Enabled() {
+	suite.T().Setenv(env.VulnReportingEnhancements.EnvVar(), "true")
+	if !env.VulnReportingEnhancements.BooleanSetting() {
 		suite.T().Skip("Skip test when reporting enhancements are disabled")
 		suite.T().SkipNow()
 	}
@@ -116,8 +115,8 @@ func (suite *ReportServiceTestSuite) TestGetReportHistory() {
 
 func (suite *ReportServiceTestSuite) TestAuthz() {
 
-	suite.T().Setenv(features.VulnMgmtReportingEnhancements.EnvVar(), "true")
-	if !features.VulnMgmtReportingEnhancements.Enabled() {
+	suite.T().Setenv(env.VulnReportingEnhancements.EnvVar(), "true")
+	if !env.VulnReportingEnhancements.BooleanSetting() {
 		suite.T().Skip("Skip test when reporting enhancements are disabled")
 		suite.T().SkipNow()
 	}
