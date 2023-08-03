@@ -7,6 +7,8 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	installationStore "github.com/stackrox/rox/central/installation/store"
 	"github.com/stackrox/rox/generated/storage"
+	"github.com/stackrox/rox/pkg/branding"
+	"github.com/stackrox/rox/pkg/buildinfo"
 	"github.com/stackrox/rox/pkg/env"
 	"github.com/stackrox/rox/pkg/metrics"
 	"github.com/stackrox/rox/pkg/sac"
@@ -52,6 +54,8 @@ func newGaugeVec(installation installationStore.Store) *prometheus.GaugeVec {
 			Name:      "info",
 			Help:      "A metric with a constant '1' value labeled by information identifying the Central installation",
 			ConstLabels: prometheus.Labels{
+				"branding":        branding.GetProductNameShort(),
+				"build":           buildinfo.BuildFlavor,
 				"central_id":      installInfo.GetId(),
 				"central_version": version.GetMainVersion(),
 				"hosting":         getHosting(),
