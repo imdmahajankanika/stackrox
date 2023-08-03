@@ -100,7 +100,7 @@
                 "COMPLIANCE_SCAN_SETTINGS",
                 "COMPLIANCE_SCAN",
                 "COMPLIANCE_CHECK_RESULTS",
-                "USAGE"
+                "PRODUCT_USAGE"
               ]
             },
             "collectionFormat": "multi"
@@ -200,7 +200,7 @@
                 "COMPLIANCE_SCAN_SETTINGS",
                 "COMPLIANCE_SCAN",
                 "COMPLIANCE_CHECK_RESULTS",
-                "USAGE"
+                "PRODUCT_USAGE"
               ]
             },
             "collectionFormat": "multi"
@@ -294,7 +294,7 @@
                 "COMPLIANCE_SCAN_SETTINGS",
                 "COMPLIANCE_SCAN",
                 "COMPLIANCE_CHECK_RESULTS",
-                "USAGE"
+                "PRODUCT_USAGE"
               ]
             },
             "collectionFormat": "multi"
@@ -437,7 +437,7 @@
         "COMPLIANCE_SCAN_SETTINGS",
         "COMPLIANCE_SCAN",
         "COMPLIANCE_CHECK_RESULTS",
-        "USAGE"
+        "PRODUCT_USAGE"
       ],
       "default": "SEARCH_UNSET",
       "title": "Next available tag: 59"
